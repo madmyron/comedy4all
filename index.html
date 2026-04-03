@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<!-- C4A VERSION 10.1 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comedy 4 All</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" style="display:none;position:fixed;inset:0;z-index:500;background:var(--bg);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:34px 30px;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.10)">
+    <div style="text-align:center;margin-bottom:26px">
+      <div style="width:50px;height:50px;background:var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px">&#127908;</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:3px;color:var(--text)">Comedy 4 All</div>
+      <div style="font-size:12px;color:var(--text3)">Your professional comedy workspace</div>
+    </div>
+    <div style="display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px">
+      <button id="tab-signin" onclick="showAuthTab('signin')" style="flex:1;padding:9px;border:none;background:var(--gold);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Sign In</button>
+      <button id="tab-signup" onclick="showAuthTab('signup')" style="flex:1;padding:9px;border:none;background:var(--bg3);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">Sign Up</button>
+    </div>
+    <div id="auth-signin">
+      <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Email</label><input id="signin-email" type="email" autocomplete="email" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="michael@comedy4all.com" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignIn()"></div>
+      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><input id="signin-password" type="password" autocomplete="current-password" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignIn()"></div>
+      <button onclick="doSignIn()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Sign In</button>
+      <button onclick="doGoogleSignIn()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Continue with Google</button>
+      <button onclick="showAuthTab('phone')" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">&#128241; Sign in with phone</button>
+    </div>
+    <div id="auth-signup" style="display:none">
+      <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Your Name</label><input id="signup-name" type="text" autocomplete="name" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="Michael D'Asaro" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
+      <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Email</label><input id="signup-email" type="email" autocomplete="email" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="michael@comedy4all.com" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
+      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><input id="signup-password" type="password" autocomplete="new-password" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="At least 6 characters" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignUp()"></div>
+      <button id="signup-btn" onclick="doSignUp()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Create Account</button>
+      <button onclick="doGoogleSignIn()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Continue with Google</button>
+      <button onclick="showAuthTab('phone')" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">&#128241; Use phone number instead</button>
+    </div>
+    <div id="auth-error" style="display:none;margin-top:10px;padding:9px 12px;background:var(--red-bg);border:1px solid #f0c0bb;border-radius:8px;font-size:12px;color:var(--red)"></div>
+    <div id="auth-success" style="display:none;margin-top:10px;padding:9px 12px;background:var(--green-bg);border:1px solid #a8d8aa;border-radius:8px;font-size:12px;color:var(--green)"></div>
+    <!-- PHONE LOGIN -->
+    <div id="auth-phone" style="display:none">
+      <div id="phone-step1">
+        <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Phone Number</label><input id="phone-input" type="tel" autocomplete="tel" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="+1 (214) 555-0000" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doPhoneSend()"></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.6">We'll send a 6-digit code to your phone. Standard SMS rates may apply.</div>
+        <button id="phone-send-btn" onclick="doPhoneSend()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Send Code</button>
+        <button onclick="showAuthTab('signin')" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">&#8592; Back to email</button>
+      </div>
+      <div id="phone-step2" style="display:none">
+        <div style="text-align:center;margin-bottom:14px;font-size:12px;color:var(--text3)" id="phone-sent-msg">Code sent!</div>
+        <div style="margin-bottom:14px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Enter 6-digit code</label><input id="otp-input" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-size:22px;font-family:'DM Mono',monospace;outline:none;background:var(--bg3);color:var(--text);text-align:center;letter-spacing:.25em" placeholder="······" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" oninput="if(this.value.length===6)doPhoneVerify()" onkeydown="if(event.key==='Enter')doPhoneVerify()"></div>
+        <button id="phone-verify-btn" onclick="doPhoneVerify()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Verify &amp; Sign In</button>
+        <button onclick="showPhoneStep1()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">&#8592; Change number</button>
+      </div>
+    </div>
+    <div style="display:none">
+      <input id="sb-url" type="hidden">
+      <input id="sb-key" type="hidden">
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-icon" onclick="toggleSidebar()" title="Toggle menu">&#127908;</div>
+      <div class="logo-texts"><div class="logo-text">Comedy 4 All</div><div class="logo-sub">Pro Workspace</div></div>
+    </div>
+    <div class="nav">
+      <div class="nav-sect">Main</div>
+      <div class="nav-item active" data-screen="dashboard" data-label="Dashboard">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor" opacity=".8"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" opacity=".3"/></svg>
+        <span class="nav-label">Dashboard</span>
+      </div>
+      <div class="nav-item" data-screen="jokes" data-label="Joke Manager">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="9" height="2" rx="1" fill="currentColor" opacity=".7"/><rect x="2" y="12" width="6" height="2" rx="1" fill="currentColor" opacity=".5"/></svg>
+        <span class="nav-label">Joke Manager</span><span class="nav-badge" id="nb-jokes">9</span>
+      </div>
+      <div class="nav-item" data-screen="sets" data-label="Set Builder">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="nav-label">Set Builder</span>
+      </div>
+      <div class="nav-sect">Create</div>
+      <div class="nav-item" data-screen="recording" data-label="Recording">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M4 9c0 2.2 1.8 4 4 4s4-1.8 4-4M8 13v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="nav-label">Recording</span>
+      </div>
+      <div class="nav-item" data-screen="studio" data-label="Writing Studio">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 3h10v10H3V3zM6 7h4M6 10h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span class="nav-label">Writing Studio</span>
+      </div>
+      <div class="nav-item" data-screen="brooks" data-label="Brooks AI">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 9.5c.5.8 1.5 1.5 2.5 1.5s2-.7 2.5-1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="6" cy="7" r="1" fill="currentColor"/><circle cx="10" cy="7" r="1" fill="currentColor"/></svg>
+        <span class="nav-label">Brooks AI &#10022;</span>
+      </div>
+      <div class="nav-sect">Insights</div>
+      <div class="nav-item" data-screen="analytics" data-label="Analytics">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 13V8l3-3 3 2 4-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="nav-label">Analytics</span>
+      </div>
+      <div class="nav-item" data-screen="shows" data-label="Show History">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 3V1M11 3V1M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span class="nav-label">Show History</span>
+      </div>
+      <div class="nav-item" data-screen="versions" data-label="Version History">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="4" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M8 6v4" stroke="currentColor" stroke-width="1.3"/></svg>
+        <span class="nav-label">Version History</span>
+      </div>
+      <div class="nav-sect">Account</div>
+      <div class="nav-item" data-screen="settings" data-label="Settings">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span class="nav-label">Settings</span>
+      </div>
+    </div>
+    <div class="sidebar-foot">
+      <div class="u-chip">
+        <div class="avatar">MD</div>
+        <div class="u-chip-text"><div style="font-size:12px;font-weight:500">Michael D.</div><div style="font-size:10px;color:var(--gold);font-weight:500">Pro Plan &#10022;</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="sync-bar" style="display:none;align-items:center;gap:8px;padding:4px 16px;background:var(--green-bg);border-bottom:1px solid #c0ddc0;font-size:11px;color:var(--green);flex-shrink:0">
+      <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;transition:background .3s"></span>
+      <span id="sync-msg" style="font-weight:500">Synced</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <span id="sync-user" style="color:var(--text3);font-size:10px"></span>
+        <button onclick="doSignOut()" style="background:none;border:1px solid #a8d8aa;border-radius:5px;font-size:10px;color:var(--text3);padding:2px 9px;cursor:pointer;font-family:'Inter',sans-serif">Sign Out</button>
+        <button class="dark-toggle" onclick="toggleDark()" title="Toggle dark mode" id="dark-btn">&#127769;</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="screen-dashboard" class="screen active">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Good evening, Michael &#128075; <span style="font-size:12px;color:var(--text3);font-weight:400">&#183; Next show in 3 days</span></div>
+        <button class="btn btn-sm" onclick="go('analytics')">&#128202; Stats</button>
+        <button class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
+      </div>
+      <div class="content scroll">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-lbl">Total Jokes</div><div class="stat-val" style="color:var(--gold)" id="dash-count">9</div><div class="stat-d up">&#8593; growing library</div></div>
+          <div class="stat-card"><div class="stat-lbl">Active Sets</div><div class="stat-val">6</div><div class="stat-d up">&#8593; 1 new</div></div>
+          <div class="stat-card"><div class="stat-lbl">Avg Rating</div><div class="stat-val">4.2</div><div class="stat-d up">&#8593; 0.3 this month</div></div>
+          <div class="stat-card"><div class="stat-lbl">Stage Time</div><div class="stat-val">38<span style="font-size:13px;color:var(--text3)">m</span></div><div class="stat-d">material ready</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 290px;gap:14px">
+          <div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="ctitle">Top Performing Jokes <span class="csub">by audience score</span></div>
+              <div class="bar-row"><div class="bar-lbl">Airport security bit</div><div class="bar-track"><div class="bar-fill" style="width:92%"></div></div><div class="bar-val">9.2</div></div>
+              <div class="bar-row"><div class="bar-lbl">Dating app opener</div><div class="bar-track"><div class="bar-fill" style="width:87%"></div></div><div class="bar-val">8.7</div></div>
+              <div class="bar-row"><div class="bar-lbl">Remote work WFH</div><div class="bar-track"><div class="bar-fill" style="width:83%"></div></div><div class="bar-val">8.3</div></div>
+              <div class="bar-row"><div class="bar-lbl">Mom texting</div><div class="bar-track"><div class="bar-fill" style="width:79%"></div></div><div class="bar-val">7.9</div></div>
+              <div class="bar-row"><div class="bar-lbl">Coffee shop prices</div><div class="bar-track"><div class="bar-fill" style="width:71%"></div></div><div class="bar-val">7.1</div></div>
+            </div>
+            <div class="card">
+              <div class="ctitle">Recent Activity</div>
+              <div id="activity-feed"></div>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="ctitle">Upcoming Shows</div>
+              <div style="font-size:12px">
+                <div style="padding:9px 0;border-bottom:1px solid var(--border)">
+                  <div style="font-weight:600;margin-bottom:2px">Addison Improv -- Friday</div>
+                  <div style="color:var(--text3);font-size:10px;margin-bottom:6px">8:00 PM &#183; 20 min &#183; <span style="color:var(--gold);font-weight:500">3 days away</span></div>
+                  <button class="btn btn-sm" onclick="go('rehearsal')">&gt; Rehearse Now</button>
+                </div>
+                <div style="padding:9px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600;margin-bottom:2px">Dallas Comedy Club -- Apr 5</div><div style="color:var(--text3);font-size:10px">Corporate gig &#183; 10 min</div></div>
+                <div style="padding:9px 0"><div style="font-weight:600;margin-bottom:2px">Hyena's -- Apr 12</div><div style="color:var(--text3);font-size:10px">Headliner &#183; 45 min</div></div>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="ctitle">Quick Actions</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="openNewJoke()">&#9997;&#65039; Write a new joke</button>
+                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go('sets')">&#128203; Build a set</button>
+                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go('rehearsal')">&#127917; Rehearse current set</button>
+                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go('brooks')">&#10022; Ask Brooks AI</button>
+                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go('recording')">&#127897;&#65039; Start recording</button>
+              </div>
+            </div>
+            <div class="card" style="background:var(--gold-bg);border-color:var(--gold-br)">
+              <div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:5px;letter-spacing:.05em">&#10022; BROOKS INSIGHT</div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.7">Your tech jokes score 15% higher than relationship material. Show Friday -- want to punch up the set?</div>
+              <button class="btn btn-sm" style="margin-top:9px" onclick="go('brooks')">Chat with Brooks -&gt;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOKE MANAGER -->
+    <div id="screen-jokes" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Joke Manager</div>
+        <input id="joke-search" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:185px;transition:border .15s" placeholder="Search jokes..." oninput="filterJokes(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <select class="btn" style="padding:6px 9px" onchange="filterByTag(this.value)">
+          <option value="">All Tags</option><option>Travel</option><option>Dating</option><option>Tech</option><option>Family</option><option>Work</option>
+        </select>
+        <select class="btn" style="padding:6px 9px" onchange="sortJokes(this.value)">
+          <option value="score">Rating &#8595;</option><option value="alpha">A-Z</option><option value="newest">Newest</option>
+        </select>
+        <button class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
+      </div>
+      <div style="display:flex;flex:1;overflow:hidden">
+        <div class="content scroll" style="flex:1">
+          <div style="display:flex;gap:6px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+            <span class="tag tag-gold" style="cursor:pointer" onclick="filterByTier('a')">A-Tier</span>
+            <span class="tag tag-blue" style="cursor:pointer" onclick="filterByTier('b')">B-Tier</span>
+            <span class="tag tag-gray" style="cursor:pointer" onclick="filterByTier('c')">C-Tier</span>
+            <span class="tag tag-gray" style="cursor:pointer" onclick="filterByTier('')">All</span>
+            <span class="tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid #b8d4f4;cursor:pointer" onclick="filterByTier('archived')">&#128230; Archived</span>
+            <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="joke-count">9 jokes</span>
+            <button class="btn btn-sm btn-primary" onclick="openNewJoke()" style="margin-left:6px">+ New Joke</button>
+          </div>
+          <div class="joke-grid" id="joke-grid"></div>
+        </div>
+        <div id="joke-detail" style="background:var(--bg2);border-left:1px solid var(--border);width:295px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden">
+          <div class="detail-close-bar" style="display:none;align-items:center;justify-content:space-between;padding:10px 14px 6px;border-bottom:1px solid var(--border);flex-shrink:0">
+            <div style="width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto"></div>
+            <button onclick="closeDetail()" style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;color:var(--text2);padding:4px 12px;cursor:pointer;position:absolute;right:14px;top:10px">&#10005; Close</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:12px;flex-direction:column;gap:10px;padding:20px;text-align:center">
+            <div style="font-size:30px">&#128221;</div><div>Click a joke to view details &amp; Brooks notes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SET BUILDER -->
+    <div id="screen-sets" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Set Builder -- <span style="color:var(--gold)">The Weekender</span></div>
+        <select class="btn" style="padding:6px 9px"><option>The Weekender</option><option>Corporate Gig</option><option>Late Night Pilot</option></select>
+        <button class="btn btn-sm" onclick="toast('Exported!')">&#8595; Export</button>
+        <button class="btn btn-sm btn-primary" onclick="toast('Set saved! &#10003;')">Save Set</button>
+      </div>
+      <div style="display:grid;grid-template-columns:228px 1fr 250px;height:calc(100% - 54px);overflow:hidden">
+        <div style="background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto" class="scroll">
+          <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:12px 13px 6px">Joke Library</div>
+          <div id="set-lib"></div>
+        </div>
+        <div style="overflow-y:auto;padding:14px;background:var(--bg)" class="scroll">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;color:var(--text3)">
+            <span style="font-weight:600">22:30</span>
+            <div style="flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;background:var(--gold);width:73%;border-radius:3px"></div></div>
+            <span style="color:var(--gold);font-weight:500">30min goal</span>
+          </div>
+          <div id="set-canvas"></div>
+          <div style="padding:11px;border:2px dashed var(--border2);border-radius:var(--r2);text-align:center;font-size:11px;color:var(--text3);cursor:pointer;margin-top:8px;background:var(--bg2)" onclick="toast('Click jokes on the left to add them')">+ Add joke to set</div>
+        </div>
+        <div style="background:var(--bg2);border-left:1px solid var(--border);padding:14px;overflow-y:auto" class="scroll">
+          <div class="sect-title">Set Stats</div>
+          <div style="text-align:center;margin-bottom:12px"><div style="font-size:38px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold)">22:30</div><div style="font-size:10px;color:var(--text3)">total runtime</div></div>
+          <div style="background:var(--bg3);border-radius:3px;height:5px;overflow:hidden;margin-bottom:4px"><div style="height:100%;background:var(--gold);width:73%;border-radius:3px"></div></div>
+          <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:14px">73% of 30min target</div>
+          <div class="sep"></div>
+          <div class="sect-title" style="margin-top:10px">Flow Score</div>
+          <div style="font-size:34px;font-weight:700;color:var(--green);margin-bottom:4px">8.4</div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:14px">Variety: Good &#183; Arc: Strong</div>
+          <div class="sep"></div>
+          <div class="sect-title" style="margin-top:10px">AI Notes</div>
+          <div style="font-size:11.5px;color:var(--text2);line-height:1.65;margin-bottom:14px;background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);padding:9px 11px">Opener strength: 9.2 &#10003;<br>Consider moving "Mom texting" earlier -- warming slow at slot 6.</div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:7px;font-size:12px" onclick="go('rehearsal')">&gt; Rehearse This Set</button>
+          <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="toast('PDF exported!')">&#8595; PDF Set Sheet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REHEARSAL -->
+    <div id="screen-rehearsal" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Rehearsal -- <span style="color:var(--gold)">The Weekender</span></div>
+        <button class="btn btn-sm btn-primary" onclick="go('sets')">&#10003; Done</button>
+      </div>
+      <div style="flex:1;display:flex;overflow:hidden">
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:22px;overflow-y:auto;background:var(--bg)">
+          <div style="max-width:660px;width:100%;text-align:center">
+            <div style="display:flex;gap:6px;justify-content:center;margin-bottom:18px" id="r-dots"></div>
+            <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:11px;letter-spacing:.11em" id="r-counter">JOKE 1 OF 5</div>
+            <div class="rj-text" id="r-text"></div>
+            <div class="rj-punch" id="r-punch" onclick="togglePunch()"></div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:16px">click above or press Space to reveal punchline</div>
+            <div style="display:flex;gap:9px;justify-content:center;margin-bottom:12px">
+              <button class="btn" onclick="prevJoke()">&#8249; Prev</button>
+              <button class="btn" id="reveal-btn" onclick="togglePunch()">Show Punchline</button>
+              <button class="btn btn-primary" onclick="nextJoke()">Next &#8250;</button>
+            </div>
+            <div style="display:flex;gap:9px;justify-content:center;margin-bottom:18px">
+              <button class="btn" style="color:var(--red)" onclick="rateJ('bomb')">&#128128; Bombed</button>
+              <button class="btn" onclick="rateJ('ok')">&#128528; Okay</button>
+              <button class="btn" style="color:var(--green)" onclick="rateJ('kill')">&#128293; Killed</button>
+            </div>
+            <div style="font-size:11px;color:var(--text3)" id="r-timer"> 0:00 elapsed</div>
+          </div>
+        </div>
+        <div style="width:215px;background:var(--bg2);border-left:1px solid var(--border);padding:13px;overflow-y:auto" class="scroll">
+          <div class="sect-title">Set List</div><div id="r-setlist"></div>
+          <div class="sep" style="margin-top:12px"></div>
+          <div class="sect-title" style="margin-top:10px">Session Ratings</div>
+          <div id="r-ratings" style="font-size:11px;color:var(--text3)">Rate jokes as you rehearse...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECORDING -->
+    <div id="screen-recording" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Recording</div>
+        <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:3px">
+          <button id="mode-audio-btn" onclick="setRecMode('audio')" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;background:var(--gold);color:#fff;font-family:'Inter',sans-serif">&#127897;&#65039; Audio</button>
+          <button id="mode-video-btn" onclick="setRecMode('video')" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--text2);font-family:'Inter',sans-serif">&#127909; Video</button>
+        </div>
+        <button class="btn btn-sm btn-primary" id="rec-start-btn" onclick="startRecording()">&#128308; Record</button>
+      </div>
+      <div class="content scroll">
+        <div id="rec-cta" style="text-align:center;padding:22px 0 18px">
+          <div id="video-preview-wrap" style="display:none;margin-bottom:16px;position:relative;max-width:480px;margin-left:auto;margin-right:auto">
+            <video id="video-preview" autoplay muted playsinline style="width:100%;border-radius:var(--r);border:2px solid var(--red);background:#000;display:block"></video>
+            <div id="preview-badge" style="position:absolute;top:10px;left:10px;background:rgba(184,50,40,.85);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.04em">PREVIEW</div>
+          </div>
+          <button onclick="startRecording()" id="rec-big-btn" style="width:90px;height:90px;border-radius:50%;background:var(--red);border:none;font-size:32px;cursor:pointer;box-shadow:0 4px 18px rgba(184,50,40,.35);transition:transform .1s;display:inline-flex;align-items:center;justify-content:center" onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform='scale(1)'">&#127897;&#65039;</button>
+          <div style="font-size:11px;color:var(--text3);margin-top:9px" id="rec-cta-label">Tap to record audio</div>
+        </div>
+        <div id="live-rec-panel" style="display:none;margin-bottom:14px">
+          <div class="rec-live">
+            <div class="rec-pulse"></div>
+            <span>Recording</span>
+            <span id="live-rec-time" style="font-family:'DM Mono',monospace;margin-left:4px;font-size:15px;font-weight:700;min-width:50px">0:00</span>
+            <div class="rec-waveform-live" id="live-waveform" style="flex:1"></div>
+            <button onclick="stopRecording()" style="margin-left:auto;background:var(--red);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0">&#9632; Stop</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 275px;gap:14px">
+          <div>
+            <div class="card" style="margin-bottom:12px" id="playback-card">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div><div style="font-size:13px;font-weight:600" id="pb-title">Select a recording</div><div style="font-size:10px;color:var(--text3);margin-top:2px" id="pb-meta">Click a recording from the list &#8594;</div></div>
+                <span class="tag tag-green" id="pb-status" style="display:none">Ready &#10003;</span>
+              </div>
+              <div id="video-playback-wrap" style="display:none;margin-bottom:12px;border-radius:var(--r);overflow:hidden;background:#000;border:1px solid var(--border)">
+                <video id="video-playback-el" style="width:100%;max-height:320px;display:block" controls></video>
+              </div>
+              <div id="waveform" style="height:72px;background:var(--bg3);border-radius:var(--r2);margin-bottom:12px;display:flex;align-items:center;gap:2px;padding:0 10px;overflow:hidden;border:1px solid var(--border)"></div>
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
+                <button class="btn btn-sm btn-primary" onclick="togglePlay()" id="play-btn" disabled>&gt; Play</button>
+                <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)" id="rec-time">0:00</span>
+                <input type="range" min="0" max="100" value="0" id="rec-seek" style="flex:1" oninput="seekRec(this.value)" disabled>
+                <button class="btn btn-sm" id="dl-btn" style="display:none" onclick="downloadRecording()">&#8595; Save</button>
+              </div>
+              <div id="rec-notes-area" style="display:none">
+                <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;font-weight:700">Notes / Transcript</div>
+                <textarea id="rec-notes" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:11px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);resize:vertical;height:110px;outline:none" placeholder="Add notes about this recording &#8212; what worked, what didn't..." oninput="saveRecNotes()"></textarea>
+              </div>
+            </div>
+            <div class="card">
+              <div class="ctitle">Post-Show Crowd Reactions <span class="csub">how did each joke land?</span></div>
+              <div id="detected-moments"></div>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="ctitle">Performance Score</div>
+              <div style="text-align:center;padding:8px 0 12px"><div style="font-size:46px;font-weight:700;color:var(--green)" id="perf-score">--</div><div style="font-size:10px;color:var(--text3)">show rating</div></div>
+              <div id="perf-bars"><div style="font-size:11px;color:var(--text3);text-align:center">Select a recording to see stats</div></div>
+            </div>
+            <div class="card">
+              <div class="ctitle">All Recordings</div>
+              <div id="rec-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WRITING STUDIO -->
+    <div id="screen-studio" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Writing Studio</div>
+        <button class="btn btn-sm" onclick="toast('Auto-saved! &#10003;')">&#128190; Save</button>
+        <button class="btn btn-sm btn-primary" onclick="toast('Exported as PDF script!')">&#8595; Export</button>
+      </div>
+      <div style="display:grid;grid-template-columns:198px 1fr 232px;height:calc(100% - 54px);overflow:hidden">
+        <div style="background:var(--bg2);border-right:1px solid var(--border);padding:13px;overflow-y:auto" class="scroll">
+          <div class="sect-title">Projects</div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em;font-weight:700">TV / Film</div>
+          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;background:var(--gold-bg);color:var(--gold);font-weight:500">&#128250; Late Night Pilot -- Draft 3</div>
+          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">&#127916; Short Film: Open Mic</div>
+          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">&#128252; Comedy Special</div>
+          <div style="font-size:9px;color:var(--text3);margin:11px 0 5px;text-transform:uppercase;letter-spacing:.07em;font-weight:700">Long-Form</div>
+          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">&#128214; Memoir -- Ch.1</div>
+          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">&#128221; Corporate Roast</div>
+          <div style="margin-top:12px"><button class="btn btn-sm" style="width:100%;justify-content:center" onclick="toast('New project created!')">+ New Project</button></div>
+        </div>
+        <div style="padding:22px 26px;overflow-y:auto;background:var(--bg2)" class="scroll">
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:5px;line-height:1.2;color:var(--text)">Late Night Pilot: "The Setup"</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:20px;display:flex;gap:12px"><span>Draft 3</span><span>&#183;</span><span>TV Comedy Pilot</span><span>&#183;</span><span style="color:var(--gold);font-weight:500">23 pages</span></div>
+          <div style="font-size:10px;color:var(--gold);font-weight:700;font-family:'DM Mono',monospace;letter-spacing:.07em;margin-bottom:5px;text-transform:uppercase">Act 1 -- Cold Open</div>
+          <div style="padding:12px 14px;background:var(--bg3);border-left:3px solid var(--gold);border-radius:0 var(--r2) var(--r2) 0;margin-bottom:16px;font-size:13px;line-height:1.85;color:var(--text2)">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600">Interior -- Comedy Club Backstage -- Night</div>
+            MARCUS, 30s, paces nervously in a tiny green room. The walls are covered in faded headshots of comedians who clearly found better jobs.
+          </div>
+          <div style="font-size:13px;color:var(--text3);line-height:1.95">He checks his phone. 47 unread texts from his mom asking if he's "still doing the joke thing."</div>
+        </div>
+        <div style="background:var(--bg3);border-left:1px solid var(--border);padding:13px;overflow-y:auto" class="scroll">
+          <div class="sect-title">Brooks AI Notes</div>
+          <div style="font-size:11.5px;color:var(--text2);margin-bottom:11px">3 suggestions on this draft:</div>
+          <div class="sugg"><div class="slbl">Strengthen</div>The "47 texts from mom" could land harder -- add her specific go-to topic.</div>
+          <div class="sugg"><div class="slbl">Pacing</div>Act 1 runs 2 pages long. Combine scenes 3 and 4.</div>
+          <div class="sugg"><div class="slbl">Callback</div>The fluorescent light gag in scene 1 could callback in Act 3.</div>
+          <div class="sep"></div>
+          <div class="sect-title" style="margin-top:10px">Script Format</div>
+          <button class="btn btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="toast('Formatted as TV script!')">TV Script</button>
+          <button class="btn btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="toast('Formatted as film script!')">Film Script</button>
+          <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="toast('Formatted as stage notes!')">Stage Notes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROOKS AI -->
+    <div id="screen-brooks" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Brooks AI <span style="color:var(--gold);font-size:11px;font-weight:400">&#10022; Comedy Writing Assistant</span></div>
+        <button class="btn btn-sm" onclick="clearBrooks()">+ New Session</button>
+      </div>
+      <div style="flex:1;display:grid;grid-template-columns:1fr 262px;overflow:hidden">
+        <div style="display:flex;flex-direction:column;">
+          <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--bg)" id="chat-msgs" class="scroll">
+            <div class="cmsg ai"><div class="mfrom">BROOKS AI</div>Alright, Michael. I've read your material. The airport bit? Solid. The relationship stuff? We need to talk. You've got a show Friday and I refuse to let you walk out there with a 7.4 average on your closer. So -- are we punching up the set, writing new material, or do you want me to find you a sitcom deal first?</div>
+            <div class="cmsg ai" style="background:var(--gold-bg);border-color:var(--gold-br)">
+              <div class="mfrom">&#9888; SETUP REQUIRED</div>
+              Brooks AI calls the Claude API directly from your browser. To use it:<br><br>
+              1. Open <strong>Settings &#8594; Brooks AI</strong><br>
+              2. Paste your Anthropic API key<br>
+              3. Come back here and start chatting<br><br>
+              <em style="font-size:11px;color:var(--text3)">Your key is stored only in this browser session and never sent anywhere except api.anthropic.com</em>
+            </div>
+          </div>
+          <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;background:var(--bg2)">
+            <textarea id="brooks-input" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:none;height:60px;line-height:1.5;transition:all .15s" placeholder="Ask Brooks anything about your material..." onkeydown="handleBrooksKey(event)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+            <button class="btn btn-primary btn-sm" onclick="sendBrooks()" id="send-btn" style="height:40px;padding:0 16px">Send</button>
+          </div>
+        </div>
+        <div style="padding:14px;overflow-y:auto;background:var(--bg2);border-left:1px solid var(--border)" class="scroll">
+          <div class="sect-title">Quick Prompts</div>
+          <div class="sugg" onclick="fillBrooks('Punch up my airport security bit for Friday')"><div class="slbl">Punch Up</div>Punch up the airport bit for Friday</div>
+          <div class="sugg" onclick="fillBrooks('Analyze my set order and improve the energy arc')"><div class="slbl">Set Flow</div>Analyze my set order</div>
+          <div class="sugg" onclick="fillBrooks('Give me 5 fresh angles on my WFH remote work material')"><div class="slbl">New Angles</div>5 fresh WFH angles</div>
+          <div class="sugg" onclick="fillBrooks('What is my weakest joke and how do I fix it?')"><div class="slbl">Critique</div>Find and fix my weakest joke</div>
+          <div class="sugg" onclick="fillBrooks('Write me 3 new joke premises I could develop into full bits')"><div class="slbl">New Material</div>3 new premises to develop</div>
+          <div class="sugg" onclick="fillBrooks('Help me write a strong closer for a 20 minute set')"><div class="slbl">Closer</div>Write a strong set closer</div>
+          <div class="sep"></div>
+          <div class="sect-title" style="margin-top:6px">&#127916; Story Mining</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.6">Let Brooks scan all your jokes for sitcom &amp; movie potential.</div>
+          <button onclick="runStoryMining('sitcom')" style="width:100%;margin-bottom:6px;padding:8px 10px;background:var(--purple-bg);border:1px solid var(--purple);border-radius:var(--r2);color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-align:left">&#127916; Find Sitcom Ideas</button>
+          <button onclick="runStoryMining('movie')" style="width:100%;margin-bottom:6px;padding:8px 10px;background:var(--blue-bg);border:1px solid var(--blue);border-radius:var(--r2);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-align:left">&#127916; Find Movie Ideas</button>
+          <button onclick="runStoryMining('special')" style="width:100%;margin-bottom:6px;padding:8px 10px;background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-align:left">&#10024; Build a Comedy Special Arc</button>
+          <div class="sep"></div>
+          <div class="sect-title" style="margin-top:6px">Your Context</div>
+          <div style="font-size:11px;color:var(--text3);line-height:2.1" id="brooks-context-display">Loading...</div>
+          <div class="sep"></div>
+          <div class="sect-title" style="margin-top:6px">API Key</div>
+          <input id="api-key-input" type="password" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;color:var(--text);font-size:11px;font-family:'Inter',sans-serif;outline:none;margin-bottom:6px;transition:border .15s" placeholder="sk-ant-..." oninput="saveApiKey(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+          <div style="font-size:10px;color:var(--text3);line-height:1.6">Enter your Anthropic API key above to enable live AI responses. Key is stored in your browser only.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div id="screen-analytics" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Analytics</div>
+        <select class="btn" style="padding:6px 9px"><option>Last 30 days</option><option>Last 90 days</option><option>All time</option></select>
+        <button class="btn btn-sm" onclick="toast('Report exported!')">&#8595; Export</button>
+      </div>
+      <div class="content scroll">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-lbl">Shows This Month</div><div class="stat-val" style="color:var(--gold)">8</div><div class="stat-d up">&#8593; 2 vs last</div></div>
+          <div class="stat-card"><div class="stat-lbl">Avg Show Score</div><div class="stat-val">7.8</div><div class="stat-d up">&#8593; 0.6</div></div>
+          <div class="stat-card"><div class="stat-lbl">Best Joke</div><div class="stat-val" style="font-size:14px;padding-top:6px">Airport Bit</div><div class="stat-d" style="color:var(--gold)">9.2 avg</div></div>
+          <div class="stat-card"><div class="stat-lbl">Jokes in Library</div><div class="stat-val" id="analytics-count">9</div><div class="stat-d">total jokes</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
+          <div class="card">
+            <div class="ctitle">Show Scores Over Time <span class="csub">last 8 shows</span></div>
+            <div style="display:flex;align-items:flex-end;gap:5px;height:120px;margin-top:10px" id="show-bars"></div>
+          </div>
+          <div class="card">
+            <div class="ctitle">Performance by Category</div>
+            <div style="margin-top:7px">
+              <div class="bar-row"><div class="bar-lbl">Tech &amp; Internet</div><div class="bar-track"><div class="bar-fill" style="width:88%;background:var(--blue)"></div></div><div class="bar-val">8.8</div></div>
+              <div class="bar-row"><div class="bar-lbl">Travel</div><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div><div class="bar-val">8.2</div></div>
+              <div class="bar-row"><div class="bar-lbl">Dating</div><div class="bar-track"><div class="bar-fill" style="width:74%;background:var(--purple)"></div></div><div class="bar-val">7.4</div></div>
+              <div class="bar-row"><div class="bar-lbl">Family</div><div class="bar-track"><div class="bar-fill" style="width:68%;background:var(--green)"></div></div><div class="bar-val">6.8</div></div>
+              <div class="bar-row"><div class="bar-lbl">Work</div><div class="bar-track"><div class="bar-fill" style="width:63%;background:var(--red)"></div></div><div class="bar-val">6.3</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ctitle">Heatmap <span class="csub">by day of week</span></div>
+            <div style="display:flex;gap:3px;margin:8px 0 4px;font-size:9px;color:var(--text3)">
+              <div style="flex:1;text-align:center">M</div><div style="flex:1;text-align:center">T</div><div style="flex:1;text-align:center">W</div><div style="flex:1;text-align:center">T</div><div style="flex:1;text-align:center">F</div><div style="flex:1;text-align:center">S</div><div style="flex:1;text-align:center">S</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px" id="heatmap"></div>
+          </div>
+          <div class="card">
+            <div class="ctitle">Joke Rankings</div>
+            <div id="joke-ranking" style="overflow-y:auto;max-height:170px" class="scroll"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERSION HISTORY -->
+    <div id="screen-versions" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Version History</div>
+      </div>
+      <div class="content scroll">
+        <div style="display:grid;grid-template-columns:275px 1fr;gap:14px;min-height:380px">
+          <div class="card">
+            <div class="ctitle">Airport Security Bit</div>
+            <div id="ver-list"></div>
+          </div>
+          <div class="card">
+            <div class="ctitle">Diff View <span class="csub" id="diff-label">v2 -&gt; v3 (current)</span></div>
+            <div style="font-size:13px;line-height:1.9;color:var(--text2)" id="ver-diff"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHOW HISTORY -->
+    <div id="screen-shows" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Show History</div>
+        <button class="btn btn-sm btn-primary" onclick="openNewShow()">+ Log a Show</button>
+      </div>
+      <div class="content scroll">
+        <div style="display:grid;grid-template-columns:1fr 270px;gap:14px">
+          <div>
+            <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+              <div class="stat-card"><div class="stat-lbl">Total Shows</div><div class="stat-val" style="color:var(--gold)" id="sh-total">0</div><div class="stat-d">logged</div></div>
+              <div class="stat-card"><div class="stat-lbl">Avg Show Score</div><div class="stat-val" id="sh-avg">--</div><div class="stat-d">out of 5</div></div>
+              <div class="stat-card"><div class="stat-lbl">Best Joke Overall</div><div class="stat-val" style="font-size:13px;padding-top:4px" id="sh-best">--</div><div class="stat-d" style="color:var(--gold)" id="sh-best-score"></div></div>
+            </div>
+            <div id="shows-list"><div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No shows logged yet.<br><span style="font-size:11px">Tap "+ Log a Show" after a gig to track your performance.</span></div></div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="ctitle">Joke Win Rate <span class="csub">across all shows</span></div>
+              <div id="joke-win-rate" style="margin-top:6px"><div style="font-size:11px;color:var(--text3)">Log shows to see which jokes consistently land.</div></div>
+            </div>
+            <div class="card">
+              <div class="ctitle">Brooks Insight</div>
+              <div id="shows-insight" style="font-size:12px;color:var(--text2);line-height:1.7">Log a few shows and Brooks will analyze patterns in what's working.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="screen-settings" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Settings</div>
+      </div>
+      <div style="flex:1;display:flex;overflow:hidden">
+        <div style="width:185px;flex-shrink:0;padding:10px 0;border-right:1px solid var(--border);background:var(--bg2)">
+          <div class="snav-item active" onclick="showTab('profile',this)">Profile</div>
+          <div class="snav-item" onclick="showTab('subscription',this)">Subscription</div>
+          <div class="snav-item" onclick="showTab('notifications',this)">Notifications</div>
+          <div class="snav-item" onclick="showTab('ai',this)">Brooks AI</div>
+          <div class="snav-item" onclick="showTab('sync',this)">Mobile Sync</div>
+          <div class="snav-item" onclick="showTab('export',this)">Data &amp; Export</div>
+          <div class="snav-item" onclick="showTab('keyboard',this)">Keyboard Shortcuts</div>
+        </div>
+        <div style="flex:1;padding:22px 26px;overflow-y:auto;background:var(--bg)" class="scroll" id="settings-body"></div>
+      </div>
+    </div>
+
+  </div><!-- end .main -->
+</div><!-- end .app -->
+
+<!-- ONBOARDING -->
+<div class="onboard-overlay" id="onboard-overlay" style="display:none">
+  <div class="onboard-box">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:36px;margin-bottom:8px" id="onboard-icon">&#127908;</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px;color:var(--text)" id="onboard-title">Welcome to Comedy 4 All</div>
+      <div style="font-size:12px;color:var(--text3)" id="onboard-sub">Your professional comedy workspace</div>
+    </div>
+    <div id="onboard-step-1" class="onboard-step active">
+      <div style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:20px">Three things that'll make you a better comedian:<br><br>
+        <strong>&#128221; Joke Manager</strong> &#8212; Write and rate all your material<br>
+        <strong>&#127917; Rehearsal Mode</strong> &#8212; Run your set before every show<br>
+        <strong>&#128197; Show History</strong> &#8212; Track what lands with real crowds
+      </div>
+      <button onclick="onboardNext(2)" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Let's go &#8594;</button>
+    </div>
+    <div id="onboard-step-2" class="onboard-step">
+      <div style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:16px">First &#8212; write your first joke. Even a rough idea works.</div>
+      <div style="margin-bottom:12px"><label class="mlbl">Title / Hook</label><input class="minput" id="ob-title" placeholder="What's the bit about?"></div>
+      <div style="margin-bottom:16px"><label class="mlbl">The Joke</label><textarea class="minput" id="ob-body" placeholder="Setup and punchline..." style="height:80px"></textarea></div>
+      <div style="display:flex;gap:9px">
+        <button onclick="onboardSkip()" style="flex:1;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif">Skip for now</button>
+        <button onclick="onboardSaveJoke()" style="flex:2;padding:10px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Save &amp; Continue &#8594;</button>
+      </div>
+    </div>
+    <div id="onboard-step-3" class="onboard-step">
+      <div style="text-align:center;padding:10px 0 20px">
+        <div style="font-size:48px;margin-bottom:12px">&#127881;</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--text)">You're all set!</div>
+        <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:20px">Your workspace is ready. After your next show, use <strong>Show History</strong> to log how each joke landed.</div>
+        <button onclick="onboardFinish()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Start Writing &#10003;</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;justify-content:center;margin-top:18px">
+      <div class="onboard-dot cur" id="od1"></div><div class="onboard-dot" id="od2"></div><div class="onboard-dot" id="od3"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW SHOW MODAL -->
+<div class="overlay" id="show-modal" style="display:none" onclick="if(event.target===this)closeNewShow()">
+  <div class="mbox" style="max-width:520px">
+    <div style="font-size:16px;font-weight:600;margin-bottom:17px">&#128197; Log a Show</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div><label class="mlbl">Venue</label><input class="minput" id="sh-venue" placeholder="Addison Improv"></div>
+      <div><label class="mlbl">Date</label><input class="minput" type="date" id="sh-date"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div><label class="mlbl">Set Length</label><input class="minput" id="sh-length" placeholder="e.g. 20 min"></div>
+      <div><label class="mlbl">Overall Show Rating</label><div id="sh-stars" style="display:flex;gap:3px;margin-top:6px"></div></div>
+    </div>
+    <div style="margin-bottom:14px"><label class="mlbl">Notes</label><textarea class="minput" id="sh-notes" placeholder="Crowd vibe, what worked, what didn't..." style="height:70px"></textarea></div>
+    <div style="margin-bottom:6px"><label class="mlbl">Joke Reactions &#8212; how did each land?</label></div>
+    <div id="sh-reactions" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r2);padding:4px" class="scroll"></div>
+    <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px">
+      <button class="btn" onclick="closeNewShow()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveShow()">Save Show</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW JOKE MODAL -->
+<div class="overlay" id="joke-modal" style="display:none" onclick="if(event.target===this)closeNewJoke()">
+  <div class="mbox">
+    <div style="font-size:16px;font-weight:600;margin-bottom:17px">&#9997;&#65039; Write a New Joke</div>
+    <div style="margin-bottom:12px"><label class="mlbl">Title / Hook</label><input class="minput" id="nj-title" placeholder="Working title for this bit..."></div>
+    <div style="margin-bottom:12px"><label class="mlbl">Full Joke / Notes</label><textarea class="minput" id="nj-body" placeholder="Setup, punchline, crowd work, alternate tags..."></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="margin-bottom:12px"><label class="mlbl">Runtime</label><input class="minput" id="nj-runtime" placeholder="e.g. 1:30"></div>
+      <div style="margin-bottom:12px"><label class="mlbl">Your Rating</label><div id="nj-stars" style="display:flex;gap:2px;margin-top:5px"></div></div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="mlbl">Tags</label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px" id="modal-tags">
+        <span class="tag tag-gold" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Travel')">Travel</span>
+        <span class="tag tag-blue" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Tech')">Tech</span>
+        <span class="tag tag-purple" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Dating')">Dating</span>
+        <span class="tag tag-green" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Family')">Family</span>
+        <span class="tag tag-gray" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Work')">Work</span>
+        <span class="tag tag-gray" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Current Events')">Current Events</span>
+        <span id="custom-tags-container"></span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <input id="custom-tag-input" type="text" placeholder="Add custom tag..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key==='Enter'){addCustomTag();event.preventDefault();}">
+        <button onclick="addCustomTag()" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">+ Add</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px">
+      <button class="btn" onclick="closeNewJoke()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewJoke()">Save Joke</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT JOKE MODAL -->
+<div class="overlay" id="edit-modal" style="display:none" onclick="if(event.target===this)closeEditModal()">
+  <div class="mbox">
+    <div style="font-size:16px;font-weight:600;margin-bottom:17px">&#9999;&#65039; Edit Joke</div>
+    <div style="margin-bottom:12px"><label class="mlbl">Title / Hook</label><input class="minput" id="ej-title" placeholder="Working title..."></div>
+    <div style="margin-bottom:12px"><label class="mlbl">Full Joke / Notes</label><textarea class="minput" id="ej-body" placeholder="Setup, punchline, crowd work..." style="height:120px"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="margin-bottom:12px"><label class="mlbl">Runtime</label><input class="minput" id="ej-runtime" placeholder="e.g. 1:30"></div>
+      <div style="margin-bottom:12px">
+        <label class="mlbl">Tier</label>
+        <select class="minput" id="ej-tier" style="cursor:pointer">
+          <option value="a">A-Tier (Best material)</option>
+          <option value="b">B-Tier (Solid)</option>
+          <option value="c">C-Tier (Needs work)</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="mlbl">Your Rating</label>
+      <div id="ej-stars" style="display:flex;gap:2px;margin-top:5px"></div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="mlbl">Tags</label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px" id="edit-modal-tags">
+        <span class="tag tag-gold edit-tag" onclick="toggleEditTag(this,'Travel')">Travel</span>
+        <span class="tag tag-blue edit-tag" onclick="toggleEditTag(this,'Tech')">Tech</span>
+        <span class="tag tag-purple edit-tag" onclick="toggleEditTag(this,'Dating')">Dating</span>
+        <span class="tag tag-green edit-tag" onclick="toggleEditTag(this,'Family')">Family</span>
+        <span class="tag tag-gray edit-tag" onclick="toggleEditTag(this,'Work')">Work</span>
+        <span class="tag tag-gray edit-tag" onclick="toggleEditTag(this,'Current Events')">Current Events</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:9px;justify-content:space-between;margin-top:18px;align-items:center">
+      <button class="btn btn-sm btn-danger" onclick="closeEditModal();confirmDelete(editingId)">&#128465;&#65039; Delete Joke</button>
+      <div style="display:flex;gap:9px">
+        <button class="btn" onclick="closeEditModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditedJoke()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast-el"></div>
+
+<script src="js/data.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/jokes.js"></script>
+<script src="js/rehearsal.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/brooks.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/shows.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Backup files
+index_BACKUP_*.html
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor folders
+.vscode/
+.idea/
+
+# Node (if ever added)
+node_modules/

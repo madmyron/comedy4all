@@ -1,0 +1,72 @@
+// - INIT -
+renderJokes(jokes);
+renderSet();
+renderAnalytics();
+renderWaveform();
+renderRecList();
+renderMoments();
+renderVersions();
+showTab('profile', document.querySelector('.snav-item'));
+updateCounts();
+
+// - SUPABASE INIT PATCH -
+_patchFunctions();
+
+// Default: show auth screen
+showAuthScreen();
+
+// Auto-init Supabase
+(function() {
+  var url = 'https://largbufmopnfeodsmhkr.supabase.co';
+  var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhcmdidWZtb3BuZmVvZHNtaGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MzA1NzMsImV4cCI6MjA5MDMwNjU3M30.HnQSgcuLYlEdx_P2pt_7FCxad7gODMtwWKuyghRPzfI';
+  var ui = document.getElementById('sb-url'), ki = document.getElementById('sb-key');
+  if (ui) ui.value = url; if (ki) ki.value = '(configured)';
+  initSupabase(url, key);
+  try { localStorage.setItem('c4a_sb_url', url); localStorage.setItem('c4a_sb_key', key); } catch(e) {}
+  try { apiKey = localStorage.getItem('c4a_apikey') || ''; } catch(e) {}
+  setTimeout(function() {
+    var ki2 = document.getElementById('api-key-input');
+    if (ki2 && apiKey) ki2.value = apiKey;
+  }, 500);
+  try { if (localStorage.getItem('c4a_dark') === '1') { document.body.classList.add('dark'); var db = document.getElementById('dark-btn'); if(db) db.textContent = '\u2600\ufe0f'; } } catch(e) {}
+})();
+
+// - ONBOARDING -
+function checkOnboarding() {
+  try {
+    if (!localStorage.getItem('c4a_onboarded')) {
+      document.getElementById('onboard-overlay').style.display = 'flex';
+    }
+  } catch(e) {}
+}
+function onboardNext(step) {
+  for (var i=1;i<=3;i++) {
+    var s = document.getElementById('onboard-step-'+i);
+    if(s) s.classList.toggle('active', i===step);
+    var d = document.getElementById('od'+i);
+    if(d) d.classList.toggle('cur', i===step);
+  }
+}
+function onboardSaveJoke() {
+  var t = (document.getElementById('ob-title')||{}).value||'';
+  var b = (document.getElementById('ob-body')||{}).value||'';
+  if (t.trim()) {
+    var newJ = {id:nextId++,title:t.trim(),body:b.trim()||'Work in progress.',tags:['Work'],tier:'c',rating:3,runtime:'1:00',score:7.0};
+    jokes.unshift(newJ); displayJokes = jokes.slice();
+    renderJokes(displayJokes); updateCounts();
+    toast('First joke saved! \u2713');
+  }
+  onboardNext(3);
+}
+function onboardSkip() { onboardNext(3); }
+function onboardFinish() {
+  document.getElementById('onboard-overlay').style.display = 'none';
+  try { localStorage.setItem('c4a_onboarded', '1'); } catch(e) {}
+}
+
+// Hook onboarding into showApp
+var _origShowApp = showApp;
+showApp = function() {
+  _origShowApp();
+  setTimeout(checkOnboarding, 600);
+};
