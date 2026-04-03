@@ -74,7 +74,11 @@
     </div>
     <div class="nav">
       <div class="nav-sect">Main</div>
-      <div class="nav-item active" data-screen="dashboard" data-label="Dashboard">
+      <div class="nav-item active" data-screen="home" data-label="Home">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M1 7L8 1l7 6v7a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6 14V9h4v5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="nav-label">Home</span>
+      </div>
+      <div class="nav-item" data-screen="dashboard" data-label="Dashboard">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor" opacity=".8"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" opacity=".3"/></svg>
         <span class="nav-label">Dashboard</span>
       </div>
@@ -137,8 +141,73 @@
       </div>
     </div>
 
+    <!-- HOME -->
+    <div id="screen-home" class="screen active">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title" id="home-greeting">Good morning, Michael &#128075;</div>
+      </div>
+      <div class="content scroll">
+        <div class="home-grid">
+          <div class="home-tile" onclick="go('jokes')">
+            <div class="home-tile-icon">&#128221;</div>
+            <div class="home-tile-title">Joke Manager</div>
+            <div class="home-tile-desc">Write, rate &amp; organize your material</div>
+          </div>
+          <div class="home-tile" onclick="go('sets')">
+            <div class="home-tile-icon">&#128203;</div>
+            <div class="home-tile-title">Set Builder</div>
+            <div class="home-tile-desc">Drag jokes into a polished set list</div>
+          </div>
+          <div class="home-tile" onclick="go('rehearsal')">
+            <div class="home-tile-icon">&#127917;</div>
+            <div class="home-tile-title">Rehearsal Mode</div>
+            <div class="home-tile-desc">Run your set before showtime</div>
+          </div>
+          <div class="home-tile" onclick="go('recording')">
+            <div class="home-tile-icon">&#127908;</div>
+            <div class="home-tile-title">Recording</div>
+            <div class="home-tile-desc">Record audio or video of your performance</div>
+          </div>
+          <div class="home-tile featured" onclick="go('brooks')">
+            <div class="home-tile-icon">&#10022;</div>
+            <div class="home-tile-title">Brooks AI</div>
+            <div class="home-tile-desc">Your AI comedy writing partner</div>
+          </div>
+          <div class="home-tile" onclick="go('studio')">
+            <div class="home-tile-icon">&#9999;&#65039;</div>
+            <div class="home-tile-title">Writing Studio</div>
+            <div class="home-tile-desc">Scripts, pilots &amp; long-form projects</div>
+          </div>
+          <div class="home-tile" onclick="go('shows')">
+            <div class="home-tile-icon">&#128197;</div>
+            <div class="home-tile-title">Show History</div>
+            <div class="home-tile-desc">Log shows &amp; track what lands</div>
+          </div>
+          <div class="home-tile" onclick="go('analytics')">
+            <div class="home-tile-icon">&#128200;</div>
+            <div class="home-tile-title">Analytics</div>
+            <div class="home-tile-desc">Charts, heatmaps &amp; joke rankings</div>
+          </div>
+          <div class="home-tile" onclick="go('dashboard')">
+            <div class="home-tile-icon">&#128202;</div>
+            <div class="home-tile-title">Dashboard</div>
+            <div class="home-tile-desc">Stats overview &amp; recent activity</div>
+          </div>
+        </div>
+        <div class="home-next-show">
+          <div>
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:4px">Next Show</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">Addison Improv</div>
+            <div style="font-size:12px;color:var(--text2)">Friday &middot; 8:00 PM</div>
+          </div>
+          <button class="btn btn-primary" onclick="go('rehearsal')">Rehearse Now &rarr;</button>
+        </div>
+      </div>
+    </div>
+
     <!-- DASHBOARD -->
-    <div id="screen-dashboard" class="screen active">
+    <div id="screen-dashboard" class="screen">
       <div class="topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Good evening, Michael &#128075; <span style="font-size:12px;color:var(--text3);font-weight:400">&#183; Next show in 3 days</span></div>

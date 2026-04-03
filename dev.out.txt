@@ -1,0 +1,5 @@
+
+> comedy4all@1.0.0 dev
+> node server.js
+
+Comedy 4 All dev server running at http://localhost:5173

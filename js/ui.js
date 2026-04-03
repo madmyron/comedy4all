@@ -44,11 +44,17 @@ function go(name) {
   if (el) el.classList.add('active');
   var ni = document.querySelectorAll('.nav-item[data-screen="'+name+'"]');
   for (var i=0;i<ni.length;i++) ni[i].classList.add('active');
+  if (name==='home') {}
   if (name==='jokes') renderJokes(displayJokes);
   if (name==='sets') renderSet();
   if (name==='analytics') renderAnalytics();
   if (name==='rehearsal') initRehearsal();
-  if (name==='recording') { renderWaveform(); renderRecList(); renderMoments(); }
+  if (name==='recording') {
+    if (typeof renderWaveform === 'function') renderWaveform();
+    if (typeof renderRecList === 'function') renderRecList();
+    else if (typeof renderRecListReal === 'function') renderRecListReal();
+    if (typeof renderMoments === 'function') renderMoments();
+  }
   if (name==='versions') renderVersions();
   if (name==='shows') renderShows();
   if (name==='settings') showTab('profile', document.querySelector('.snav-item'));

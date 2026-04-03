@@ -1,13 +1,26 @@
 // - INIT -
+function runIfAvailable(fn) {
+  if (typeof fn === 'function') fn();
+}
+
 renderJokes(jokes);
 renderSet();
 renderAnalytics();
-renderWaveform();
-renderRecList();
-renderMoments();
+runIfAvailable(typeof renderWaveform === 'function' ? renderWaveform : null);
+runIfAvailable(typeof renderRecList === 'function' ? renderRecList : (typeof renderRecListReal === 'function' ? renderRecListReal : null));
+runIfAvailable(typeof renderMoments === 'function' ? renderMoments : null);
 renderVersions();
 showTab('profile', document.querySelector('.snav-item'));
 updateCounts();
+
+function getGreeting() {
+  var h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+var greetEl = document.getElementById('home-greeting');
+if (greetEl) greetEl.textContent = getGreeting() + ', Michael ' + String.fromCharCode(0x1F44B);
 
 // - SUPABASE INIT PATCH -
 _patchFunctions();

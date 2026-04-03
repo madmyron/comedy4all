@@ -225,6 +225,18 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
 .edit-tag{cursor:pointer;user-select:none;transition:opacity .12s}
 .edit-tag.off{opacity:.35}
 .confirm-box{background:var(--red-bg);border:1px solid #f0c0bb;border-radius:var(--r2);padding:13px 14px;margin-top:10px}
+/* HOME SCREEN */
+.home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.home-tile{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:22px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:flex-start}
+.home-tile:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.home-tile.featured{background:var(--gold-bg);border-color:var(--gold-br)}
+.home-tile-icon{width:60px;height:60px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px;flex-shrink:0}
+.home-tile.featured .home-tile-icon{background:rgba(176,125,16,.15)}
+.home-tile-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px}
+.home-tile-desc{font-size:12px;color:var(--text3);line-height:1.6}
+.home-next-show{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+@media(max-width:900px){.home-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.home-grid{grid-template-columns:1fr}}
 /* DETAIL PANEL -- always full-screen slide-up on all devices */
 #joke-detail{
   transition:transform .25s cubic-bezier(.4,0,.2,1);
