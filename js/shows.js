@@ -193,6 +193,39 @@ function getRecordingOptions(mode) {
   return { mimeType: '', ext: getRecordingExtension('', mode) };
 }
 
+function setRecordingPendingUI(isPending) {
+  var startBtn = document.getElementById('rec-start-btn');
+  var bigBtn = document.getElementById('rec-big-btn');
+  var label = document.getElementById('rec-cta-label');
+  if (startBtn) {
+    startBtn.disabled = !!isPending;
+    startBtn.textContent = isPending ? 'Waiting for permission...' : '\ud83d\udd34 Record';
+  }
+  if (bigBtn) bigBtn.disabled = !!isPending;
+  if (label) {
+    if (isPending) label.textContent = 'Allow microphone/camera access to begin recording';
+    else label.textContent = _recMode === 'video' ? 'Tap to record video' : 'Tap to record audio';
+  }
+}
+
+function getMediaErrorMessage(err, mode) {
+  var prefix = mode === 'video' ? 'Camera and microphone' : 'Microphone';
+  if (!err || !err.name) return prefix + ' access failed.';
+  if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+    return prefix + ' permission was blocked. Use the browser permission icon and tap Allow, then try again.';
+  }
+  if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+    return 'No ' + (mode === 'video' ? 'camera/microphone' : 'microphone') + ' was found on this device.';
+  }
+  if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+    return prefix + ' is already in use by another app or tab.';
+  }
+  if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+    return 'This device could not satisfy the requested recording settings.';
+  }
+  return prefix + ' access failed: ' + err.name;
+}
+
 function renderWaveform() {
   var wf = document.getElementById('waveform');
   if (!wf || wf.children.length) return;
@@ -228,7 +261,10 @@ function updateRecordingAvailability() {
   var text = document.getElementById('recording-env-note-text');
   if (!note || !text) return;
   if (isRecordingSecureContext()) {
-    note.style.display = 'none';
+    note.style.display = 'block';
+    text.textContent = _recMode === 'video'
+      ? 'Video recording needs camera and microphone access. If Chrome shows the permission icon, tap it and choose Allow.'
+      : 'Audio recording needs microphone access. If Chrome shows the permission icon, tap it and choose Allow.';
     return;
   }
   note.style.display = 'block';
@@ -281,6 +317,7 @@ function startRecording() {
   }
   var constraints = _recMode === 'video' ? {video:true, audio:true} : {audio:true};
   var capturedMode = _recMode;
+  setRecordingPendingUI(true);
   navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
     if (_camStream) { _camStream.getTracks().forEach(function(t){t.stop();}); _camStream = null; }
     _audioChunks = [];
@@ -292,6 +329,7 @@ function startRecording() {
         _mediaRecorder = new MediaRecorder(stream);
       } catch (fallbackErr) {
         stream.getTracks().forEach(function(t){t.stop();});
+        setRecordingPendingUI(false);
         toast('Recording is not supported on this device.');
         return;
       }
@@ -322,11 +360,14 @@ function startRecording() {
       if (badge) badge.textContent = '\u25cf REC';
     }
     _mediaRecorder.start(250);
+    setRecordingPendingUI(false);
     startLiveUI();
     var bigBtn = document.getElementById('rec-big-btn');
     if (bigBtn) bigBtn.disabled = true;
-  }).catch(function(){
-    toast(capturedMode === 'video' ? 'Camera/mic access denied.' : 'Microphone access denied.');
+  }).catch(function(err){
+    setRecordingPendingUI(false);
+    updateRecordingAvailability();
+    toast(getMediaErrorMessage(err, capturedMode));
   });
 }
 function stopRecording() {
@@ -358,6 +399,7 @@ function stopLiveUI() {
   document.getElementById('live-rec-panel').style.display = 'none';
   var cta = document.getElementById('rec-cta');
   if (cta) cta.style.display = 'block';
+  updateRecordingAvailability();
   var startBtn = document.getElementById('rec-start-btn');
   if (startBtn) { startBtn.textContent = '\ud83d\udd34 Record'; startBtn.disabled = false; }
   var bigBtn = document.getElementById('rec-big-btn');
