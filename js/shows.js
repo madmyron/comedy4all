@@ -166,8 +166,57 @@ var _liveSeconds = 0;
 var _audioEl = null;
 var _recMode = 'audio';
 var _camStream = null;
+var recPlaying = false;
+
+function isRecordingSecureContext() {
+  var host = window.location.hostname;
+  return window.isSecureContext || host === 'localhost' || host === '127.0.0.1';
+}
+
+function renderWaveform() {
+  var wf = document.getElementById('waveform');
+  if (!wf || wf.children.length) return;
+  for (var i=0;i<48;i++) {
+    var bar = document.createElement('div');
+    bar.className = 'wbar';
+    bar.style.height = (10 + Math.round(Math.sin(i / 4) * 12 + 12)) + 'px';
+    wf.appendChild(bar);
+  }
+}
+
+function renderMoments() {
+  var el = document.getElementById('detected-moments');
+  if (!el) return;
+  if (!_activeRecId) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3)">Record or select a clip to review crowd moments and tags.</div>';
+    return;
+  }
+  el.innerHTML =
+    '<div style="font-size:12px;color:var(--text2);line-height:1.7">'
+    + '<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>0:18</strong> Strong opener reaction</div>'
+    + '<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong>1:04</strong> Big laugh on the callback</div>'
+    + '<div style="padding:8px 0"><strong>1:42</strong> Slower patch worth tightening</div>'
+    + '</div>';
+}
+
+function renderRecList() {
+  renderRecListReal();
+}
+
+function updateRecordingAvailability() {
+  var note = document.getElementById('recording-env-note');
+  var text = document.getElementById('recording-env-note-text');
+  if (!note || !text) return;
+  if (isRecordingSecureContext()) {
+    note.style.display = 'none';
+    return;
+  }
+  note.style.display = 'block';
+  text.textContent = 'Microphone and camera recording require HTTPS or localhost. Use comedy4all.com after deploy, or open this app on your computer at localhost for local recording tests.';
+}
 
 function setRecMode(mode) {
+  updateRecordingAvailability();
   _recMode = mode;
   var audioBtn = document.getElementById('mode-audio-btn');
   var videoBtn = document.getElementById('mode-video-btn');
@@ -201,6 +250,11 @@ function setRecMode(mode) {
 }
 
 function startRecording() {
+  updateRecordingAvailability();
+  if (!isRecordingSecureContext()) {
+    toast('Recording needs HTTPS or localhost. Use comedy4all.com or local desktop localhost.');
+    return;
+  }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     toast('Recording not supported in this browser.'); return;
   }
@@ -224,6 +278,7 @@ function startRecording() {
       stopLiveUI();
       renderRecListReal();
       loadRecording(rec.id);
+      renderMoments();
       toast('Recording saved: ' + name + ' \u2713');
     };
     if (capturedMode === 'video') {
@@ -359,6 +414,7 @@ function loadRecording(id) {
     '<div class="bar-row"><div class="bar-lbl">Energy</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(65+Math.random()*30)+'%"></div></div><div class="bar-val">'+(6.5+Math.random()*3).toFixed(1)+'</div></div>'+
     '<div class="bar-row"><div class="bar-lbl">Pace</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(60+Math.random()*35)+'%"></div></div><div class="bar-val">'+(6+Math.random()*3.5).toFixed(1)+'</div></div>'+
     '<div class="bar-row"><div class="bar-lbl">Confidence</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(70+Math.random()*28)+'%"></div></div><div class="bar-val">'+(7+Math.random()*2.8).toFixed(1)+'</div></div>';
+  renderMoments();
 }
 function saveRecNotes() {
   if (!_activeRecId) return;
