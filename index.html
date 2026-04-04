@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Comedy 4 All</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
@@ -149,50 +149,50 @@
       </div>
       <div class="content scroll">
         <div class="home-grid">
-          <div class="home-tile" onclick="go('jokes')">
-            <div class="home-tile-icon">&#128221;</div>
+          <div class="home-tile" data-tile="jokes" onclick="go('jokes')">
+            <div class="home-tile-icon">📝</div>
             <div class="home-tile-title">Joke Manager</div>
             <div class="home-tile-desc">Write, rate &amp; organize your material</div>
           </div>
-          <div class="home-tile" onclick="go('sets')">
-            <div class="home-tile-icon">&#128203;</div>
+          <div class="home-tile" data-tile="sets" onclick="go('sets')">
+            <div class="home-tile-icon">📋</div>
             <div class="home-tile-title">Set Builder</div>
             <div class="home-tile-desc">Drag jokes into a polished set list</div>
           </div>
-          <div class="home-tile" onclick="go('rehearsal')">
-            <div class="home-tile-icon">&#127917;</div>
-            <div class="home-tile-title">Rehearsal Mode</div>
+          <div class="home-tile" data-tile="rehearsal" onclick="go('rehearsal')">
+            <div class="home-tile-icon">🎭</div>
+            <div class="home-tile-title">Rehearsal</div>
             <div class="home-tile-desc">Run your set before showtime</div>
           </div>
-          <div class="home-tile" onclick="go('recording')">
-            <div class="home-tile-icon">&#127908;</div>
+          <div class="home-tile" data-tile="recording" onclick="go('recording')">
+            <div class="home-tile-icon">🎙️</div>
             <div class="home-tile-title">Recording</div>
-            <div class="home-tile-desc">Record audio or video of your performance</div>
+            <div class="home-tile-desc">Record audio or video</div>
           </div>
-          <div class="home-tile featured" onclick="go('brooks')">
-            <div class="home-tile-icon">&#10022;</div>
+          <div class="home-tile featured" data-tile="brooks" onclick="go('brooks')">
+            <div class="home-tile-icon">✦</div>
             <div class="home-tile-title">Brooks AI</div>
             <div class="home-tile-desc">Your AI comedy writing partner</div>
           </div>
-          <div class="home-tile" onclick="go('studio')">
-            <div class="home-tile-icon">&#9999;&#65039;</div>
+          <div class="home-tile" data-tile="studio" onclick="go('studio')">
+            <div class="home-tile-icon">✍️</div>
             <div class="home-tile-title">Writing Studio</div>
-            <div class="home-tile-desc">Scripts, pilots &amp; long-form projects</div>
+            <div class="home-tile-desc">Scripts &amp; long-form projects</div>
           </div>
-          <div class="home-tile" onclick="go('shows')">
-            <div class="home-tile-icon">&#128197;</div>
+          <div class="home-tile" data-tile="shows" onclick="go('shows')">
+            <div class="home-tile-icon">📅</div>
             <div class="home-tile-title">Show History</div>
             <div class="home-tile-desc">Log shows &amp; track what lands</div>
           </div>
-          <div class="home-tile" onclick="go('analytics')">
-            <div class="home-tile-icon">&#128200;</div>
+          <div class="home-tile" data-tile="analytics" onclick="go('analytics')">
+            <div class="home-tile-icon">📈</div>
             <div class="home-tile-title">Analytics</div>
-            <div class="home-tile-desc">Charts, heatmaps &amp; joke rankings</div>
+            <div class="home-tile-desc">Charts &amp; joke rankings</div>
           </div>
-          <div class="home-tile" onclick="go('dashboard')">
-            <div class="home-tile-icon">&#128202;</div>
+          <div class="home-tile" data-tile="dashboard" onclick="go('dashboard')">
+            <div class="home-tile-icon">📊</div>
             <div class="home-tile-title">Dashboard</div>
-            <div class="home-tile-desc">Stats overview &amp; recent activity</div>
+            <div class="home-tile-desc">Stats &amp; recent activity</div>
           </div>
         </div>
         <div class="home-next-show">
