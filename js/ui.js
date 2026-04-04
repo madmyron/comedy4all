@@ -48,7 +48,14 @@ function go(name) {
   if (name==='jokes') renderJokes(displayJokes);
   if (name==='sets') renderSet();
   if (name==='analytics') renderAnalytics();
-  if (name==='rehearsal') initRehearsal();
+  if (name==='rehearsal') {
+    if (!rehearsalData.length) {
+      toast('Add a few jokes first to start rehearsing.');
+      go('jokes');
+      return;
+    }
+    initRehearsal();
+  }
   if (name==='recording') {
     if (typeof renderWaveform === 'function') renderWaveform();
     if (typeof renderRecList === 'function') renderRecList();

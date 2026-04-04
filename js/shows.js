@@ -174,6 +174,25 @@ function isRecordingSecureContext() {
   return host === 'localhost' || host === '127.0.0.1' || host === '';
 }
 
+function getRecordingExtension(mimeType, mode) {
+  if (mimeType && mimeType.indexOf('mp4') !== -1) return mode === 'video' ? 'mp4' : 'm4a';
+  if (mimeType && mimeType.indexOf('webm') !== -1) return 'webm';
+  return mode === 'video' ? 'mp4' : 'm4a';
+}
+
+function getRecordingOptions(mode) {
+  var candidates = mode === 'video'
+    ? ['video/mp4;codecs=h264,aac', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+    : ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
+  if (typeof MediaRecorder === 'undefined') return { mimeType: '', ext: getRecordingExtension('', mode) };
+  for (var i = 0; i < candidates.length; i++) {
+    if (!MediaRecorder.isTypeSupported || MediaRecorder.isTypeSupported(candidates[i])) {
+      return { mimeType: candidates[i], ext: getRecordingExtension(candidates[i], mode) };
+    }
+  }
+  return { mimeType: '', ext: getRecordingExtension('', mode) };
+}
+
 function renderWaveform() {
   var wf = document.getElementById('waveform');
   if (!wf || wf.children.length) return;
@@ -265,17 +284,28 @@ function startRecording() {
   navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
     if (_camStream) { _camStream.getTracks().forEach(function(t){t.stop();}); _camStream = null; }
     _audioChunks = [];
-    var mimeType = capturedMode === 'video' ? 'video/webm' : 'audio/webm';
-    var options = MediaRecorder.isTypeSupported(mimeType) ? {mimeType: mimeType} : {};
-    _mediaRecorder = new MediaRecorder(stream, options);
+    var config = getRecordingOptions(capturedMode);
+    try {
+      _mediaRecorder = config.mimeType ? new MediaRecorder(stream, {mimeType: config.mimeType}) : new MediaRecorder(stream);
+    } catch (err) {
+      try {
+        _mediaRecorder = new MediaRecorder(stream);
+      } catch (fallbackErr) {
+        stream.getTracks().forEach(function(t){t.stop();});
+        toast('Recording is not supported on this device.');
+        return;
+      }
+    }
     _mediaRecorder.ondataavailable = function(e) { if(e.data.size>0) _audioChunks.push(e.data); };
     _mediaRecorder.onstop = function() {
       stream.getTracks().forEach(function(t){t.stop();});
-      var blob = new Blob(_audioChunks, {type: capturedMode === 'video' ? 'video/webm' : 'audio/webm'});
+      var actualMime = _mediaRecorder.mimeType || config.mimeType || (capturedMode === 'video' ? 'video/mp4' : 'audio/mp4');
+      var ext = getRecordingExtension(actualMime, capturedMode);
+      var blob = new Blob(_audioChunks, {type: actualMime});
       var url = URL.createObjectURL(blob);
       var defaultName = 'Show -- ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
       var name = prompt('Name this recording:', defaultName) || defaultName;
-      var rec = {id: Date.now(), name: name, blob: blob, url: url, duration: _liveSeconds, notes: '', type: capturedMode};
+      var rec = {id: Date.now(), name: name, blob: blob, url: url, duration: _liveSeconds, notes: '', type: capturedMode, ext: ext, mimeType: actualMime};
       _recordings.unshift(rec);
       stopLiveUI();
       renderRecListReal();
@@ -291,7 +321,7 @@ function startRecording() {
       var badge = document.getElementById('preview-badge');
       if (badge) badge.textContent = '\u25cf REC';
     }
-    _mediaRecorder.start(100);
+    _mediaRecorder.start(250);
     startLiveUI();
     var bigBtn = document.getElementById('rec-big-btn');
     if (bigBtn) bigBtn.disabled = true;
@@ -427,7 +457,7 @@ function downloadRecording() {
   var r = _recordings.find(function(x){return x.id===_activeRecId;});
   if (!r) return;
   var a = document.createElement('a');
-  a.href = r.url; a.download = r.name.replace(/\s+/g,'-')+'.webm';
+  a.href = r.url; a.download = r.name.replace(/\s+/g,'-') + '.' + (r.ext || 'webm');
   a.click();
 }
 togglePlay = function() {

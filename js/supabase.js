@@ -58,6 +58,17 @@ function showApp() {
   if (currentUser && currentUser.email) {
     window._c4aUserEmail = currentUser.email;
   }
+  var fullName = (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name) || '';
+  var firstName = fullName ? fullName.trim().split(/\s+/)[0] : '';
+  var emailName = (currentUser && currentUser.email) ? currentUser.email.split('@')[0].split(/[._-]/)[0] : '';
+  var displayName = firstName || (emailName ? emailName.charAt(0).toUpperCase() + emailName.slice(1) : 'You');
+  var initials = fullName ? fullName.trim().split(/\s+/).slice(0,2).map(function(part){ return part.charAt(0).toUpperCase(); }).join('') : displayName.charAt(0).toUpperCase();
+  var avatar = document.getElementById('sidebar-avatar');
+  var nameEl = document.getElementById('sidebar-user-name');
+  if (avatar) avatar.textContent = initials || 'U';
+  if (nameEl) nameEl.textContent = displayName || 'You';
+  if (typeof updateUserGreetings === 'function') updateUserGreetings();
+  if (typeof updateBrooksContext === 'function') updateBrooksContext();
 }
 function showAuthScreen() {
   var a = document.getElementById('auth-screen');

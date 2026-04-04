@@ -20,8 +20,21 @@ function getGreeting() {
   if (h < 17) return 'Good afternoon';
   return 'Good evening';
 }
-var greetEl = document.getElementById('home-greeting');
-if (greetEl) greetEl.textContent = getGreeting() + ', Michael ' + String.fromCharCode(0x1F44B);
+function getCurrentUserFirstName() {
+  var meta = (currentUser && currentUser.user_metadata) || {};
+  var fullName = (meta.full_name || '').trim();
+  return fullName ? fullName.split(/\s+/)[0] : '';
+}
+function updateUserGreetings() {
+  var firstName = getCurrentUserFirstName();
+  var wave = String.fromCharCode(0x1F44B);
+  var text = firstName ? (getGreeting() + ', ' + firstName + ' ' + wave) : ('Hey there ' + wave);
+  var homeEl = document.getElementById('home-greeting');
+  var dashEl = document.getElementById('dashboard-greeting');
+  if (homeEl) homeEl.textContent = text;
+  if (dashEl) dashEl.textContent = text;
+}
+updateUserGreetings();
 
 // - SUPABASE INIT PATCH -
 _patchFunctions();

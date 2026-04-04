@@ -3,7 +3,11 @@ var BROOKS_SYS='You are Brooks -- a grizzled, sharp-tongued comedy writing veter
 
 function updateBrooksContext(){
   var el=document.getElementById('brooks-context-display');
-  if(el) el.innerHTML='\u2713 '+jokes.length+' jokes in library<br>\u2713 Show: Friday, Addison Improv<br>\u2713 Top joke: Airport bit (9.2)<br>\u2713 Best genre: Tech (avg 8.3)<br>\u2713 API key: '+(apiKey?'<span style="color:var(--green)">Set \u2713</span>':'<span style="color:var(--red)">Not set</span>');
+  var top = null;
+  for (var i=0;i<jokes.length;i++) {
+    if (!top || (jokes[i].score||0) > (top.score||0)) top = jokes[i];
+  }
+  if(el) el.innerHTML='\u2713 '+jokes.length+' joke'+(jokes.length===1?'':'s')+' in your library<br>\u2713 Top scoring joke: '+(top?top.title:'None yet')+(top?' ('+(top.score||0)+')':'')+'<br>\u2713 Brooks access: '+(apiKey?'<span style="color:var(--green)">Ready</span>':'<span style="color:var(--text3)">Premium / creator account</span>');
   var ki=document.getElementById('api-key-input');
   if(ki && apiKey) ki.value=apiKey;
 }
