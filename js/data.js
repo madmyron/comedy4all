@@ -29,3 +29,8 @@ var rIdx=0, rPunch=false, rRatings={}, rTimer=0, rIv=null;
 var recPlaying=false, recSecs=0, recIv=null;
 var brooksHistory=[];
 var displayJokes = jokes.slice();
+
+// - WRITING STUDIO DATA -
+var scripts = [];
+var activeScriptId = null;
+var scriptNextId = 1;

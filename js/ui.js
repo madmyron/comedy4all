@@ -55,6 +55,7 @@ function go(name) {
     else if (typeof renderRecListReal === 'function') renderRecListReal();
     if (typeof renderMoments === 'function') renderMoments();
   }
+  if (name==='studio') renderStudio();
   if (name==='versions') renderVersions();
   if (name==='shows') renderShows();
   if (name==='settings') showTab('profile', document.querySelector('.snav-item'));

@@ -466,42 +466,35 @@
       <div class="topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Writing Studio</div>
-        <button class="btn btn-sm" onclick="toast('Auto-saved! &#10003;')">&#128190; Save</button>
-        <button class="btn btn-sm btn-primary" onclick="toast('Exported as PDF script!')">&#8595; Export</button>
+        <button class="btn btn-sm btn-primary" onclick="openNewScript()">+ New Script</button>
       </div>
-      <div style="display:grid;grid-template-columns:198px 1fr 232px;height:calc(100% - 54px);overflow:hidden">
-        <div style="background:var(--bg2);border-right:1px solid var(--border);padding:13px;overflow-y:auto" class="scroll">
-          <div class="sect-title">Projects</div>
-          <div style="font-size:9px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em;font-weight:700">TV / Film</div>
-          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;background:var(--gold-bg);color:var(--gold);font-weight:500">&#128250; Late Night Pilot -- Draft 3</div>
-          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">&#127916; Short Film: Open Mic</div>
-          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">&#128252; Comedy Special</div>
-          <div style="font-size:9px;color:var(--text3);margin:11px 0 5px;text-transform:uppercase;letter-spacing:.07em;font-weight:700">Long-Form</div>
-          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">&#128214; Memoir -- Ch.1</div>
-          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">&#128221; Corporate Roast</div>
-          <div style="margin-top:12px"><button class="btn btn-sm" style="width:100%;justify-content:center" onclick="toast('New project created!')">+ New Project</button></div>
+      <div style="display:grid;grid-template-columns:200px 1fr;height:calc(100% - 54px);overflow:hidden">
+        <div style="background:var(--bg2);border-right:1px solid var(--border);padding:10px;overflow-y:auto" class="scroll">
+          <div class="sect-title">My Scripts</div>
+          <div id="studio-project-list"></div>
         </div>
-        <div style="padding:22px 26px;overflow-y:auto;background:var(--bg2)" class="scroll">
-          <div style="font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:5px;line-height:1.2;color:var(--text)">Late Night Pilot: "The Setup"</div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:20px;display:flex;gap:12px"><span>Draft 3</span><span>&#183;</span><span>TV Comedy Pilot</span><span>&#183;</span><span style="color:var(--gold);font-weight:500">23 pages</span></div>
-          <div style="font-size:10px;color:var(--gold);font-weight:700;font-family:'DM Mono',monospace;letter-spacing:.07em;margin-bottom:5px;text-transform:uppercase">Act 1 -- Cold Open</div>
-          <div style="padding:12px 14px;background:var(--bg3);border-left:3px solid var(--gold);border-radius:0 var(--r2) var(--r2) 0;margin-bottom:16px;font-size:13px;line-height:1.85;color:var(--text2)">
-            <div style="font-size:10px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600">Interior -- Comedy Club Backstage -- Night</div>
-            MARCUS, 30s, paces nervously in a tiny green room. The walls are covered in faded headshots of comedians who clearly found better jobs.
+        <div style="display:flex;flex-direction:column;overflow:hidden;position:relative">
+          <div id="studio-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:var(--text3);text-align:center;padding:30px">
+            <div style="font-size:40px">✍️</div>
+            <div style="font-size:15px;font-weight:600;color:var(--text)">Start a new script</div>
+            <div style="font-size:13px;line-height:1.7">Choose your network, format type,<br>and start writing in the correct style.</div>
+            <button class="btn btn-primary" onclick="openNewScript()">+ New Script</button>
           </div>
-          <div style="font-size:13px;color:var(--text3);line-height:1.95">He checks his phone. 47 unread texts from his mom asking if he's "still doing the joke thing."</div>
-        </div>
-        <div style="background:var(--bg3);border-left:1px solid var(--border);padding:13px;overflow-y:auto" class="scroll">
-          <div class="sect-title">Brooks AI Notes</div>
-          <div style="font-size:11.5px;color:var(--text2);margin-bottom:11px">3 suggestions on this draft:</div>
-          <div class="sugg"><div class="slbl">Strengthen</div>The "47 texts from mom" could land harder -- add her specific go-to topic.</div>
-          <div class="sugg"><div class="slbl">Pacing</div>Act 1 runs 2 pages long. Combine scenes 3 and 4.</div>
-          <div class="sugg"><div class="slbl">Callback</div>The fluorescent light gag in scene 1 could callback in Act 3.</div>
-          <div class="sep"></div>
-          <div class="sect-title" style="margin-top:10px">Script Format</div>
-          <button class="btn btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="toast('Formatted as TV script!')">TV Script</button>
-          <button class="btn btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="toast('Formatted as film script!')">Film Script</button>
-          <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="toast('Formatted as stage notes!')">Stage Notes</button>
+          <div id="studio-editor" style="display:none;flex-direction:column;height:100%">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg2)">
+              <div>
+                <div id="studio-script-title" style="font-size:14px;font-weight:600;color:var(--text)"></div>
+                <div id="studio-format-label" style="font-size:11px;color:var(--text3);margin-top:1px"></div>
+              </div>
+              <div style="display:flex;gap:7px">
+                <button class="btn btn-sm" onclick="exportActiveScript()">↓ Export</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteActiveScript()">Delete</button>
+              </div>
+            </div>
+            <textarea id="studio-script-body"
+              style="flex:1;padding:22px 26px;font-family:'Courier New',monospace;font-size:13px;line-height:1.9;color:var(--text);background:var(--bg);border:none;outline:none;resize:none;overflow-y:auto;"
+              placeholder="Start writing..."></textarea>
+          </div>
         </div>
       </div>
     </div>
@@ -549,9 +542,12 @@
           <div class="sect-title" style="margin-top:6px">Your Context</div>
           <div style="font-size:11px;color:var(--text3);line-height:2.1" id="brooks-context-display">Loading...</div>
           <div class="sep"></div>
-          <div class="sect-title" style="margin-top:6px">API Key</div>
-          <input id="api-key-input" type="password" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;color:var(--text);font-size:11px;font-family:'Inter',sans-serif;outline:none;margin-bottom:6px;transition:border .15s" placeholder="sk-ant-..." oninput="saveApiKey(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
-          <div style="font-size:10px;color:var(--text3);line-height:1.6">Enter your Anthropic API key above to enable live AI responses. Key is stored in your browser only.</div>
+          <div class="sect-title" style="margin-top:6px">Brooks AI Access</div>
+          <div id="brooks-access-status" style="font-size:11px;color:var(--text3);line-height:1.7">
+            Brooks AI is a <strong style="color:var(--gold)">Premium</strong> feature.<br>
+            <span style="color:var(--green);font-weight:600">&#10003; You have full access.</span>
+          </div>
+          <input id="api-key-input" type="hidden">
         </div>
       </div>
     </div>
@@ -811,6 +807,65 @@
   </div>
 </div>
 
+<!-- NEW SCRIPT MODAL -->
+<div class="overlay" id="new-script-modal" style="display:none" onclick="if(event.target===this)closeNewScript()">
+  <div class="mbox" style="max-width:480px">
+    <div style="font-size:16px;font-weight:600;margin-bottom:18px">✍️ New Script</div>
+    <div style="margin-bottom:12px">
+      <label class="mlbl">Script Title</label>
+      <input class="minput" id="ns-title" placeholder="e.g. The Setup — Late Night Pilot">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div>
+        <label class="mlbl">Network / Platform</label>
+        <select class="minput" id="ns-network" onchange="updateFormatPreview()">
+          <option value="netflix">Netflix</option>
+          <option value="nbc">NBC</option>
+          <option value="hbo">HBO</option>
+          <option value="abc">ABC</option>
+          <option value="fx">FX</option>
+          <option value="warnerbros">Warner Bros.</option>
+          <option value="universal">Universal</option>
+          <option value="a24">A24</option>
+          <option value="standup">Stand-Up</option>
+          <option value="corporate">Corporate</option>
+          <option value="memoir">Memoir / Book</option>
+        </select>
+      </div>
+      <div>
+        <label class="mlbl">Script Type</label>
+        <select class="minput" id="ns-type" onchange="updateFormatPreview()">
+          <option value="sitcom">Sitcom / TV Comedy</option>
+          <option value="movie">Feature Film</option>
+          <option value="latenight">Late Night Monologue</option>
+          <option value="special">Comedy Special</option>
+          <option value="set">Set Notes</option>
+          <option value="roast">Corporate Roast</option>
+          <option value="chapter">Memoir Chapter</option>
+        </select>
+      </div>
+    </div>
+    <div id="ns-format-preview" style="margin-bottom:16px"></div>
+    <div style="display:flex;gap:9px;justify-content:flex-end">
+      <button class="btn" onclick="closeNewScript()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewScript()">Create Script</button>
+    </div>
+  </div>
+</div>
+
+<!-- BROOKS UPGRADE OVERLAY -->
+<div id="brooks-upgrade-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--gold-br);border-radius:16px;padding:30px;max-width:380px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.2)">
+    <div style="font-size:36px;margin-bottom:12px">✦</div>
+    <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px;color:var(--text)">Upgrade to Brooks AI</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px">Brooks is your personal AI comedy writing partner. Punch up jokes, build set lists, mine your material for TV &amp; film ideas.</div>
+    <div style="font-size:28px;font-weight:700;color:var(--gold);margin-bottom:4px">$9.99<span style="font-size:14px;color:var(--text3);font-weight:400">/month</span></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:20px">Cancel anytime</div>
+    <button onclick="toast('Billing coming soon! Email michael@comedy4all.com to get early access.');document.getElementById('brooks-upgrade-overlay').style.display='none';" style="width:100%;padding:12px;background:var(--gold);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Upgrade for $9.99/mo</button>
+    <button onclick="document.getElementById('brooks-upgrade-overlay').style.display='none'" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif">Maybe later</button>
+  </div>
+</div>
+
 <div class="toast" id="toast-el"></div>
 
 <script src="js/data.js"></script>
@@ -822,6 +877,7 @@
 <script src="js/brooks.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/shows.js"></script>
+<script src="js/studio.js"></script>
 <script src="js/init.js"></script>
 </body>
 </html>

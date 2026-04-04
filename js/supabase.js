@@ -55,6 +55,9 @@ function showApp() {
   if (a) a.style.display = 'none';
   if (app) app.style.display = 'flex';
   if (b) b.style.display = 'flex';
+  if (currentUser && currentUser.email) {
+    window._c4aUserEmail = currentUser.email;
+  }
 }
 function showAuthScreen() {
   var a = document.getElementById('auth-screen');

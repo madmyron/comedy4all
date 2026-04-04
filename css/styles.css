@@ -337,6 +337,8 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
   .home-tile-desc { display: none; }
   .home-next-show { flex-direction: column; align-items: flex-start; gap: 10px; }
   .home-next-show .btn { width: 100%; justify-content: center; }
+  #screen-home .content { overflow-y: auto; padding-bottom: 80px; }
+  .home-next-show { margin-bottom: 24px; }
 }
 /* DETAIL PANEL -- always full-screen slide-up on all devices */
 #joke-detail{
@@ -356,7 +358,7 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
   #screen-sets > div:last-child > div:last-child{display:none}
   #screen-studio > div:last-child{grid-template-columns:1fr!important}
   #screen-studio > div:last-child > div:first-child{display:none}
-  #screen-studio > div:last-child > div:last-child{display:none}
+  #screen-studio > div:last-child > div:last-child{display:flex}
   #screen-shows .content > div{grid-template-columns:1fr!important}
   #screen-shows .content > div > div:last-child{display:none}
   .stat-grid{grid-template-columns:1fr 1fr!important}

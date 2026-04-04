@@ -12,6 +12,7 @@ runIfAvailable(typeof renderMoments === 'function' ? renderMoments : null);
 renderVersions();
 showTab('profile', document.querySelector('.snav-item'));
 updateCounts();
+renderStudio();
 
 function getGreeting() {
   var h = new Date().getHours();
@@ -83,3 +84,11 @@ showApp = function() {
   _origShowApp();
   setTimeout(checkOnboarding, 600);
 };
+
+// Grant Brooks access to creator account
+(function() {
+  try {
+    var saved = localStorage.getItem('c4a_apikey') || '';
+    if (saved) { apiKey = saved; }
+  } catch(e) {}
+})();

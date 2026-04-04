@@ -169,8 +169,9 @@ var _camStream = null;
 var recPlaying = false;
 
 function isRecordingSecureContext() {
+  if (window.isSecureContext) return true;
   var host = window.location.hostname;
-  return window.isSecureContext || host === 'localhost' || host === '127.0.0.1';
+  return host === 'localhost' || host === '127.0.0.1' || host === '';
 }
 
 function renderWaveform() {
@@ -250,9 +251,10 @@ function setRecMode(mode) {
 }
 
 function startRecording() {
-  updateRecordingAvailability();
+  // On comedy4all.com (HTTPS) this will always pass
+  // On http://192.168.x.x it will show the toast
   if (!isRecordingSecureContext()) {
-    toast('Recording needs HTTPS or localhost. Use comedy4all.com or local desktop localhost.');
+    toast('Recording requires HTTPS. Please use comedy4all.com on your phone.');
     return;
   }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {

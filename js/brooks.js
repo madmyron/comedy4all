@@ -11,12 +11,17 @@ function saveApiKey(v){
   var trimmed=v.trim();
   try{localStorage.setItem('c4a_apikey',trimmed);}catch(e){}
   apiKey=trimmed;
+  var ki=document.getElementById('api-key-input');
+  if(ki) ki.value=trimmed;
   updateBrooksContext();
 }
 
 function sendBrooks(){
-  if(!apiKey){
-    toast('! Please enter your Anthropic API key in the right panel first!');
+  // Check for premium access — hardcoded for now, backend billing check comes later
+  var userEmail = (window._c4aUserEmail || '');
+  var isPremium = (userEmail === 'michael@comedy4all.com') || apiKey;
+  if (!isPremium) {
+    document.getElementById('brooks-upgrade-overlay').style.display = 'flex';
     return;
   }
   var input=document.getElementById('brooks-input'),msgs=document.getElementById('chat-msgs');
