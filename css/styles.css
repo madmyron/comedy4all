@@ -437,13 +437,20 @@ body.dark{color-scheme:dark}
   .recording-topbar .topbar-title{flex:0 0 auto}
   .recording-mode-switch{order:3;width:100%;justify-content:center}
   #rec-start-btn{margin-left:auto}
-  .recording-playback-actions{flex-wrap:wrap}
-  .recording-playback-actions #rec-time{order:2}
-  .recording-playback-actions #rec-seek{order:3;flex-basis:100%;width:100%}
+  .recording-playback-actions{flex-wrap:wrap;align-items:center}
+  .recording-playback-actions #play-btn{order:1;flex:0 0 auto}
+  .recording-playback-actions #rec-time{order:2;flex:0 0 auto}
+  .recording-playback-actions #rec-seek{order:3;flex:1 1 100%;width:100%;min-width:0}
+  .recording-playback-actions #dl-btn{order:4;flex:1 1 calc(50% - 5px);justify-content:center}
+  .recording-playback-actions #delete-rec-btn{order:5;flex:1 1 calc(50% - 5px);justify-content:center}
   .recording-playback-actions #dl-btn,
-  .recording-playback-actions #delete-rec-btn{margin-left:0}
-  .rec-live{flex-wrap:wrap}
-  .rec-live #live-waveform{order:3;flex-basis:100%;width:100%}
+  .recording-playback-actions #delete-rec-btn{margin-left:0;min-width:0}
+  .rec-live{flex-wrap:wrap;align-items:center}
+  .rec-live .rec-pulse,
+  .rec-live > span,
+  .rec-live #live-rec-time{flex:0 0 auto}
+  .rec-live #live-waveform{order:3;flex:1 1 100%;width:100%;min-width:0}
+  .rec-live .live-stop-btn{order:4;flex:1 1 100%;width:100%;margin-left:0!important;justify-content:center}
   .joke-grid{grid-template-columns:1fr 1fr!important}
   .topbar input[type=text], .topbar select:not(:first-of-type){display:none}
   #screen-sets > div:last-child{grid-template-columns:1fr!important;height:auto!important;overflow:auto!important}
