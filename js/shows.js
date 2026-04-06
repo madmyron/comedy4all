@@ -189,6 +189,16 @@ function getRecordingExtension(mimeType, mode) {
   return mode === 'video' ? 'mp4' : 'm4a';
 }
 
+function getDefaultRecordingName(mode) {
+  var stamp = new Date().toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+  return (mode === 'video' ? 'Video' : 'Audio') + ' -- ' + stamp;
+}
+
 function getRecordingOptions(mode) {
   var candidates = mode === 'video'
     ? ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4;codecs=h264,aac', 'video/mp4']
@@ -425,8 +435,8 @@ function startRecording() {
         return;
       }
       var url = URL.createObjectURL(blob);
-      var defaultName = 'Show -- ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
-      var name = prompt('Name this recording:', defaultName) || defaultName;
+      var defaultName = getDefaultRecordingName(capturedMode);
+      var name = isLikelyMobile() ? defaultName : (prompt('Name this recording:', defaultName) || defaultName);
       var rec = {id: Date.now(), name: name, blob: blob, url: url, duration: _liveSeconds, notes: '', type: capturedMode, ext: ext, mimeType: actualMime};
       _recordings.unshift(rec);
       stopLiveUI();
@@ -443,7 +453,7 @@ function startRecording() {
       var badge = document.getElementById('preview-badge');
       if (badge) badge.textContent = '\u25cf REC';
     }
-    _mediaRecorder.start();
+    _mediaRecorder.start(1000);
     setRecordingPendingUI(false);
     startLiveUI();
     var bigBtn = document.getElementById('rec-big-btn');
