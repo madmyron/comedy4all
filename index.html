@@ -442,6 +442,7 @@
                 <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)" id="rec-time">0:00</span>
                 <input type="range" min="0" max="100" value="0" id="rec-seek" style="flex:1" oninput="seekRec(this.value)" disabled>
                 <button class="btn btn-sm" id="dl-btn" style="display:none" onclick="downloadRecording()">&#8595; Save</button>
+                <button class="btn btn-sm" id="delete-rec-btn" style="display:none" onclick="deleteRecording()">Delete</button>
               </div>
               <div id="rec-notes-area" style="display:none">
                 <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;font-weight:700">Notes / Transcript</div>

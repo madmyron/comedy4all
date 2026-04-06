@@ -460,6 +460,10 @@ function startRecording() {
 }
 
 function triggerCaptureFallback() {
+  if (_recMode !== 'video') {
+    toast('Audio uses your microphone in the app. Tap the red record button to start.');
+    return;
+  }
   var input = document.getElementById(_recMode === 'video' ? 'rec-video-fallback' : 'rec-audio-fallback');
   if (input) {
     toast(_recMode === 'video' ? 'Opening your phone camera recorder...' : 'Opening your phone audio recorder...');
@@ -588,6 +592,7 @@ function loadRecording(id) {
   document.getElementById('rec-notes-area').style.display = 'block';
   document.getElementById('rec-notes').value = r.notes || '';
   document.getElementById('dl-btn').style.display = 'inline-flex';
+  document.getElementById('delete-rec-btn').style.display = 'inline-flex';
   document.getElementById('play-btn').disabled = false;
   document.getElementById('rec-seek').disabled = false;
   document.getElementById('rec-seek').max = r.duration;
@@ -644,6 +649,43 @@ function downloadRecording() {
   var a = document.createElement('a');
   a.href = r.url; a.download = r.name.replace(/\s+/g,'-') + '.' + (r.ext || 'webm');
   a.click();
+}
+function deleteRecording() {
+  var idx = _recordings.findIndex(function(x){ return x.id === _activeRecId; });
+  if (idx === -1) return;
+  var removed = _recordings.splice(idx, 1)[0];
+  if (removed && removed.url && removed.url.indexOf('blob:') === 0) {
+    try { URL.revokeObjectURL(removed.url); } catch (e) {}
+  }
+  if (_audioEl) {
+    _audioEl.pause();
+    _audioEl = null;
+  }
+  var vidPlayback = document.getElementById('video-playback-el');
+  if (vidPlayback) {
+    vidPlayback.pause();
+    vidPlayback.removeAttribute('src');
+    vidPlayback.load();
+  }
+  _activeRecId = null;
+  renderRecListReal();
+  document.getElementById('pb-title').textContent = 'Select a recording';
+  document.getElementById('pb-meta').textContent = 'Click a recording from the list →';
+  document.getElementById('pb-status').style.display = 'none';
+  document.getElementById('rec-notes-area').style.display = 'none';
+  document.getElementById('dl-btn').style.display = 'none';
+  document.getElementById('delete-rec-btn').style.display = 'none';
+  document.getElementById('video-playback-wrap').style.display = 'none';
+  document.getElementById('waveform').style.display = 'flex';
+  document.getElementById('play-btn').style.display = 'inline-flex';
+  document.getElementById('play-btn').disabled = true;
+  document.getElementById('play-btn').textContent = '> Play';
+  document.getElementById('rec-seek').style.display = 'inline-block';
+  document.getElementById('rec-seek').disabled = true;
+  document.getElementById('rec-seek').value = 0;
+  document.getElementById('rec-time').textContent = '0:00';
+  renderMoments();
+  toast('Recording deleted.');
 }
 togglePlay = function() {
   if (_audioEl) {
