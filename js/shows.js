@@ -174,7 +174,7 @@ function isLikelyMobile() {
 
 function shouldPreferCaptureFallback(mode) {
   if (!isLikelyMobile()) return false;
-  return mode === 'audio' || mode === 'video';
+  return mode === 'video';
 }
 
 function isRecordingSecureContext() {
@@ -234,6 +234,7 @@ function setRecordingPendingUI(isPending) {
   var startBtn = document.getElementById('rec-start-btn');
   var bigBtn = document.getElementById('rec-big-btn');
   var label = document.getElementById('rec-cta-label');
+  var fallbackBtn = document.getElementById('rec-phone-fallback-btn');
   if (startBtn) {
     startBtn.disabled = !!isPending;
     if (isPending) startBtn.textContent = 'Waiting for permission...';
@@ -244,6 +245,9 @@ function setRecordingPendingUI(isPending) {
     if (isPending) label.textContent = 'Allow microphone/camera access to begin recording';
     else if (shouldPreferCaptureFallback(_recMode)) label.textContent = _recMode === 'video' ? 'Use your phone camera app to record a video clip' : 'Use your phone voice recorder to capture audio';
     else label.textContent = _recMode === 'video' ? 'Tap to record video' : 'Tap to record audio';
+  }
+  if (fallbackBtn) {
+    fallbackBtn.textContent = _recMode === 'video' ? 'Use phone camera instead' : 'Import audio file instead';
   }
 }
 
@@ -308,6 +312,11 @@ function updateRecordingAvailability() {
       : 'On phones, Comedy 4 All now uses your device voice recorder/file picker because it is more reliable than live browser capture.';
     return;
   }
+  if (isLikelyMobile() && _recMode === 'audio') {
+    note.style.display = 'block';
+    text.textContent = 'Audio recording uses your phone microphone directly in the browser. If you already recorded something elsewhere, use "Import audio file instead."';
+    return;
+  }
   if (isRecordingSecureContext()) {
     note.style.display = 'block';
     text.textContent = _recMode === 'video'
@@ -347,7 +356,7 @@ function setRecMode(mode) {
     if (audioBtn) { audioBtn.style.background = 'var(--gold)'; audioBtn.style.color = '#fff'; audioBtn.style.fontWeight = '600'; }
     if (videoBtn) { videoBtn.style.background = 'transparent'; videoBtn.style.color = 'var(--text2)'; videoBtn.style.fontWeight = '500'; }
     if (bigBtn) bigBtn.textContent = '\ud83c\udf99\ufe0f';
-    if (label) label.textContent = shouldPreferCaptureFallback('audio') ? 'Use your phone voice recorder to capture audio' : 'Tap to record audio';
+    if (label) label.textContent = 'Tap to record audio';
     if (previewWrap) previewWrap.style.display = 'none';
     if (_camStream) { _camStream.getTracks().forEach(function(t){t.stop();}); _camStream = null; }
   }
