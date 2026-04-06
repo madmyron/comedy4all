@@ -155,7 +155,12 @@ function openShowDetail(id) {
 var _origGo = go;
 go = function(name) {
   _origGo(name);
-  if (name === 'recording') renderRecListReal();
+  if (name === 'recording') {
+    renderRecListReal();
+    var cta = document.getElementById('rec-cta');
+    if (cta) cta.style.display = 'block';
+    setRecMode(_recMode || 'audio');
+  }
 };
 var _mediaRecorder = null;
 var _audioChunks = [];
@@ -354,6 +359,8 @@ function setRecMode(mode) {
   var bigBtn = document.getElementById('rec-big-btn');
   var label = document.getElementById('rec-cta-label');
   var previewWrap = document.getElementById('video-preview-wrap');
+  var cta = document.getElementById('rec-cta');
+  if (cta) cta.style.display = 'block';
   if (mode === 'video') {
     if (audioBtn) { audioBtn.style.background = 'transparent'; audioBtn.style.color = 'var(--text2)'; audioBtn.style.fontWeight = '500'; }
     if (videoBtn) { videoBtn.style.background = 'var(--gold)'; videoBtn.style.color = '#fff'; videoBtn.style.fontWeight = '600'; }
@@ -534,6 +541,8 @@ function stopRecording() {
 }
 function startLiveUI() {
   _liveSeconds = 0;
+  var cta = document.getElementById('rec-cta');
+  if (cta) cta.style.display = 'block';
   var startBtn = document.getElementById('rec-start-btn');
   if (startBtn) { startBtn.textContent = '\u25a0 Stop'; startBtn.disabled = false; }
   document.getElementById('live-rec-panel').style.display = 'block';
@@ -550,6 +559,8 @@ function startLiveUI() {
 function stopLiveUI() {
   clearInterval(_liveTimer);
   document.getElementById('live-rec-panel').style.display = 'none';
+  var cta = document.getElementById('rec-cta');
+  if (cta) cta.style.display = 'block';
   updateRecordingAvailability();
   setRecordingPendingUI(false);
 }
