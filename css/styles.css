@@ -433,6 +433,17 @@ body.dark{color-scheme:dark}
 #joke-detail.panel-open{transform:translateY(0)}
 .detail-close-bar{display:flex!important}
 @media(max-width:700px){
+  .recording-topbar{height:auto;min-height:50px;flex-wrap:wrap;align-items:center;padding-top:8px;padding-bottom:8px}
+  .recording-topbar .topbar-title{flex:0 0 auto}
+  .recording-mode-switch{order:3;width:100%;justify-content:center}
+  #rec-start-btn{margin-left:auto}
+  .recording-playback-actions{flex-wrap:wrap}
+  .recording-playback-actions #rec-time{order:2}
+  .recording-playback-actions #rec-seek{order:3;flex-basis:100%;width:100%}
+  .recording-playback-actions #dl-btn,
+  .recording-playback-actions #delete-rec-btn{margin-left:0}
+  .rec-live{flex-wrap:wrap}
+  .rec-live #live-waveform{order:3;flex-basis:100%;width:100%}
   .joke-grid{grid-template-columns:1fr 1fr!important}
   .topbar input[type=text], .topbar select:not(:first-of-type){display:none}
   #screen-sets > div:last-child{grid-template-columns:1fr!important;height:auto!important;overflow:auto!important}

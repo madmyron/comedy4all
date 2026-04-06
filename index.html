@@ -392,10 +392,10 @@
 
     <!-- RECORDING -->
     <div id="screen-recording" class="screen">
-      <div class="topbar">
+      <div class="topbar recording-topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Recording</div>
-        <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:3px">
+        <div class="recording-mode-switch" style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:3px">
           <button id="mode-audio-btn" onclick="setRecMode('audio')" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;background:var(--gold);color:#fff;font-family:'Inter',sans-serif">&#127897;&#65039; Audio</button>
           <button id="mode-video-btn" onclick="setRecMode('video')" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--text2);font-family:'Inter',sans-serif">&#127909; Video</button>
         </div>
@@ -437,7 +437,7 @@
                 <video id="video-playback-el" style="width:100%;max-height:320px;display:block" controls></video>
               </div>
               <div id="waveform" style="height:72px;background:var(--bg3);border-radius:var(--r2);margin-bottom:12px;display:flex;align-items:center;gap:2px;padding:0 10px;overflow:hidden;border:1px solid var(--border)"></div>
-              <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
+              <div class="recording-playback-actions" style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
                 <button class="btn btn-sm btn-primary" onclick="togglePlay()" id="play-btn" disabled>&gt; Play</button>
                 <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)" id="rec-time">0:00</span>
                 <input type="range" min="0" max="100" value="0" id="rec-seek" style="flex:1" oninput="seekRec(this.value)" disabled>
