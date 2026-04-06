@@ -182,8 +182,8 @@ function getRecordingExtension(mimeType, mode) {
 
 function getRecordingOptions(mode) {
   var candidates = mode === 'video'
-    ? ['video/mp4;codecs=h264,aac', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
-    : ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
+    ? ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4;codecs=h264,aac', 'video/mp4']
+    : ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
   if (typeof MediaRecorder === 'undefined') return { mimeType: '', ext: getRecordingExtension('', mode) };
   for (var i = 0; i < candidates.length; i++) {
     if (!MediaRecorder.isTypeSupported || MediaRecorder.isTypeSupported(candidates[i])) {
@@ -191,6 +191,34 @@ function getRecordingOptions(mode) {
     }
   }
   return { mimeType: '', ext: getRecordingExtension('', mode) };
+}
+
+function getPreferredConstraints(mode) {
+  if (mode === 'video') {
+    return [
+      { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } },
+      { video: true, audio: true }
+    ];
+  }
+  return [
+    { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } },
+    { audio: true }
+  ];
+}
+
+function requestRecordingStream(mode) {
+  var attempts = getPreferredConstraints(mode);
+  var idx = 0;
+  return new Promise(function(resolve, reject) {
+    function next(lastErr) {
+      if (idx >= attempts.length) {
+        reject(lastErr);
+        return;
+      }
+      navigator.mediaDevices.getUserMedia(attempts[idx++]).then(resolve).catch(next);
+    }
+    next();
+  });
 }
 
 function setRecordingPendingUI(isPending) {
@@ -285,7 +313,7 @@ function setRecMode(mode) {
     if (bigBtn) bigBtn.textContent = '\ud83c\udfa5';
     if (label) label.textContent = 'Tap to record video';
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(function(stream) {
+      requestRecordingStream('video').then(function(stream) {
         _camStream = stream;
         var vid = document.getElementById('video-preview');
         if (vid) { vid.srcObject = stream; }
@@ -315,10 +343,9 @@ function startRecording() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     toast('Recording not supported in this browser.'); return;
   }
-  var constraints = _recMode === 'video' ? {video:true, audio:true} : {audio:true};
   var capturedMode = _recMode;
   setRecordingPendingUI(true);
-  navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+  requestRecordingStream(capturedMode).then(function(stream) {
     if (_camStream) { _camStream.getTracks().forEach(function(t){t.stop();}); _camStream = null; }
     _audioChunks = [];
     var config = getRecordingOptions(capturedMode);
@@ -334,12 +361,29 @@ function startRecording() {
         return;
       }
     }
+    _mediaRecorder.onerror = function() {
+      stream.getTracks().forEach(function(t){t.stop();});
+      stopLiveUI();
+      toast('Recording failed before the file could be saved.');
+    };
     _mediaRecorder.ondataavailable = function(e) { if(e.data.size>0) _audioChunks.push(e.data); };
     _mediaRecorder.onstop = function() {
       stream.getTracks().forEach(function(t){t.stop();});
+      if (!_audioChunks.length) {
+        stopLiveUI();
+        setRecordingPendingUI(false);
+        toast('No recording data was captured. Try again and keep the app open until you tap Stop.');
+        return;
+      }
       var actualMime = _mediaRecorder.mimeType || config.mimeType || (capturedMode === 'video' ? 'video/mp4' : 'audio/mp4');
       var ext = getRecordingExtension(actualMime, capturedMode);
       var blob = new Blob(_audioChunks, {type: actualMime});
+      if (!blob.size) {
+        stopLiveUI();
+        setRecordingPendingUI(false);
+        toast('The recording finished, but the file came back empty.');
+        return;
+      }
       var url = URL.createObjectURL(blob);
       var defaultName = 'Show -- ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
       var name = prompt('Name this recording:', defaultName) || defaultName;
@@ -359,7 +403,7 @@ function startRecording() {
       var badge = document.getElementById('preview-badge');
       if (badge) badge.textContent = '\u25cf REC';
     }
-    _mediaRecorder.start(250);
+    _mediaRecorder.start();
     setRecordingPendingUI(false);
     startLiveUI();
     var bigBtn = document.getElementById('rec-big-btn');
@@ -371,7 +415,10 @@ function startRecording() {
   });
 }
 function stopRecording() {
-  if (_mediaRecorder && _mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
+  if (_mediaRecorder && _mediaRecorder.state !== 'inactive') {
+    try { _mediaRecorder.requestData(); } catch (e) {}
+    _mediaRecorder.stop();
+  }
   var btn = document.getElementById('rec-start-btn');
   if (btn) { btn.textContent = '\ud83d\udd34 Record'; btn.disabled = false; }
   var badge = document.getElementById('preview-badge');

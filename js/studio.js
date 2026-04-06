@@ -1,34 +1,101 @@
 // - WRITING STUDIO -
 
-// Script format templates keyed by [network]-[type]
 var SCRIPT_FORMATS = {
-  // --- SITCOMS ---
-  'nbc-sitcom':       { name: 'NBC Multi-Cam Sitcom',      pages: 22, acts: 2, sceneStyle: 'INT./EXT.',   fontStyle: 'courier', margins: 'standard' },
-  'netflix-sitcom':   { name: 'Netflix Single-Cam Sitcom', pages: 30, acts: 3, sceneStyle: 'INT./EXT.',   fontStyle: 'courier', margins: 'standard' },
-  'hbo-sitcom':       { name: 'HBO Single-Cam Comedy',     pages: 30, acts: 3, sceneStyle: 'INT./EXT.',   fontStyle: 'courier', margins: 'standard' },
-  'abc-sitcom':       { name: 'ABC Multi-Cam Sitcom',      pages: 22, acts: 2, sceneStyle: 'INT./EXT.',   fontStyle: 'courier', margins: 'standard' },
-  'fx-sitcom':        { name: 'FX Single-Cam Comedy',      pages: 28, acts: 3, sceneStyle: 'INT./EXT.',   fontStyle: 'courier', margins: 'standard' },
-  // --- LATE NIGHT ---
-  'nbc-latenight':    { name: 'NBC Late Night Monologue',  pages: 4,  acts: 1, sceneStyle: 'STAGE',       fontStyle: 'courier', margins: 'standard' },
-  'netflix-special':  { name: 'Netflix Comedy Special',    pages: 60, acts: 1, sceneStyle: 'STAGE',       fontStyle: 'courier', margins: 'standard' },
-  // --- FEATURE FILM ---
+  'nbc-sitcom':       { name: 'NBC Multi-Cam Sitcom', pages: 22, acts: 2, sceneStyle: 'INT./EXT.', fontStyle: 'courier', margins: 'standard' },
+  'netflix-sitcom':   { name: 'Netflix Single-Cam Sitcom', pages: 30, acts: 3, sceneStyle: 'INT./EXT.', fontStyle: 'courier', margins: 'standard' },
+  'hbo-sitcom':       { name: 'HBO Single-Cam Comedy', pages: 30, acts: 3, sceneStyle: 'INT./EXT.', fontStyle: 'courier', margins: 'standard' },
+  'abc-sitcom':       { name: 'ABC Multi-Cam Sitcom', pages: 22, acts: 2, sceneStyle: 'INT./EXT.', fontStyle: 'courier', margins: 'standard' },
+  'fx-sitcom':        { name: 'FX Single-Cam Comedy', pages: 28, acts: 3, sceneStyle: 'INT./EXT.', fontStyle: 'courier', margins: 'standard' },
+  'nbc-latenight':    { name: 'NBC Late Night Monologue', pages: 4, acts: 1, sceneStyle: 'STAGE', fontStyle: 'courier', margins: 'standard' },
+  'netflix-special':  { name: 'Netflix Comedy Special', pages: 60, acts: 1, sceneStyle: 'STAGE', fontStyle: 'courier', margins: 'standard' },
   'warnerbros-movie': { name: 'Warner Bros. Feature Comedy', pages: 110, acts: 3, sceneStyle: 'INT./EXT.', fontStyle: 'courier', margins: 'standard' },
-  'netflix-movie':    { name: 'Netflix Feature Comedy',    pages: 100, acts: 3, sceneStyle: 'INT./EXT.',  fontStyle: 'courier', margins: 'standard' },
-  'a24-movie':        { name: 'A24 Comedy Feature',        pages: 95,  acts: 3, sceneStyle: 'INT./EXT.',  fontStyle: 'courier', margins: 'standard' },
-  'universal-movie':  { name: 'Universal Feature Comedy',  pages: 110, acts: 3, sceneStyle: 'INT./EXT.',  fontStyle: 'courier', margins: 'standard' },
-  // --- STAND-UP ---
-  'standup-special':  { name: 'Stand-Up Special Script',   pages: 45, acts: 1, sceneStyle: 'STAGE',       fontStyle: 'courier', margins: 'standard' },
-  'standup-set':      { name: 'Stand-Up Set Notes',        pages: 5,  acts: 1, sceneStyle: 'NOTES',       fontStyle: 'sans',    margins: 'loose' },
-  // --- OTHER ---
-  'corporate-roast':  { name: 'Corporate Roast Script',    pages: 10, acts: 1, sceneStyle: 'STAGE',       fontStyle: 'sans',    margins: 'loose' },
-  'memoir-chapter':   { name: 'Memoir Chapter',            pages: 15, acts: 1, sceneStyle: 'PROSE',       fontStyle: 'sans',    margins: 'loose' }
+  'netflix-movie':    { name: 'Netflix Feature Comedy', pages: 100, acts: 3, sceneStyle: 'INT./EXT.', fontStyle: 'courier', margins: 'standard' },
+  'a24-movie':        { name: 'A24 Comedy Feature', pages: 95, acts: 3, sceneStyle: 'INT./EXT.', fontStyle: 'courier', margins: 'standard' },
+  'universal-movie':  { name: 'Universal Feature Comedy', pages: 110, acts: 3, sceneStyle: 'INT./EXT.', fontStyle: 'courier', margins: 'standard' },
+  'standup-special':  { name: 'Stand-Up Special Script', pages: 45, acts: 1, sceneStyle: 'STAGE', fontStyle: 'courier', margins: 'standard' },
+  'standup-set':      { name: 'Stand-Up Set Notes', pages: 5, acts: 1, sceneStyle: 'NOTES', fontStyle: 'sans', margins: 'loose' },
+  'corporate-roast':  { name: 'Corporate Roast Script', pages: 10, acts: 1, sceneStyle: 'STAGE', fontStyle: 'sans', margins: 'loose' },
+  'memoir-chapter':   { name: 'Memoir Chapter', pages: 15, acts: 1, sceneStyle: 'PROSE', fontStyle: 'sans', margins: 'loose' }
 };
 
+var STUDIO_STORAGE_KEY = 'c4a_scripts';
+var STUDIO_AUTOSAVE_MS = 450;
+var _studioSaveTimer = null;
+var _studioLoaded = false;
+
+function loadStudioState() {
+  if (_studioLoaded) return;
+  _studioLoaded = true;
+  try {
+    var raw = localStorage.getItem(STUDIO_STORAGE_KEY);
+    if (!raw) return;
+    var parsed = JSON.parse(raw);
+    if (parsed && parsed.scripts && parsed.scripts.length) {
+      scripts = parsed.scripts;
+      activeScriptId = parsed.activeScriptId || parsed.scripts[0].id;
+      scriptNextId = parsed.scriptNextId || (parsed.scripts.reduce(function(max, script) {
+        return Math.max(max, Number(script.id) || 0);
+      }, 0) + 1);
+    }
+  } catch (e) {}
+}
+
+function persistStudioState() {
+  try {
+    localStorage.setItem(STUDIO_STORAGE_KEY, JSON.stringify({
+      scripts: scripts,
+      activeScriptId: activeScriptId,
+      scriptNextId: scriptNextId
+    }));
+  } catch (e) {}
+}
+
+function setStudioStatus(message, isDirty) {
+  var status = document.getElementById('studio-save-status');
+  if (!status) return;
+  status.textContent = message;
+  status.style.color = isDirty ? 'var(--gold)' : 'var(--text3)';
+}
+
+function getActiveScript() {
+  if (!activeScriptId) return null;
+  for (var i = 0; i < scripts.length; i++) {
+    if (scripts[i].id === activeScriptId) return scripts[i];
+  }
+  return null;
+}
+
+function queueStudioSave() {
+  clearTimeout(_studioSaveTimer);
+  setStudioStatus('Saving...', true);
+  _studioSaveTimer = setTimeout(function() {
+    saveActiveScript(true);
+  }, STUDIO_AUTOSAVE_MS);
+}
+
 function renderStudio() {
-  var projectList = document.getElementById('studio-project-list');
+  loadStudioState();
+  renderStudioProjectList();
   var editor = document.getElementById('studio-editor');
   var placeholder = document.getElementById('studio-placeholder');
 
+  if (activeScriptId) {
+    var script = getActiveScript();
+    if (script && editor) {
+      if (placeholder) placeholder.style.display = 'none';
+      editor.style.display = 'flex';
+      renderScriptEditor(script);
+      return;
+    }
+  }
+
+  if (editor) editor.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'flex';
+  setStudioStatus('Saved locally', false);
+}
+
+function renderStudioProjectList() {
+  var projectList = document.getElementById('studio-project-list');
   if (projectList) {
     if (scripts.length === 0) {
       projectList.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:12px;text-align:center">No scripts yet.<br>Click + New Script to start.</div>';
@@ -38,43 +105,43 @@ function renderStudio() {
         return '<div onclick="openScript(' + s.id + ')" style="padding:8px 10px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;'
           + (active ? 'background:var(--gold-bg);color:var(--gold);font-weight:600;' : 'color:var(--text2);')
           + '">'
-          + '<div style="font-weight:' + (active ? '600' : '500') + ';margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + s.title + '</div>'
-          + '<div style="font-size:10px;color:var(--text3)">' + (SCRIPT_FORMATS[s.formatKey] ? SCRIPT_FORMATS[s.formatKey].name : s.formatKey) + '</div>'
+          + '<div style="font-weight:' + (active ? '600' : '500') + ';margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(s.title) + '</div>'
+          + '<div style="font-size:10px;color:var(--text3)">' + escapeHtml((SCRIPT_FORMATS[s.formatKey] ? SCRIPT_FORMATS[s.formatKey].name : s.formatKey) || 'Script') + '</div>'
           + '</div>';
       }).join('');
     }
   }
-
-  if (activeScriptId) {
-    var s = scripts.find(function(x) { return x.id === activeScriptId; });
-    if (s && editor) {
-      if (placeholder) placeholder.style.display = 'none';
-      editor.style.display = 'flex';
-      renderScriptEditor(s);
-    }
-  } else {
-    if (editor) editor.style.display = 'none';
-    if (placeholder) placeholder.style.display = 'flex';
-  }
 }
 
-function renderScriptEditor(s) {
-  var titleEl = document.getElementById('studio-script-title');
+function renderScriptEditor(script) {
+  var titleInput = document.getElementById('studio-script-title-input');
   var formatEl = document.getElementById('studio-format-label');
   var bodyEl = document.getElementById('studio-script-body');
-  if (titleEl) titleEl.textContent = s.title;
-  if (formatEl) formatEl.textContent = SCRIPT_FORMATS[s.formatKey] ? SCRIPT_FORMATS[s.formatKey].name : s.formatKey;
-  if (bodyEl) {
-    bodyEl.value = s.body;
-    bodyEl.oninput = function() {
-      s.body = bodyEl.value;
-      s.updated = new Date().toISOString();
+  if (titleInput) {
+    titleInput.value = script.title;
+    titleInput.oninput = function() {
+      script.title = titleInput.value || 'Untitled Script';
+      script.updated = new Date().toISOString();
+      renderStudioProjectList();
+      queueStudioSave();
     };
   }
+  if (formatEl) formatEl.textContent = SCRIPT_FORMATS[script.formatKey] ? SCRIPT_FORMATS[script.formatKey].name : script.formatKey;
+  if (bodyEl) {
+    bodyEl.value = script.body;
+    bodyEl.oninput = function() {
+      script.body = bodyEl.value;
+      script.updated = new Date().toISOString();
+      queueStudioSave();
+    };
+  }
+  setStudioStatus('Saved locally', false);
 }
 
 function openScript(id) {
+  loadStudioState();
   activeScriptId = id;
+  persistStudioState();
   renderStudio();
 }
 
@@ -95,37 +162,38 @@ function updateFormatPreview() {
   var key = network + '-' + type;
   var fmt = SCRIPT_FORMATS[key];
   var preview = document.getElementById('ns-format-preview');
-  if (preview) {
-    if (fmt) {
-      preview.innerHTML = '<div style="background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);padding:9px 12px;font-size:11.5px;color:var(--text2);line-height:1.7">'
-        + '<strong>' + fmt.name + '</strong><br>'
-        + 'Approx. ' + fmt.pages + ' pages &nbsp;·&nbsp; ' + fmt.acts + ' act' + (fmt.acts > 1 ? 's' : '') + '<br>'
-        + 'Scene headers: ' + fmt.sceneStyle
-        + '</div>';
-    } else {
-      preview.innerHTML = '';
-    }
+  if (!preview) return;
+  if (!fmt) {
+    preview.innerHTML = '';
+    return;
   }
+  preview.innerHTML = '<div style="background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);padding:9px 12px;font-size:11.5px;color:var(--text2);line-height:1.7">'
+    + '<strong>' + escapeHtml(fmt.name) + '</strong><br>'
+    + 'Approx. ' + fmt.pages + ' pages &middot; ' + fmt.acts + ' act' + (fmt.acts > 1 ? 's' : '') + '<br>'
+    + 'Scene headers: ' + escapeHtml(fmt.sceneStyle)
+    + '</div>';
 }
 
 function saveNewScript() {
+  loadStudioState();
   var title = ((document.getElementById('ns-title') || {}).value || '').trim();
   if (!title) { toast('Please add a title!'); return; }
   var network = (document.getElementById('ns-network') || {}).value || 'netflix';
   var type = (document.getElementById('ns-type') || {}).value || 'sitcom';
   var key = network + '-' + type;
   var fmt = SCRIPT_FORMATS[key] || SCRIPT_FORMATS['netflix-sitcom'];
-  var starter = buildStarterContent(title, fmt);
+  var now = new Date().toISOString();
   var script = {
     id: scriptNextId++,
     title: title,
     formatKey: key,
-    body: starter,
-    created: new Date().toISOString(),
-    updated: new Date().toISOString()
+    body: buildStarterContent(title, fmt),
+    created: now,
+    updated: now
   };
   scripts.unshift(script);
   activeScriptId = script.id;
+  persistStudioState();
   closeNewScript();
   renderStudio();
   toast('Script created! \u2713');
@@ -133,10 +201,10 @@ function saveNewScript() {
 
 function buildStarterContent(title, fmt) {
   if (fmt.sceneStyle === 'STAGE' || fmt.sceneStyle === 'NOTES') {
-    return title.toUpperCase() + '\n\nWritten by Michael D\'Asaro\n\n\n';
+    return title.toUpperCase() + '\n\nWritten by Michael D\'Asaro\n\nOPEN\n\n';
   }
   if (fmt.sceneStyle === 'PROSE') {
-    return title.toUpperCase() + '\n\nBy Michael D\'Asaro\n\n\n';
+    return title.toUpperCase() + '\n\nBy Michael D\'Asaro\n\nChapter One\n\n';
   }
   return 'TITLE: ' + title.toUpperCase() + '\nWritten by Michael D\'Asaro\n\n'
     + 'COLD OPEN\n\n'
@@ -146,23 +214,120 @@ function buildStarterContent(title, fmt) {
     + 'ACT ONE\n\n';
 }
 
+function saveActiveScript(isAutoSave) {
+  loadStudioState();
+  var script = getActiveScript();
+  if (!script) return;
+  var titleInput = document.getElementById('studio-script-title-input');
+  var bodyEl = document.getElementById('studio-script-body');
+  if (titleInput) script.title = (titleInput.value || '').trim() || 'Untitled Script';
+  if (bodyEl) script.body = bodyEl.value;
+  script.updated = new Date().toISOString();
+  persistStudioState();
+  renderStudioProjectList();
+  setStudioStatus(isAutoSave ? 'Saved locally' : 'Saved just now', false);
+  if (!isAutoSave) toast('Script saved. \u2713');
+}
+
 function deleteActiveScript() {
+  loadStudioState();
   if (!activeScriptId) return;
   if (!confirm('Delete this script? This cannot be undone.')) return;
   scripts = scripts.filter(function(s) { return s.id !== activeScriptId; });
   activeScriptId = scripts.length ? scripts[0].id : null;
+  persistStudioState();
   renderStudio();
   toast('Script deleted.');
 }
 
 function exportActiveScript() {
-  if (!activeScriptId) return;
-  var s = scripts.find(function(x) { return x.id === activeScriptId; });
-  if (!s) return;
-  var blob = new Blob([s.body], { type: 'text/plain' });
+  loadStudioState();
+  saveActiveScript(true);
+  var script = getActiveScript();
+  if (!script) return;
+  var format = ((document.getElementById('studio-export-format') || {}).value || 'fdx');
+  var payload = buildScriptExport(script, format);
+  var blob = new Blob([payload.content], { type: payload.type });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = s.title.replace(/[^a-z0-9]/gi, '_') + '.txt';
+  a.download = slugifyFileName(script.title) + '.' + payload.ext;
   a.click();
-  toast('Exported!');
+  toast('Exported for ' + payload.label + '.');
+}
+
+function buildScriptExport(script, format) {
+  if (format === 'fountain') {
+    return {
+      content: buildFountain(script),
+      ext: 'fountain',
+      type: 'text/plain;charset=utf-8',
+      label: 'Fountain'
+    };
+  }
+  if (format === 'txt') {
+    return {
+      content: script.body,
+      ext: 'txt',
+      type: 'text/plain;charset=utf-8',
+      label: 'plain text'
+    };
+  }
+  return {
+    content: buildFinalDraft(script),
+    ext: 'fdx',
+    type: 'application/vnd.finaldraft',
+    label: 'Final Draft'
+  };
+}
+
+function buildFountain(script) {
+  return 'Title: ' + script.title + '\n'
+    + 'Credit: Written by\n'
+    + 'Author: Michael D\'Asaro\n'
+    + 'Format: ' + ((SCRIPT_FORMATS[script.formatKey] || {}).name || 'Screenplay') + '\n\n'
+    + script.body;
+}
+
+function buildFinalDraft(script) {
+  var paragraphs = script.body.split(/\r?\n/).map(function(line) {
+    var type = getFinalDraftParagraphType(line);
+    return '    <Paragraph Type="' + type + '"><Text>' + escapeXml(line || ' ') + '</Text></Paragraph>';
+  }).join('\n');
+  return '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n'
+    + '<FinalDraft DocumentType="Script" Template="' + escapeXml((SCRIPT_FORMATS[script.formatKey] || {}).name || 'Screenplay') + '" Version="3">\n'
+    + '  <Content>\n'
+    + paragraphs + '\n'
+    + '  </Content>\n'
+    + '</FinalDraft>\n';
+}
+
+function getFinalDraftParagraphType(line) {
+  var text = (line || '').trim();
+  if (!text) return 'Action';
+  if (/^(INT\.|EXT\.|INT\/EXT\.|EST\.)/.test(text)) return 'Scene Heading';
+  if (/^(ACT|COLD OPEN|TAG|END OF SHOW)/.test(text)) return 'Act';
+  if (/^[A-Z0-9 ()'.-]+$/.test(text) && text.length < 32) return 'Character';
+  return 'Action';
+}
+
+function slugifyFileName(value) {
+  return (value || 'script').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'script';
+}
+
+function escapeXml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

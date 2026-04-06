@@ -55,7 +55,10 @@ showAuthScreen();
     var ki2 = document.getElementById('api-key-input');
     if (ki2 && apiKey) ki2.value = apiKey;
   }, 500);
-  try { if (localStorage.getItem('c4a_dark') === '1') { document.body.classList.add('dark'); var db = document.getElementById('dark-btn'); if(db) db.textContent = '\u2600\ufe0f'; } } catch(e) {}
+  try {
+    var savedTheme = localStorage.getItem('c4a_theme') || (localStorage.getItem('c4a_dark') === '1' ? 'midnight' : 'spotlight');
+    if (typeof applyThemePreset === 'function') applyThemePreset(savedTheme);
+  } catch(e) {}
 })();
 
 // - ONBOARDING -
