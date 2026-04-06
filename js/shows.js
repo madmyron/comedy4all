@@ -172,6 +172,11 @@ function isLikelyMobile() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || window.innerWidth <= 700;
 }
 
+function shouldPreferCaptureFallback(mode) {
+  if (!isLikelyMobile()) return false;
+  return mode === 'audio' || mode === 'video';
+}
+
 function isRecordingSecureContext() {
   if (window.isSecureContext) return true;
   var host = window.location.hostname;
@@ -231,11 +236,13 @@ function setRecordingPendingUI(isPending) {
   var label = document.getElementById('rec-cta-label');
   if (startBtn) {
     startBtn.disabled = !!isPending;
-    startBtn.textContent = isPending ? 'Waiting for permission...' : '\ud83d\udd34 Record';
+    if (isPending) startBtn.textContent = 'Waiting for permission...';
+    else startBtn.textContent = shouldPreferCaptureFallback(_recMode) ? (_recMode === 'video' ? 'Open Video Recorder' : 'Open Audio Recorder') : '\ud83d\udd34 Record';
   }
   if (bigBtn) bigBtn.disabled = !!isPending;
   if (label) {
     if (isPending) label.textContent = 'Allow microphone/camera access to begin recording';
+    else if (shouldPreferCaptureFallback(_recMode)) label.textContent = _recMode === 'video' ? 'Use your phone camera app to record a video clip' : 'Use your phone voice recorder to capture audio';
     else label.textContent = _recMode === 'video' ? 'Tap to record video' : 'Tap to record audio';
   }
 }
@@ -294,6 +301,13 @@ function updateRecordingAvailability() {
   var fallbackBtn = document.getElementById('rec-phone-fallback-btn');
   if (!note || !text) return;
   if (fallbackBtn) fallbackBtn.style.display = isLikelyMobile() ? 'inline-flex' : 'none';
+  if (shouldPreferCaptureFallback(_recMode)) {
+    note.style.display = 'block';
+    text.textContent = _recMode === 'video'
+      ? 'On phones, Comedy 4 All now uses your device camera app for recording because it is more reliable than live browser capture.'
+      : 'On phones, Comedy 4 All now uses your device voice recorder/file picker because it is more reliable than live browser capture.';
+    return;
+  }
   if (isRecordingSecureContext()) {
     note.style.display = 'block';
     text.textContent = _recMode === 'video'
@@ -318,7 +332,7 @@ function setRecMode(mode) {
     if (videoBtn) { videoBtn.style.background = 'var(--gold)'; videoBtn.style.color = '#fff'; videoBtn.style.fontWeight = '600'; }
     if (bigBtn) bigBtn.textContent = '\ud83c\udfa5';
     if (label) label.textContent = 'Tap to record video';
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    if (!shouldPreferCaptureFallback('video') && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       requestRecordingStream('video').then(function(stream) {
         _camStream = stream;
         var vid = document.getElementById('video-preview');
@@ -333,13 +347,18 @@ function setRecMode(mode) {
     if (audioBtn) { audioBtn.style.background = 'var(--gold)'; audioBtn.style.color = '#fff'; audioBtn.style.fontWeight = '600'; }
     if (videoBtn) { videoBtn.style.background = 'transparent'; videoBtn.style.color = 'var(--text2)'; videoBtn.style.fontWeight = '500'; }
     if (bigBtn) bigBtn.textContent = '\ud83c\udf99\ufe0f';
-    if (label) label.textContent = 'Tap to record audio';
+    if (label) label.textContent = shouldPreferCaptureFallback('audio') ? 'Use your phone voice recorder to capture audio' : 'Tap to record audio';
     if (previewWrap) previewWrap.style.display = 'none';
     if (_camStream) { _camStream.getTracks().forEach(function(t){t.stop();}); _camStream = null; }
   }
+  setRecordingPendingUI(false);
 }
 
 function startRecording() {
+  if (shouldPreferCaptureFallback(_recMode)) {
+    triggerCaptureFallback();
+    return;
+  }
   // On comedy4all.com (HTTPS) this will always pass
   // On http://192.168.x.x it will show the toast
   if (!isRecordingSecureContext()) {
@@ -432,7 +451,10 @@ function startRecording() {
 
 function triggerCaptureFallback() {
   var input = document.getElementById(_recMode === 'video' ? 'rec-video-fallback' : 'rec-audio-fallback');
-  if (input) input.click();
+  if (input) {
+    toast(_recMode === 'video' ? 'Opening your phone camera recorder...' : 'Opening your phone audio recorder...');
+    input.click();
+  }
 }
 
 function handleCaptureFallback(event, mode) {
@@ -455,7 +477,7 @@ function handleCaptureFallback(event, mode) {
   renderRecListReal();
   loadRecording(rec.id);
   renderMoments();
-  toast((mode === 'video' ? 'Video' : 'Audio') + ' imported from phone recorder.');
+  toast((mode === 'video' ? 'Video' : 'Audio') + ' imported from your phone recorder.');
   event.target.value = '';
 }
 function stopRecording() {
