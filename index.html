@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<!-- C4A VERSION 10.2 -->
-<html lang="en">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0045)file:///C:/Users/micha/Downloads/index_2.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Comedy 4 All</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="./index_files/css2" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -273,35 +272,35 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
   #screen-recording .content > div > div:last-child{display:none}
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./index_files/supabase.js.download"></script>
 </head>
 <body>
 <!-- AUTH SCREEN -->
-<div id="auth-screen" style="display:none;position:fixed;inset:0;z-index:500;background:var(--bg);align-items:center;justify-content:center;padding:20px">
+<div id="auth-screen" style="display: flex; position: fixed; inset: 0px; z-index: 500; background: var(--bg); align-items: center; justify-content: center; padding: 20px;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:34px 30px;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.10)">
     <div style="text-align:center;margin-bottom:26px">
-      <div style="width:50px;height:50px;background:var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px">&#127908;</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:3px;color:var(--text)">Comedy 4 All</div>
+      <div style="width:50px;height:50px;background:var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px">🎤</div>
+      <div style="font-family:&#39;DM Serif Display&#39;,serif;font-size:22px;margin-bottom:3px;color:var(--text)">Comedy 4 All</div>
       <div style="font-size:12px;color:var(--text3)">Your professional comedy workspace</div>
     </div>
     <div style="display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px">
-      <button id="tab-signin" onclick="showAuthTab('signin')" style="flex:1;padding:9px;border:none;background:var(--gold);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Sign In</button>
-      <button id="tab-signup" onclick="showAuthTab('signup')" style="flex:1;padding:9px;border:none;background:var(--bg3);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">Sign Up</button>
+      <button id="tab-signin" onclick="showAuthTab(&#39;signin&#39;)" style="flex:1;padding:9px;border:none;background:var(--gold);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">Sign In</button>
+      <button id="tab-signup" onclick="showAuthTab(&#39;signup&#39;)" style="flex:1;padding:9px;border:none;background:var(--bg3);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">Sign Up</button>
     </div>
     <div id="auth-signin">
-      <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Email</label><input id="signin-email" type="email" autocomplete="email" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="michael@comedy4all.com" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignIn()"></div>
-      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><input id="signin-password" type="password" autocomplete="current-password" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignIn()"></div>
-      <button onclick="doSignIn()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Sign In</button>
-      <button onclick="doGoogleSignIn()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Continue with Google</button>
-      <button onclick="showAuthTab('phone')" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">📱 Sign in with phone</button>
+      <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Email</label><input id="signin-email" type="email" autocomplete="email" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:&#39;Inter&#39;,sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="michael@comedy4all.com" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;" onkeydown="if(event.key===&#39;Enter&#39;)doSignIn()"></div>
+      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><input id="signin-password" type="password" autocomplete="current-password" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:&#39;Inter&#39;,sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="••••••••" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;" onkeydown="if(event.key===&#39;Enter&#39;)doSignIn()"></div>
+      <button onclick="doSignIn()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;margin-bottom:9px">Sign In</button>
+      <button onclick="doGoogleSignIn()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;margin-bottom:9px">Continue with Google</button>
+      <button onclick="showAuthTab(&#39;phone&#39;)" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">📱 Sign in with phone</button>
     </div>
     <div id="auth-signup" style="display:none">
-      <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Your Name</label><input id="signup-name" type="text" autocomplete="name" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="Michael D'Asaro" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
-      <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Email</label><input id="signup-email" type="email" autocomplete="email" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="michael@comedy4all.com" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
-      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><input id="signup-password" type="password" autocomplete="new-password" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="At least 6 characters" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignUp()"></div>
-      <button id="signup-btn" onclick="doSignUp()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Create Account</button>
-      <button onclick="doGoogleSignIn()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Continue with Google</button>
-      <button onclick="showAuthTab('phone')" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">📱 Use phone number instead</button>
+      <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Your Name</label><input id="signup-name" type="text" autocomplete="name" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:&#39;Inter&#39;,sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="Michael D&#39;Asaro" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;"></div>
+      <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Email</label><input id="signup-email" type="email" autocomplete="email" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:&#39;Inter&#39;,sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="michael@comedy4all.com" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;"></div>
+      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><input id="signup-password" type="password" autocomplete="new-password" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:&#39;Inter&#39;,sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="At least 6 characters" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;" onkeydown="if(event.key===&#39;Enter&#39;)doSignUp()"></div>
+      <button id="signup-btn" onclick="doSignUp()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;margin-bottom:9px">Create Account</button>
+      <button onclick="doGoogleSignIn()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;margin-bottom:9px">Continue with Google</button>
+      <button onclick="showAuthTab(&#39;phone&#39;)" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">📱 Use phone number instead</button>
     </div>
     <div id="auth-error" style="display:none;margin-top:10px;padding:9px 12px;background:var(--red-bg);border:1px solid #f0c0bb;border-radius:8px;font-size:12px;color:var(--red)"></div>
     <div id="auth-success" style="display:none;margin-top:10px;padding:9px 12px;background:var(--green-bg);border:1px solid #a8d8aa;border-radius:8px;font-size:12px;color:var(--green)"></div>
@@ -309,21 +308,21 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
     <!-- PHONE LOGIN -->
     <div id="auth-phone" style="display:none">
       <div id="phone-step1">
-        <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Phone Number</label><input id="phone-input" type="tel" autocomplete="tel" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="+1 (214) 555-0000" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doPhoneSend()"></div>
+        <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Phone Number</label><input id="phone-input" type="tel" autocomplete="tel" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:&#39;Inter&#39;,sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="+1 (214) 555-0000" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;" onkeydown="if(event.key===&#39;Enter&#39;)doPhoneSend()"></div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.6">We'll send a 6-digit code to your phone. Standard SMS rates may apply.</div>
-        <button id="phone-send-btn" onclick="doPhoneSend()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Send Code</button>
-        <button onclick="showAuthTab('signin')" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">← Back to email</button>
+        <button id="phone-send-btn" onclick="doPhoneSend()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;margin-bottom:9px">Send Code</button>
+        <button onclick="showAuthTab(&#39;signin&#39;)" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">← Back to email</button>
       </div>
       <div id="phone-step2" style="display:none">
         <div style="text-align:center;margin-bottom:14px;font-size:12px;color:var(--text3)" id="phone-sent-msg">Code sent!</div>
-        <div style="margin-bottom:14px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Enter 6-digit code</label><input id="otp-input" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-size:22px;font-family:'DM Mono',monospace;outline:none;background:var(--bg3);color:var(--text);text-align:center;letter-spacing:.25em" placeholder="······" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" oninput="if(this.value.length===6)doPhoneVerify()" onkeydown="if(event.key==='Enter')doPhoneVerify()"></div>
-        <button id="phone-verify-btn" onclick="doPhoneVerify()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Verify & Sign In</button>
-        <button onclick="showPhoneStep1()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">← Change number</button>
+        <div style="margin-bottom:14px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Enter 6-digit code</label><input id="otp-input" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-size:22px;font-family:&#39;DM Mono&#39;,monospace;outline:none;background:var(--bg3);color:var(--text);text-align:center;letter-spacing:.25em" placeholder="······" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;" oninput="if(this.value.length===6)doPhoneVerify()" onkeydown="if(event.key===&#39;Enter&#39;)doPhoneVerify()"></div>
+        <button id="phone-verify-btn" onclick="doPhoneVerify()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;margin-bottom:9px">Verify &amp; Sign In</button>
+        <button onclick="showPhoneStep1()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">← Change number</button>
       </div>
     </div>
     <div style="display:none">
-      <input id="sb-url" type="hidden">
-      <input id="sb-key" type="hidden">
+      <input id="sb-url" type="hidden" value="https://largbufmopnfeodsmhkr.supabase.co">
+      <input id="sb-key" type="hidden" value="(configured)">
     </div>
   </div>
 </div>
@@ -338,46 +337,46 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
     <div class="nav">
       <div class="nav-sect">Main</div>
       <div class="nav-item active" data-screen="dashboard" data-label="Dashboard">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor" opacity=".8"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" opacity=".3"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor" opacity=".8"></rect><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor" opacity=".5"></rect><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor" opacity=".5"></rect><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" opacity=".3"></rect></svg>
         <span class="nav-label">Dashboard</span>
       </div>
       <div class="nav-item" data-screen="jokes" data-label="Joke Manager">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="9" height="2" rx="1" fill="currentColor" opacity=".7"/><rect x="2" y="12" width="6" height="2" rx="1" fill="currentColor" opacity=".5"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="2" rx="1" fill="currentColor"></rect><rect x="2" y="7" width="9" height="2" rx="1" fill="currentColor" opacity=".7"></rect><rect x="2" y="12" width="6" height="2" rx="1" fill="currentColor" opacity=".5"></rect></svg>
         <span class="nav-label">Joke Manager</span><span class="nav-badge" id="nb-jokes">9</span>
       </div>
       <div class="nav-item" data-screen="sets" data-label="Set Builder">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
         <span class="nav-label">Set Builder</span>
       </div>
       <div class="nav-sect">Create</div>
       <div class="nav-item" data-screen="recording" data-label="Recording">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M4 9c0 2.2 1.8 4 4 4s4-1.8 4-4M8 13v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 9c0 2.2 1.8 4 4 4s4-1.8 4-4M8 13v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
         <span class="nav-label">Recording</span>
       </div>
       <div class="nav-item" data-screen="studio" data-label="Writing Studio">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 3h10v10H3V3zM6 7h4M6 10h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 3h10v10H3V3zM6 7h4M6 10h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"></path></svg>
         <span class="nav-label">Writing Studio</span>
       </div>
       <div class="nav-item" data-screen="brooks" data-label="Brooks AI">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 9.5c.5.8 1.5 1.5 2.5 1.5s2-.7 2.5-1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="6" cy="7" r="1" fill="currentColor"/><circle cx="10" cy="7" r="1" fill="currentColor"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"></circle><path d="M5.5 9.5c.5.8 1.5 1.5 2.5 1.5s2-.7 2.5-1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"></path><circle cx="6" cy="7" r="1" fill="currentColor"></circle><circle cx="10" cy="7" r="1" fill="currentColor"></circle></svg>
         <span class="nav-label">Brooks AI ✦</span>
       </div>
       <div class="nav-sect">Insights</div>
       <div class="nav-item" data-screen="analytics" data-label="Analytics">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 13V8l3-3 3 2 4-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 13V8l3-3 3 2 4-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         <span class="nav-label">Analytics</span>
       </div>
       <div class="nav-item" data-screen="shows" data-label="Show History">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 3V1M11 3V1M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"></rect><path d="M5 3V1M11 3V1M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path></svg>
         <span class="nav-label">Show History</span>
       </div>
       <div class="nav-item" data-screen="versions" data-label="Version History">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="4" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M8 6v4" stroke="currentColor" stroke-width="1.3"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="4" r="2" stroke="currentColor" stroke-width="1.3"></circle><circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.3"></circle><path d="M8 6v4" stroke="currentColor" stroke-width="1.3"></path></svg>
         <span class="nav-label">Version History</span>
       </div>
       <div class="nav-sect">Account</div>
       <div class="nav-item" data-screen="settings" data-label="Settings">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"></circle><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path></svg>
         <span class="nav-label">Settings</span>
       </div>
     </div>
@@ -395,7 +394,7 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
   <span id="sync-msg" style="font-weight:500">Synced</span>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
     <span id="sync-user" style="color:var(--text3);font-size:10px"></span>
-    <button onclick="doSignOut()" style="background:none;border:1px solid #a8d8aa;border-radius:5px;font-size:10px;color:var(--text3);padding:2px 9px;cursor:pointer;font-family:'Inter',sans-serif">Sign Out</button>
+    <button onclick="doSignOut()" style="background:none;border:1px solid #a8d8aa;border-radius:5px;font-size:10px;color:var(--text3);padding:2px 9px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">Sign Out</button>
     <button class="dark-toggle" onclick="toggleDark()" title="Toggle dark mode" id="dark-btn">🌙</button>
   </div>
 </div>
@@ -406,7 +405,7 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
       <div class="topbar">
         <button class="nav-toggle" id="toggle-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Good evening, Michael 👋 <span style="font-size:12px;color:var(--text3);font-weight:400">· Next show in 3 days</span></div>
-        <button class="btn btn-sm" onclick="go('analytics')">[PDF] Stats</button>
+        <button class="btn btn-sm" onclick="go(&#39;analytics&#39;)">[PDF] Stats</button>
         <button class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
       </div>
       <div class="content scroll">
@@ -428,7 +427,7 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
             </div>
             <div class="card">
               <div class="ctitle">Recent Activity</div>
-              <div id="activity-feed"></div>
+              <div id="activity-feed"><div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)"><span style="width:7px;height:7px;border-radius:50%;background:#2d7a35;flex-shrink:0"></span><span style="flex:1">New joke added: <strong>"Grocery self-checkout"</strong></span><span style="color:var(--text3);font-size:10px;white-space:nowrap">2h ago</span></div><div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)"><span style="width:7px;height:7px;border-radius:50%;background:#b07d10;flex-shrink:0"></span><span style="flex:1">Set updated: <strong>"The Weekender"</strong></span><span style="color:var(--text3);font-size:10px;white-space:nowrap">5h ago</span></div><div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)"><span style="width:7px;height:7px;border-radius:50%;background:#1a5aa0;flex-shrink:0"></span><span style="flex:1">Recording transcribed: <strong>Laugh Factory 3/22</strong></span><span style="color:var(--text3);font-size:10px;white-space:nowrap">1d ago</span></div><div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)"><span style="width:7px;height:7px;border-radius:50%;background:#6830a0;flex-shrink:0"></span><span style="flex:1">Brooks AI suggestion saved</span><span style="color:var(--text3);font-size:10px;white-space:nowrap">2d ago</span></div></div>
             </div>
           </div>
           <div>
@@ -438,7 +437,7 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
                 <div style="padding:9px 0;border-bottom:1px solid var(--border)">
                   <div style="font-weight:600;margin-bottom:2px">Addison Improv -- Friday</div>
                   <div style="color:var(--text3);font-size:10px;margin-bottom:6px">8:00 PM · 20 min · <span style="color:var(--gold);font-weight:500">3 days away</span></div>
-                  <button class="btn btn-sm" onclick="go('rehearsal')">> Rehearse Now</button>
+                  <button class="btn btn-sm" onclick="go(&#39;rehearsal&#39;)">&gt; Rehearse Now</button>
                 </div>
                 <div style="padding:9px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600;margin-bottom:2px">Dallas Comedy Club -- Apr 5</div><div style="color:var(--text3);font-size:10px">Corporate gig · 10 min</div></div>
                 <div style="padding:9px 0"><div style="font-weight:600;margin-bottom:2px">Hyena's -- Apr 12</div><div style="color:var(--text3);font-size:10px">Headliner · 45 min</div></div>
@@ -448,16 +447,16 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
               <div class="ctitle">Quick Actions</div>
               <div style="display:flex;flex-direction:column;gap:6px">
                 <button class="btn" style="justify-content:flex-start;gap:9px" onclick="openNewJoke()">✍️ Write a new joke</button>
-                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go('sets')">[PDF] Build a set</button>
-                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go('rehearsal')">🎭 Rehearse current set</button>
-                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go('brooks')">✦ Ask Brooks AI</button>
-                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go('recording')">🎙️ Start recording</button>
+                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go(&#39;sets&#39;)">[PDF] Build a set</button>
+                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go(&#39;rehearsal&#39;)">🎭 Rehearse current set</button>
+                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go(&#39;brooks&#39;)">✦ Ask Brooks AI</button>
+                <button class="btn" style="justify-content:flex-start;gap:9px" onclick="go(&#39;recording&#39;)">🎙️ Start recording</button>
               </div>
             </div>
             <div class="card" style="background:var(--gold-bg);border-color:var(--gold-br)">
               <div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:5px;letter-spacing:.05em">✦ BROOKS INSIGHT</div>
               <div style="font-size:12px;color:var(--text2);line-height:1.7">Your tech jokes score 15% higher than relationship material. Show Friday -- want to punch up the set?</div>
-              <button class="btn btn-sm" style="margin-top:9px" onclick="go('brooks')">Chat with Brooks -></button>
+              <button class="btn btn-sm" style="margin-top:9px" onclick="go(&#39;brooks&#39;)">Chat with Brooks -&gt;</button>
             </div>
           </div>
         </div>
@@ -469,7 +468,7 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
       <div class="topbar">
         <button class="nav-toggle" id="toggle-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Joke Manager</div>
-        <input id="joke-search" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:185px;transition:border .15s" placeholder="Search jokes..." oninput="filterJokes(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <input id="joke-search" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;color:var(--text);font-size:12px;font-family:&#39;Inter&#39;,sans-serif;outline:none;width:185px;transition:border .15s" placeholder="Search jokes..." oninput="filterJokes(this.value)" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;">
         <select class="btn" style="padding:6px 9px" onchange="filterByTag(this.value)">
           <option value="">All Tags</option><option>Travel</option><option>Dating</option><option>Tech</option><option>Family</option><option>Work</option>
         </select>
@@ -481,15 +480,15 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
       <div style="display:flex;flex:1;overflow:hidden">
         <div class="content scroll" style="flex:1">
           <div style="display:flex;gap:6px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
-            <span class="tag tag-gold" style="cursor:pointer" onclick="filterByTier('a')">A-Tier</span>
-            <span class="tag tag-blue" style="cursor:pointer" onclick="filterByTier('b')">B-Tier</span>
-            <span class="tag tag-gray" style="cursor:pointer" onclick="filterByTier('c')">C-Tier</span>
-            <span class="tag tag-gray" style="cursor:pointer" onclick="filterByTier('')">All</span>
-            <span class="tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid #b8d4f4;cursor:pointer" onclick="filterByTier('archived')">📦 Archived</span>
+            <span class="tag tag-gold" style="cursor:pointer" onclick="filterByTier(&#39;a&#39;)">A-Tier</span>
+            <span class="tag tag-blue" style="cursor:pointer" onclick="filterByTier(&#39;b&#39;)">B-Tier</span>
+            <span class="tag tag-gray" style="cursor:pointer" onclick="filterByTier(&#39;c&#39;)">C-Tier</span>
+            <span class="tag tag-gray" style="cursor:pointer" onclick="filterByTier(&#39;&#39;)">All</span>
+            <span class="tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid #b8d4f4;cursor:pointer" onclick="filterByTier(&#39;archived&#39;)">📦 Archived</span>
             <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="joke-count">9 jokes</span>
             <button class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
           </div>
-          <div class="joke-grid" id="joke-grid"></div>
+          <div class="joke-grid" id="joke-grid"><div class="jcard ta" data-jid="1" style="cursor:pointer"><div class="jtitle">Airport security bit</div><div class="jprev">So I'm at the airport security line, right? The guy in front of me is taking off his shoes, his belt, his watch... I'm like, is this a security checkpoint or your Tinder profile photo? He goes 'First time flying?' I said -- no man. First time getting DIVORCED.</div><div style="margin-bottom:8px"><span class="tag tag-gold">Travel</span></div><div class="jmeta"><span class="stars">★★★★★</span><span style="font-family:&#39;DM Mono&#39;,monospace;color:var(--text3);font-size:10px">2:30</span><span style="color:var(--gold);font-weight:600">9.2</span></div></div><div class="jcard ta" data-jid="2" style="cursor:pointer"><div class="jtitle">Dating app opener</div><div class="jprev">Has anyone here used a dating app? Everyone. We're all swiping like it's a job we hate but can't quit. My profile says spontaneous. I have spontaneity scheduled for every other Tuesday.</div><div style="margin-bottom:8px"><span class="tag tag-purple">Dating</span></div><div class="jmeta"><span class="stars">★★★★★</span><span style="font-family:&#39;DM Mono&#39;,monospace;color:var(--text3);font-size:10px">3:00</span><span style="color:var(--gold);font-weight:600">8.7</span></div></div><div class="jcard ta" data-jid="3" style="cursor:pointer"><div class="jtitle">Remote work WFH</div><div class="jprev">I've been working from home so long my dog started giving me performance reviews. He said I need to improve my bark-to-output ratio.</div><div style="margin-bottom:8px"><span class="tag tag-gray">Work</span><span class="tag tag-blue">Tech</span></div><div class="jmeta"><span class="stars">★★★★☆</span><span style="font-family:&#39;DM Mono&#39;,monospace;color:var(--text3);font-size:10px">2:45</span><span style="color:var(--gold);font-weight:600">8.3</span></div></div><div class="jcard ta" data-jid="4" style="cursor:pointer"><div class="jtitle">First class vs coach</div><div class="jprev">First class gets warm towels. Coach gets looked at with pity by the flight attendant. I'm in row 38. She handed me a napkin like it was a consolation prize.</div><div style="margin-bottom:8px"><span class="tag tag-gold">Travel</span></div><div class="jmeta"><span class="stars">★★★★☆</span><span style="font-family:&#39;DM Mono&#39;,monospace;color:var(--text3);font-size:10px">2:15</span><span style="color:var(--gold);font-weight:600">8.1</span></div></div><div class="jcard tb" data-jid="5" style="cursor:pointer"><div class="jtitle">Mom texting</div><div class="jprev">My mom learned to use emojis. Full send, no context. She texted me the eggplant emoji asking what I wanted for dinner. I said: definitely not that.</div><div style="margin-bottom:8px"><span class="tag tag-green">Family</span></div><div class="jmeta"><span class="stars">★★★★☆</span><span style="font-family:&#39;DM Mono&#39;,monospace;color:var(--text3);font-size:10px">1:45</span><span style="color:var(--blue);font-weight:600">7.9</span></div></div><div class="jcard tb" data-jid="6" style="cursor:pointer"><div class="jtitle">Grocery self-checkout</div><div class="jprev">I love how they call it self-checkout like I asked for this responsibility. Sir this is a Kroger, not a career opportunity.</div><div style="margin-bottom:8px"><span class="tag tag-gray">Work</span></div><div class="jmeta"><span class="stars">★★★★☆</span><span style="font-family:&#39;DM Mono&#39;,monospace;color:var(--text3);font-size:10px">2:00</span><span style="color:var(--blue);font-weight:600">7.8</span></div></div><div class="jcard tb" data-jid="7" style="cursor:pointer"><div class="jtitle">Social media algorithm</div><div class="jprev">My feed is so specific it showed me an ad for left-handed scissors for anxious dog owners who like jazz. I felt seen.</div><div style="margin-bottom:8px"><span class="tag tag-blue">Tech</span></div><div class="jmeta"><span class="stars">★★★☆☆</span><span style="font-family:&#39;DM Mono&#39;,monospace;color:var(--text3);font-size:10px">1:45</span><span style="color:var(--blue);font-weight:600">7.3</span></div></div><div class="jcard tb" data-jid="8" style="cursor:pointer"><div class="jtitle">Coffee shop prices</div><div class="jprev">$7 for a coffee. I asked if it came with a hug. She said that's extra. Turns out hugs are $12 with the app.</div><div style="margin-bottom:8px"><span class="tag tag-gray">Work</span></div><div class="jmeta"><span class="stars">★★★☆☆</span><span style="font-family:&#39;DM Mono&#39;,monospace;color:var(--text3);font-size:10px">1:30</span><span style="color:var(--blue);font-weight:600">7.1</span></div></div><div class="jcard tc" data-jid="9" style="cursor:pointer"><div class="jtitle">Fitness tracker</div><div class="jprev">My fitness tracker said I took 200 steps yesterday. I work from home -- that's called commuting. It gave me a sad face emoji.</div><div style="margin-bottom:8px"><span class="tag tag-blue">Tech</span></div><div class="jmeta"><span class="stars">★★★☆☆</span><span style="font-family:&#39;DM Mono&#39;,monospace;color:var(--text3);font-size:10px">1:15</span><span style="color:var(--text3);font-weight:600">6.8</span></div></div></div>
         </div>
         <div id="joke-detail" style="background:var(--bg2);border-left:1px solid var(--border);width:295px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden">
           <!-- Mobile drag handle / close bar -- hidden on desktop via CSS -->
@@ -510,13 +509,13 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
         <button class="nav-toggle" id="toggle-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Set Builder</div>
         <select class="btn" style="padding:6px 9px"><option>The Weekender</option><option>Corporate Gig</option><option>Late Night Pilot</option></select>
-        <button class="btn btn-sm" onclick="toast('Exported!')">↓ Export</button>
-        <button class="btn btn-sm btn-primary" onclick="toast('Set saved! ✓')">Save Set</button>
+        <button class="btn btn-sm" onclick="toast(&#39;Exported!&#39;)">↓ Export</button>
+        <button class="btn btn-sm btn-primary" onclick="toast(&#39;Set saved! ✓&#39;)">Save Set</button>
       </div>
       <div style="display:grid;grid-template-columns:228px 1fr 250px;height:calc(100% - 54px);overflow:hidden">
         <div style="background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto" class="scroll">
           <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:12px 13px 6px">Joke Library</div>
-          <div id="set-lib"></div>
+          <div id="set-lib"><div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;&#39;" onclick="toast(&#39;Added: Airport security bit&#39;)"><div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:var(--gold);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:500;color:var(--text)">Airport security bit</div><div style="font-size:10px;color:var(--text3)">2:30 - 9.2/10</div></div></div><div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;&#39;" onclick="toast(&#39;Added: Dating app opener&#39;)"><div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:var(--gold);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:500;color:var(--text)">Dating app opener</div><div style="font-size:10px;color:var(--text3)">3:00 - 8.7/10</div></div></div><div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;&#39;" onclick="toast(&#39;Added: Remote work WFH&#39;)"><div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:var(--gold);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:500;color:var(--text)">Remote work WFH</div><div style="font-size:10px;color:var(--text3)">2:45 - 8.3/10</div></div></div><div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;&#39;" onclick="toast(&#39;Added: First class vs coach&#39;)"><div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:var(--gold);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:500;color:var(--text)">First class vs coach</div><div style="font-size:10px;color:var(--text3)">2:15 - 8.1/10</div></div></div><div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;&#39;" onclick="toast(&#39;Added: Mom texting&#39;)"><div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:var(--blue);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:500;color:var(--text)">Mom texting</div><div style="font-size:10px;color:var(--text3)">1:45 - 7.9/10</div></div></div><div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;&#39;" onclick="toast(&#39;Added: Grocery self-checkout&#39;)"><div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:var(--blue);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:500;color:var(--text)">Grocery self-checkout</div><div style="font-size:10px;color:var(--text3)">2:00 - 7.8/10</div></div></div><div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;&#39;" onclick="toast(&#39;Added: Social media algorithm&#39;)"><div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:var(--blue);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:500;color:var(--text)">Social media algorithm</div><div style="font-size:10px;color:var(--text3)">1:45 - 7.3/10</div></div></div><div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;&#39;" onclick="toast(&#39;Added: Coffee shop prices&#39;)"><div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:var(--blue);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:500;color:var(--text)">Coffee shop prices</div><div style="font-size:10px;color:var(--text3)">1:30 - 7.1/10</div></div></div><div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;&#39;" onclick="toast(&#39;Added: Fitness tracker&#39;)"><div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:var(--text3);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:500;color:var(--text)">Fitness tracker</div><div style="font-size:10px;color:var(--text3)">1:15 - 6.8/10</div></div></div></div>
         </div>
         <div style="overflow-y:auto;padding:14px;background:var(--bg)" class="scroll">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;color:var(--text3)">
@@ -524,12 +523,12 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
             <div style="flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;background:var(--gold);width:73%;border-radius:3px"></div></div>
             <span style="color:var(--gold);font-weight:500">30min goal</span>
           </div>
-          <div id="set-canvas"></div>
-          <div style="padding:11px;border:2px dashed var(--border2);border-radius:var(--r2);text-align:center;font-size:11px;color:var(--text3);cursor:pointer;margin-top:8px;background:var(--bg2)" onclick="toast('Click jokes on the left to add them')">+ Add joke to set</div>
+          <div id="set-canvas"><div class="sslot"><div class="sslot-num">1</div><div class="sslot-card" style="border-left:3px solid var(--gold)"><div style="font-size:12px;font-weight:600;color:var(--text)">Airport security bit</div><div style="font-size:10px;color:var(--text3);font-family:&#39;DM Mono&#39;,monospace">2:30 - 9.2/10</div></div><div class="sslot-time">0:00</div></div><div style="margin-left:24px;margin-bottom:6px"><div class="sslot-card segue" onclick="toast(&#39;Add segue here&#39;)"><div style="font-size:10px;color:var(--text3)">+ segue / crowd work</div></div></div><div class="sslot"><div class="sslot-num">2</div><div class="sslot-card" style="border-left:3px solid var(--gold)"><div style="font-size:12px;font-weight:600;color:var(--text)">Dating app opener</div><div style="font-size:10px;color:var(--text3);font-family:&#39;DM Mono&#39;,monospace">3:00 - 8.7/10</div></div><div class="sslot-time">2:30</div></div><div style="margin-left:24px;margin-bottom:6px"><div class="sslot-card segue" onclick="toast(&#39;Add segue here&#39;)"><div style="font-size:10px;color:var(--text3)">+ segue / crowd work</div></div></div><div class="sslot"><div class="sslot-num">3</div><div class="sslot-card" style="border-left:3px solid var(--gold)"><div style="font-size:12px;font-weight:600;color:var(--text)">Remote work WFH</div><div style="font-size:10px;color:var(--text3);font-family:&#39;DM Mono&#39;,monospace">2:45 - 8.3/10</div></div><div class="sslot-time">5:30</div></div><div style="margin-left:24px;margin-bottom:6px"><div class="sslot-card segue" onclick="toast(&#39;Add segue here&#39;)"><div style="font-size:10px;color:var(--text3)">+ segue / crowd work</div></div></div><div class="sslot"><div class="sslot-num">4</div><div class="sslot-card" style="border-left:3px solid var(--gold)"><div style="font-size:12px;font-weight:600;color:var(--text)">First class vs coach</div><div style="font-size:10px;color:var(--text3);font-family:&#39;DM Mono&#39;,monospace">2:15 - 8.1/10</div></div><div class="sslot-time">8:15</div></div><div style="margin-left:24px;margin-bottom:6px"><div class="sslot-card segue" onclick="toast(&#39;Add segue here&#39;)"><div style="font-size:10px;color:var(--text3)">+ segue / crowd work</div></div></div><div class="sslot"><div class="sslot-num">5</div><div class="sslot-card" style="border-left:3px solid var(--blue)"><div style="font-size:12px;font-weight:600;color:var(--text)">Mom texting</div><div style="font-size:10px;color:var(--text3);font-family:&#39;DM Mono&#39;,monospace">1:45 - 7.9/10</div></div><div class="sslot-time">10:30</div></div><div style="margin-left:24px;margin-bottom:6px"><div class="sslot-card segue" onclick="toast(&#39;Add segue here&#39;)"><div style="font-size:10px;color:var(--text3)">+ segue / crowd work</div></div></div><div class="sslot"><div class="sslot-num">6</div><div class="sslot-card" style="border-left:3px solid var(--blue)"><div style="font-size:12px;font-weight:600;color:var(--text)">Grocery self-checkout</div><div style="font-size:10px;color:var(--text3);font-family:&#39;DM Mono&#39;,monospace">2:00 - 7.8/10</div></div><div class="sslot-time">12:15</div></div><div style="margin-left:24px;margin-bottom:6px"><div class="sslot-card segue" onclick="toast(&#39;Add segue here&#39;)"><div style="font-size:10px;color:var(--text3)">+ segue / crowd work</div></div></div><div class="sslot"><div class="sslot-num">7</div><div class="sslot-card" style="border-left:3px solid var(--blue)"><div style="font-size:12px;font-weight:600;color:var(--text)">Social media algorithm</div><div style="font-size:10px;color:var(--text3);font-family:&#39;DM Mono&#39;,monospace">1:45 - 7.3/10</div></div><div class="sslot-time">14:15</div></div></div>
+          <div style="padding:11px;border:2px dashed var(--border2);border-radius:var(--r2);text-align:center;font-size:11px;color:var(--text3);cursor:pointer;margin-top:8px;background:var(--bg2)" onclick="toast(&#39;Click jokes on the left to add them&#39;)">+ Add joke to set</div>
         </div>
         <div style="background:var(--bg2);border-left:1px solid var(--border);padding:14px;overflow-y:auto" class="scroll">
           <div class="sect-title">Set Stats</div>
-          <div style="text-align:center;margin-bottom:12px"><div style="font-size:38px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold)">22:30</div><div style="font-size:10px;color:var(--text3)">total runtime</div></div>
+          <div style="text-align:center;margin-bottom:12px"><div style="font-size:38px;font-weight:700;font-family:&#39;DM Mono&#39;,monospace;color:var(--gold)">22:30</div><div style="font-size:10px;color:var(--text3)">total runtime</div></div>
           <div style="background:var(--bg3);border-radius:3px;height:5px;overflow:hidden;margin-bottom:4px"><div style="height:100%;background:var(--gold);width:73%;border-radius:3px"></div></div>
           <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:14px">73% of 30min target</div>
           <div class="sep"></div>
@@ -539,8 +538,8 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
           <div class="sep"></div>
           <div class="sect-title" style="margin-top:10px">AI Notes</div>
           <div style="font-size:11.5px;color:var(--text2);line-height:1.65;margin-bottom:14px;background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);padding:9px 11px">Opener strength: 9.2 ✓<br>Consider moving "Mom texting" earlier -- warming slow at slot 6.</div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:7px;font-size:12px" onclick="go('rehearsal')">> Rehearse This Set</button>
-          <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="toast('PDF exported!')">↓ PDF Set Sheet</button>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:7px;font-size:12px" onclick="go(&#39;rehearsal&#39;)">&gt; Rehearse This Set</button>
+          <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="toast(&#39;PDF exported!&#39;)">↓ PDF Set Sheet</button>
         </div>
       </div>
     </div>
@@ -550,13 +549,13 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
       <div class="topbar">
         <button class="nav-toggle" id="toggle-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Rehearsal -- <span style="color:var(--gold)">The Weekender</span></div>
-        <button class="btn btn-sm btn-primary" onclick="go('sets')">✓ Done</button>
+        <button class="btn btn-sm btn-primary" onclick="go(&#39;sets&#39;)">✓ Done</button>
       </div>
       <div style="flex:1;display:flex;overflow:hidden">
         <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:22px;overflow-y:auto;background:var(--bg)">
           <div style="max-width:660px;width:100%;text-align:center">
             <div style="display:flex;gap:6px;justify-content:center;margin-bottom:18px" id="r-dots"></div>
-            <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:11px;letter-spacing:.11em" id="r-counter">JOKE 1 OF 5</div>
+            <div style="font-size:10px;color:var(--text3);font-family:&#39;DM Mono&#39;,monospace;margin-bottom:11px;letter-spacing:.11em" id="r-counter">JOKE 1 OF 5</div>
             <div class="rj-text" id="r-text"></div>
             <div class="rj-punch" id="r-punch" onclick="togglePunch()"></div>
             <div style="font-size:11px;color:var(--text3);margin-bottom:16px">click above or press Space to reveal punchline</div>
@@ -566,9 +565,9 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
               <button class="btn btn-primary" onclick="nextJoke()">Next ›</button>
             </div>
             <div style="display:flex;gap:9px;justify-content:center;margin-bottom:18px">
-              <button class="btn" style="color:var(--red)" onclick="rateJ('bomb')">💀 Bombed</button>
-              <button class="btn" onclick="rateJ('ok')">😐 Okay</button>
-              <button class="btn" style="color:var(--green)" onclick="rateJ('kill')">🔥 Killed</button>
+              <button class="btn" style="color:var(--red)" onclick="rateJ(&#39;bomb&#39;)">💀 Bombed</button>
+              <button class="btn" onclick="rateJ(&#39;ok&#39;)">😐 Okay</button>
+              <button class="btn" style="color:var(--green)" onclick="rateJ(&#39;kill&#39;)">🔥 Killed</button>
             </div>
             <div style="font-size:11px;color:var(--text3)" id="r-timer"> 0:00 elapsed</div>
           </div>
@@ -588,8 +587,8 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
         <button class="nav-toggle" id="toggle-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Recording</div>
         <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:3px">
-          <button id="mode-audio-btn" onclick="setRecMode('audio')" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;background:var(--gold);color:#fff;font-family:'Inter',sans-serif">🎙️ Audio</button>
-          <button id="mode-video-btn" onclick="setRecMode('video')" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--text2);font-family:'Inter',sans-serif">🎥 Video</button>
+          <button id="mode-audio-btn" onclick="setRecMode(&#39;audio&#39;)" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;background:var(--gold);color:#fff;font-family:&#39;Inter&#39;,sans-serif">🎙️ Audio</button>
+          <button id="mode-video-btn" onclick="setRecMode(&#39;video&#39;)" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--text2);font-family:&#39;Inter&#39;,sans-serif">🎥 Video</button>
         </div>
         <button class="btn btn-sm btn-primary" id="rec-start-btn" onclick="startRecording()">⏺ Record</button>
       </div>
@@ -598,10 +597,10 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
         <div id="rec-cta" style="text-align:center;padding:22px 0 18px">
           <!-- Camera preview (video mode only) -->
           <div id="video-preview-wrap" style="display:none;margin-bottom:16px;position:relative;max-width:480px;margin-left:auto;margin-right:auto">
-            <video id="video-preview" autoplay muted playsinline style="width:100%;border-radius:var(--r);border:2px solid var(--red);background:#000;display:block"></video>
+            <video id="video-preview" autoplay="" muted="" playsinline="" style="width:100%;border-radius:var(--r);border:2px solid var(--red);background:#000;display:block"></video>
             <div id="preview-badge" style="position:absolute;top:10px;left:10px;background:rgba(184,50,40,.85);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.04em">PREVIEW</div>
           </div>
-          <button onclick="startRecording()" id="rec-big-btn" style="width:90px;height:90px;border-radius:50%;background:var(--red);border:none;font-size:32px;cursor:pointer;box-shadow:0 4px 18px rgba(184,50,40,.35);transition:transform .1s;display:inline-flex;align-items:center;justify-content:center" onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform='scale(1)'">🎙️</button>
+          <button onclick="startRecording()" id="rec-big-btn" style="width:90px;height:90px;border-radius:50%;background:var(--red);border:none;font-size:32px;cursor:pointer;box-shadow:0 4px 18px rgba(184,50,40,.35);transition:transform .1s;display:inline-flex;align-items:center;justify-content:center" onmousedown="this.style.transform=&#39;scale(.93)&#39;" onmouseup="this.style.transform=&#39;scale(1)&#39;">🎙️</button>
           <div style="font-size:11px;color:var(--text3);margin-top:9px" id="rec-cta-label">Tap to record audio</div>
         </div>
 
@@ -610,9 +609,9 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
           <div class="rec-live">
             <div class="rec-pulse"></div>
             <span>Recording</span>
-            <span id="live-rec-time" style="font-family:'DM Mono',monospace;margin-left:4px;font-size:15px;font-weight:700;min-width:50px">0:00</span>
+            <span id="live-rec-time" style="font-family:&#39;DM Mono&#39;,monospace;margin-left:4px;font-size:15px;font-weight:700;min-width:50px">0:00</span>
             <div class="rec-waveform-live" id="live-waveform" style="flex:1"></div>
-            <button onclick="stopRecording()" style="margin-left:auto;background:var(--red);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0">■ Stop</button>
+            <button onclick="stopRecording()" style="margin-left:auto;background:var(--red);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;flex-shrink:0">■ Stop</button>
           </div>
         </div><!-- end live-rec-panel -->
 
@@ -626,23 +625,23 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
               </div>
               <!-- Video playback (shown for video recordings) -->
               <div id="video-playback-wrap" style="display:none;margin-bottom:12px;border-radius:var(--r);overflow:hidden;background:#000;border:1px solid var(--border)">
-                <video id="video-playback-el" style="width:100%;max-height:320px;display:block" controls></video>
+                <video id="video-playback-el" style="width:100%;max-height:320px;display:block" controls=""></video>
               </div>
-              <div id="waveform" style="height:72px;background:var(--bg3);border-radius:var(--r2);margin-bottom:12px;display:flex;align-items:center;gap:2px;padding:0 10px;overflow:hidden;border:1px solid var(--border)"></div>
+              <div id="waveform" style="height:72px;background:var(--bg3);border-radius:var(--r2);margin-bottom:12px;display:flex;align-items:center;gap:2px;padding:0 10px;overflow:hidden;border:1px solid var(--border)"><div class="wbar" style="height:65px;opacity:0.5706727537416518"></div><div class="wbar" style="height:65px;opacity:0.5374995339057216"></div><div class="wbar" style="height:54.672435972190065px;opacity:0.4145647821303442"></div><div class="wbar" style="height:51.31765198392821px;opacity:0.4151945848676867"></div><div class="wbar" style="height:35.34499998801321px;opacity:0.513968671327947"></div><div class="wbar" style="height:32.200380871289894px;opacity:0.8374841080329261"></div><div class="wbar" style="height:46.50030039131387px;opacity:0.7492602256753513"></div><div class="wbar" style="height:59.81647715841131px;opacity:0.36126269115754733"></div><div class="wbar" style="height:62.721567978519566px;opacity:0.6759241547383309"></div><div class="wbar" style="height:65px;opacity:0.6800839105080698"></div><div class="wbar" style="height:53.10898172381469px;opacity:0.7151944497140854"></div><div class="wbar" style="height:27.088579664490887px;opacity:0.8280881870452601"></div><div class="wbar" style="height:34.65941215767937px;opacity:0.7412378629654183"></div><div class="wbar" style="height:46.7821785677078px;opacity:0.6845252682116287"></div><div class="wbar" style="height:62.090888875643486px;opacity:0.9468513545009696"></div><div class="wbar" style="height:65px;opacity:0.6560366255360368"></div><div class="wbar" style="height:65px;opacity:0.7720681627598267"></div><div class="wbar" style="height:47.42342453480062px;opacity:0.4255391965391598"></div><div class="wbar" style="height:22.620824547691637px;opacity:0.8557903650870857"></div><div class="wbar" style="height:26.16863541198838px;opacity:0.34860628366081237"></div><div class="wbar" style="height:43.631865629236465px;opacity:0.3508825938517517"></div><div class="wbar" style="height:57.752275614811836px;opacity:0.3280765794488686"></div><div class="wbar" style="height:63.72453936807256px;opacity:0.7266505588375166"></div><div class="wbar" style="height:64.98540479214535px;opacity:0.33418373671494117"></div><div class="wbar" style="height:49.70846040789323px;opacity:0.8930984670826401"></div><div class="wbar" style="height:35.700627685425054px;opacity:0.7137057160787026"></div><div class="wbar" style="height:35.43903475038314px;opacity:0.426633338160898"></div><div class="wbar" style="height:43.18116527840488px;opacity:0.4253277975537575"></div><div class="wbar" style="height:65px;opacity:0.3700912679502281"></div><div class="wbar" style="height:63.51690123987796px;opacity:0.5757681686910479"></div><div class="wbar" style="height:56.4288394360311px;opacity:0.3839856608951962"></div><div class="wbar" style="height:48.98628179227391px;opacity:0.8475526713983215"></div><div class="wbar" style="height:28.803230346501838px;opacity:0.8603160877822171"></div><div class="wbar" style="height:26.31051018133938px;opacity:0.3225973993616448"></div><div class="wbar" style="height:42.06680204627852px;opacity:0.5082043413667428"></div><div class="wbar" style="height:54.18911910129137px;opacity:0.611173334864465"></div><div class="wbar" style="height:65px;opacity:0.9308687855972244"></div><div class="wbar" style="height:63.11431371589294px;opacity:0.4104361941581196"></div><div class="wbar" style="height:45.216422347994126px;opacity:0.7230189502586112"></div><div class="wbar" style="height:27.968890043695534px;opacity:0.40642503103825367"></div><div class="wbar" style="height:36.16082687968539px;opacity:0.8853249821083147"></div><div class="wbar" style="height:53.134085526012406px;opacity:0.6524971467064715"></div><div class="wbar" style="height:65px;opacity:0.6527111111926225"></div><div class="wbar" style="height:65px;opacity:0.45485397921203197"></div><div class="wbar" style="height:53.50780867932119px;opacity:0.5395451670627903"></div><div class="wbar" style="height:47.49942447959333px;opacity:0.6684435471400894"></div><div class="wbar" style="height:24.17792127757271px;opacity:0.3441807107415239"></div><div class="wbar" style="height:23.8715025505516px;opacity:0.39863660955614294"></div><div class="wbar" style="height:52.57024510178266px;opacity:0.9392811353089254"></div><div class="wbar" style="height:62.839858892684035px;opacity:0.7040483864286506"></div><div class="wbar" style="height:58.5506697690366px;opacity:0.7927928075602751"></div><div class="wbar" style="height:57.12322768382367px;opacity:0.8174236553052261"></div><div class="wbar" style="height:43.50526359431471px;opacity:0.7284511776967472"></div><div class="wbar" style="height:29.66329973038278px;opacity:0.9285703833386378"></div><div class="wbar" style="height:28.110031241039817px;opacity:0.4986589365922935"></div><div class="wbar" style="height:50.49678927720057px;opacity:0.8497179197771947"></div><div class="wbar" style="height:65px;opacity:0.7038012385700818"></div><div class="wbar" style="height:65px;opacity:0.6953273176440691"></div><div class="wbar" style="height:55.4576774721927px;opacity:0.5786648147474327"></div><div class="wbar" style="height:53.622908288409306px;opacity:0.6819249627790337"></div></div>
               <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
-                <button class="btn btn-sm btn-primary" onclick="togglePlay()" id="play-btn" disabled>> Play</button>
-                <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)" id="rec-time">0:00</span>
-                <input type="range" min="0" max="100" value="0" id="rec-seek" style="flex:1" oninput="seekRec(this.value)" disabled>
+                <button class="btn btn-sm btn-primary" onclick="togglePlay()" id="play-btn" disabled="">&gt; Play</button>
+                <span style="font-family:&#39;DM Mono&#39;,monospace;font-size:11px;color:var(--text3)" id="rec-time">0:00</span>
+                <input type="range" min="0" max="100" value="0" id="rec-seek" style="flex:1" oninput="seekRec(this.value)" disabled="">
                 <button class="btn btn-sm" id="dl-btn" style="display:none" onclick="downloadRecording()">↓ Save</button>
               </div>
               <div id="rec-notes-area" style="display:none">
                 <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;font-weight:700">Notes / Transcript</div>
-                <textarea id="rec-notes" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:11px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);resize:vertical;height:110px;outline:none" placeholder="Add notes about this recording — what worked, what didn't..." oninput="saveRecNotes()"></textarea>
+                <textarea id="rec-notes" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:11px;font-size:13px;font-family:&#39;Inter&#39;,sans-serif;color:var(--text);resize:vertical;height:110px;outline:none" placeholder="Add notes about this recording — what worked, what didn&#39;t..." oninput="saveRecNotes()"></textarea>
               </div>
             </div>
             <div class="card">
               <div class="ctitle">Post-Show Crowd Reactions <span class="csub">how did each joke land?</span></div>
-              <div id="detected-moments"></div>
+              <div id="detected-moments"><div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="font-family:&#39;DM Mono&#39;,monospace;font-size:10px;color:var(--gold);flex-shrink:0;font-weight:600">0:24</span><span style="flex:1;color:var(--text2)">Airport security / Tinder comparison -- first laugh</span><button class="btn btn-sm" onclick="toast(&#39;Saved to Joke Manager!&#39;)">+ Save</button></div><div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="font-family:&#39;DM Mono&#39;,monospace;font-size:10px;color:var(--gold);flex-shrink:0;font-weight:600">1:03</span><span style="flex:1;color:var(--text2)">"First time divorced" punchline  Big reaction</span><button class="btn btn-sm" onclick="toast(&#39;Saved to Joke Manager!&#39;)">+ Save</button></div><div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="font-family:&#39;DM Mono&#39;,monospace;font-size:10px;color:var(--gold);flex-shrink:0;font-weight:600">1:40</span><span style="flex:1;color:var(--text2)">Dating app crowd callback -- solid engagement</span><button class="btn btn-sm" onclick="toast(&#39;Saved to Joke Manager!&#39;)">+ Save</button></div></div>
             </div>
           </div>
           <div>
@@ -655,7 +654,7 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
             </div>
             <div class="card">
               <div class="ctitle">All Recordings</div>
-              <div id="rec-list"></div>
+              <div id="rec-list"><div style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px" onclick="toast(&#39;Loading...&#39;)"><div style="font-weight:600;color:var(--text)">Comedy Store -- Mar 15</div><div style="color:var(--text3);font-size:10px;margin-top:1px">12min - 7.9</div></div><div style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px" onclick="toast(&#39;Loading...&#39;)"><div style="font-weight:600;color:var(--text)">Open Mic Westwood -- Mar 8</div><div style="color:var(--text3);font-size:10px;margin-top:1px">5min - 6.2</div></div><div style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px" onclick="toast(&#39;Loading...&#39;)"><div style="font-weight:600;color:var(--text)">Ha Comedy Club -- Feb 28</div><div style="color:var(--text3);font-size:10px;margin-top:1px">20min - 9.1</div></div></div>
             </div>
           </div>
         </div><!-- end grid -->
@@ -676,17 +675,17 @@ body.dark{--bg:#1a1814;--bg2:#222018;--bg3:#2a2720;--bg4:#332f28;--border:#3a363
           <div class="sect-title">Projects</div>
           <div style="font-size:9px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em;font-weight:700">TV / Film</div>
           <div class="proj-item" style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;background:var(--gold-bg);color:var(--gold);font-weight:500">📺 Late Night Pilot -- Draft 3</div>
-          <div class="proj-item" style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">🎬 Short Film: Open Mic</div>
-          <div class="proj-item" style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">📼 Comedy Special</div>
+          <div class="proj-item" style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast(&#39;Opening...&#39;)">🎬 Short Film: Open Mic</div>
+          <div class="proj-item" style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast(&#39;Opening...&#39;)">📼 Comedy Special</div>
           <div style="font-size:9px;color:var(--text3);margin:11px 0 5px;text-transform:uppercase;letter-spacing:.07em;font-weight:700">Long-Form</div>
-          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">📖 Memoir -- Ch.1</div>
-          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast('Opening...')">📝 Corporate Roast</div>
-          <div style="margin-top:12px"><button class="btn btn-sm" style="width:100%;justify-content:center" onclick="toast('New project created!')">+ New Project</button></div>
+          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast(&#39;Opening...&#39;)">📖 Memoir -- Ch.1</div>
+          <div style="padding:7px 9px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;font-size:12px;color:var(--text2)" onclick="toast(&#39;Opening...&#39;)">📝 Corporate Roast</div>
+          <div style="margin-top:12px"><button class="btn btn-sm" style="width:100%;justify-content:center" onclick="toast(&#39;New project created!&#39;)">+ New Project</button></div>
         </div>
         <div style="padding:22px 26px;overflow-y:auto;background:var(--bg2)" class="scroll">
-          <div style="font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:5px;line-height:1.2;color:var(--text)" contenteditable="true" id="studio-title" oninput="studioAutoSave()">Late Night Pilot: "The Setup"</div>
+          <div style="font-family:&#39;DM Serif Display&#39;,serif;font-size:28px;margin-bottom:5px;line-height:1.2;color:var(--text)" contenteditable="true" id="studio-title" oninput="studioAutoSave()">Late Night Pilot: "The Setup"</div>
           <div style="font-size:11px;color:var(--text3);margin-bottom:20px;display:flex;gap:12px"><span>Draft 3</span><span>·</span><span>TV Comedy Pilot</span><span>·</span><span style="color:var(--gold);font-weight:500">23 pages</span></div>
-          <div style="font-size:10px;color:var(--gold);font-weight:700;font-family:'DM Mono',monospace;letter-spacing:.07em;margin-bottom:5px;text-transform:uppercase">Act 1 -- Cold Open</div>
+          <div style="font-size:10px;color:var(--gold);font-weight:700;font-family:&#39;DM Mono&#39;,monospace;letter-spacing:.07em;margin-bottom:5px;text-transform:uppercase">Act 1 -- Cold Open</div>
           <div id="studio-body" contenteditable="true" oninput="studioAutoSave()" style="padding:12px 14px;background:var(--bg3);border-left:3px solid var(--gold);border-radius:0 var(--r2) var(--r2) 0;margin-bottom:16px;font-size:13px;line-height:1.85;color:var(--text2);min-height:200px;outline:none;white-space:pre-wrap">Interior -- Comedy Club Backstage -- Night
 
 MARCUS, 30s, paces nervously in a tiny green room. The walls are covered in faded headshots of comedians who clearly found better jobs.
@@ -706,9 +705,9 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
           <div class="sugg"><div class="slbl">Callback</div>The fluorescent light gag in scene 1 could callback in Act 3.</div>
           <div class="sep"></div>
           <div class="sect-title" style="margin-top:10px">Script Format</div>
-          <button class="btn btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="toast('Formatted as TV script!')">TV Script</button>
-          <button class="btn btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="toast('Formatted as film script!')">Film Script</button>
-          <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="toast('Formatted as stage notes!')">Stage Notes</button>
+          <button class="btn btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="toast(&#39;Formatted as TV script!&#39;)">TV Script</button>
+          <button class="btn btn-sm" style="width:100%;justify-content:center;margin-bottom:6px" onclick="toast(&#39;Formatted as film script!&#39;)">Film Script</button>
+          <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="toast(&#39;Formatted as stage notes!&#39;)">Stage Notes</button>
         </div>
       </div>
     </div>
@@ -727,37 +726,37 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
             <div class="cmsg ai" style="background:var(--gold-bg);border-color:var(--gold-br)">
               <div class="mfrom">⚠ SETUP REQUIRED</div>
               Brooks AI calls the Claude API directly from your browser. To use it:<br><br>
-              1. Open <strong>Settings -> Brooks AI</strong><br>
+              1. Open <strong>Settings -&gt; Brooks AI</strong><br>
               2. Paste your Anthropic API key<br>
               3. Come back here and start chatting<br><br>
               <em style="font-size:11px;color:var(--text3)">Your key is stored only in this browser session and never sent anywhere except api.anthropic.com</em>
             </div>
           </div>
           <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;background:var(--bg2)">
-            <textarea id="brooks-input" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:none;height:60px;line-height:1.5;transition:all .15s" placeholder="Ask Brooks anything about your material..." onkeydown="handleBrooksKey(event)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+            <textarea id="brooks-input" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px;color:var(--text);font-size:13px;font-family:&#39;Inter&#39;,sans-serif;outline:none;resize:none;height:60px;line-height:1.5;transition:all .15s" placeholder="Ask Brooks anything about your material..." onkeydown="handleBrooksKey(event)" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;"></textarea>
             <button class="btn btn-primary btn-sm" onclick="sendBrooks()" id="send-btn" style="height:40px;padding:0 16px">Send</button>
           </div>
         </div>
         <div style="padding:14px;overflow-y:auto;background:var(--bg2);border-left:1px solid var(--border)" class="scroll">
           <div class="sect-title">Quick Prompts</div>
-          <div class="sugg" onclick="fillBrooks('Punch up my airport security bit for Friday')"><div class="slbl">Punch Up</div>Punch up the airport bit for Friday</div>
-          <div class="sugg" onclick="fillBrooks('Analyze my set order and improve the energy arc')"><div class="slbl">Set Flow</div>Analyze my set order</div>
-          <div class="sugg" onclick="fillBrooks('Give me 5 fresh angles on my WFH remote work material')"><div class="slbl">New Angles</div>5 fresh WFH angles</div>
-          <div class="sugg" onclick="fillBrooks('What is my weakest joke and how do I fix it?')"><div class="slbl">Critique</div>Find and fix my weakest joke</div>
-          <div class="sugg" onclick="fillBrooks('Write me 3 new joke premises I could develop into full bits')"><div class="slbl">New Material</div>3 new premises to develop</div>
-          <div class="sugg" onclick="fillBrooks('Help me write a strong closer for a 20 minute set')"><div class="slbl">Closer</div>Write a strong set closer</div>
+          <div class="sugg" onclick="fillBrooks(&#39;Punch up my airport security bit for Friday&#39;)"><div class="slbl">Punch Up</div>Punch up the airport bit for Friday</div>
+          <div class="sugg" onclick="fillBrooks(&#39;Analyze my set order and improve the energy arc&#39;)"><div class="slbl">Set Flow</div>Analyze my set order</div>
+          <div class="sugg" onclick="fillBrooks(&#39;Give me 5 fresh angles on my WFH remote work material&#39;)"><div class="slbl">New Angles</div>5 fresh WFH angles</div>
+          <div class="sugg" onclick="fillBrooks(&#39;What is my weakest joke and how do I fix it?&#39;)"><div class="slbl">Critique</div>Find and fix my weakest joke</div>
+          <div class="sugg" onclick="fillBrooks(&#39;Write me 3 new joke premises I could develop into full bits&#39;)"><div class="slbl">New Material</div>3 new premises to develop</div>
+          <div class="sugg" onclick="fillBrooks(&#39;Help me write a strong closer for a 20 minute set&#39;)"><div class="slbl">Closer</div>Write a strong set closer</div>
           <div class="sep"></div>
-          <div class="sect-title" style="margin-top:6px">&#127916; Story Mining</div>
+          <div class="sect-title" style="margin-top:6px">🎬 Story Mining</div>
           <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.6">Let Brooks scan all your jokes for sitcom &amp; movie potential.</div>
-          <button onclick="runStoryMining('sitcom')" style="width:100%;margin-bottom:6px;padding:8px 10px;background:var(--purple-bg);border:1px solid var(--purple);border-radius:var(--r2);color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-align:left">&#127916; Find Sitcom Ideas</button>
-          <button onclick="runStoryMining('movie')" style="width:100%;margin-bottom:6px;padding:8px 10px;background:var(--blue-bg);border:1px solid var(--blue);border-radius:var(--r2);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-align:left">&#127916; Find Movie Ideas</button>
-          <button onclick="runStoryMining('special')" style="width:100%;margin-bottom:6px;padding:8px 10px;background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-align:left">&#10024; Build a Comedy Special Arc</button>
+          <button onclick="runStoryMining(&#39;sitcom&#39;)" style="width:100%;margin-bottom:6px;padding:8px 10px;background:var(--purple-bg);border:1px solid var(--purple);border-radius:var(--r2);color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;text-align:left">🎬 Find Sitcom Ideas</button>
+          <button onclick="runStoryMining(&#39;movie&#39;)" style="width:100%;margin-bottom:6px;padding:8px 10px;background:var(--blue-bg);border:1px solid var(--blue);border-radius:var(--r2);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;text-align:left">🎬 Find Movie Ideas</button>
+          <button onclick="runStoryMining(&#39;special&#39;)" style="width:100%;margin-bottom:6px;padding:8px 10px;background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;text-align:left">✨ Build a Comedy Special Arc</button>
           <div class="sep"></div>
           <div class="sect-title" style="margin-top:6px">Your Context</div>
           <div style="font-size:11px;color:var(--text3);line-height:2.1" id="brooks-context-display">Loading...</div>
           <div class="sep"></div>
           <div class="sect-title" style="margin-top:6px">API Key</div>
-          <input id="api-key-input" type="password" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;color:var(--text);font-size:11px;font-family:'Inter',sans-serif;outline:none;margin-bottom:6px;transition:border .15s" placeholder="sk-ant-..." oninput="saveApiKey(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+          <input id="api-key-input" type="password" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:7px 9px;color:var(--text);font-size:11px;font-family:&#39;Inter&#39;,sans-serif;outline:none;margin-bottom:6px;transition:border .15s" placeholder="sk-ant-..." oninput="saveApiKey(this.value)" onfocus="this.style.borderColor=&#39;var(--gold)&#39;" onblur="this.style.borderColor=&#39;var(--border)&#39;">
           <div style="font-size:10px;color:var(--text3);line-height:1.6">Enter your Anthropic API key above to enable live AI responses. Key is stored in your browser only.</div>
         </div>
       </div>
@@ -769,7 +768,7 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
         <button class="nav-toggle" id="toggle-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Analytics</div>
         <select class="btn" style="padding:6px 9px"><option>Last 30 days</option><option>Last 90 days</option><option>All time</option></select>
-        <button class="btn btn-sm" onclick="toast('Report exported!')">↓ Export</button>
+        <button class="btn btn-sm" onclick="toast(&#39;Report exported!&#39;)">↓ Export</button>
       </div>
       <div class="content scroll">
         <div class="stat-grid">
@@ -781,7 +780,7 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
           <div class="card">
             <div class="ctitle">Show Scores Over Time <span class="csub">last 8 shows</span></div>
-            <div style="display:flex;align-items:flex-end;gap:5px;height:120px;margin-top:10px" id="show-bars"></div>
+            <div style="display:flex;align-items:flex-end;gap:5px;height:120px;margin-top:10px" id="show-bars"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--text3);height:75%"></div><div style="font-size:8px;color:var(--text3)">6.8</div><div style="font-size:7px;color:var(--text3)">F5</div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--text3);height:79%"></div><div style="font-size:8px;color:var(--text3)">7.2</div><div style="font-size:7px;color:var(--text3)">F12</div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--blue);height:87%"></div><div style="font-size:8px;color:var(--text3)">7.9</div><div style="font-size:7px;color:var(--text3)">F19</div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--blue);height:89%"></div><div style="font-size:8px;color:var(--text3)">8.1</div><div style="font-size:7px;color:var(--text3)">F28</div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--blue);height:82%"></div><div style="font-size:8px;color:var(--text3)">7.5</div><div style="font-size:7px;color:var(--text3)">M8</div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--gold);height:95%"></div><div style="font-size:8px;color:var(--text3)">8.6</div><div style="font-size:7px;color:var(--text3)">M15</div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--gold);height:100%"></div><div style="font-size:8px;color:var(--text3)">9.1</div><div style="font-size:7px;color:var(--text3)">M22</div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--blue);height:91%"></div><div style="font-size:8px;color:var(--text3)">8.3</div><div style="font-size:7px;color:var(--text3)">M26</div></div></div>
           </div>
           <div class="card">
             <div class="ctitle">Performance by Category</div>
@@ -798,11 +797,11 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
             <div style="display:flex;gap:3px;margin:8px 0 4px;font-size:9px;color:var(--text3)">
               <div style="flex:1;text-align:center">M</div><div style="flex:1;text-align:center">T</div><div style="flex:1;text-align:center">W</div><div style="flex:1;text-align:center">T</div><div style="flex:1;text-align:center">F</div><div style="flex:1;text-align:center">S</div><div style="flex:1;text-align:center">S</div>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px" id="heatmap"></div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px" id="heatmap"><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.3);cursor:pointer" title="Score: 3/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.5);cursor:pointer" title="Score: 5/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.4);cursor:pointer" title="Score: 4/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.6);cursor:pointer" title="Score: 6/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.8);cursor:pointer" title="Score: 8/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.9);cursor:pointer" title="Score: 9/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.7);cursor:pointer" title="Score: 7/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.2);cursor:pointer" title="Score: 2/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.4);cursor:pointer" title="Score: 4/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.5);cursor:pointer" title="Score: 5/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.7);cursor:pointer" title="Score: 7/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.6);cursor:pointer" title="Score: 6/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.8);cursor:pointer" title="Score: 8/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.9);cursor:pointer" title="Score: 9/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.4);cursor:pointer" title="Score: 4/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.5);cursor:pointer" title="Score: 5/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.3);cursor:pointer" title="Score: 3/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.6);cursor:pointer" title="Score: 6/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.7);cursor:pointer" title="Score: 7/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.9);cursor:pointer" title="Score: 9/10"></div><div style="height:22px;border-radius:3px;background:rgba(176,125,16,0.8);cursor:pointer" title="Score: 8/10"></div></div>
           </div>
           <div class="card">
             <div class="ctitle">Joke Rankings</div>
-            <div id="joke-ranking" style="overflow-y:auto;max-height:260px" class="scroll"></div>
+            <div id="joke-ranking" style="overflow-y:auto;max-height:260px" class="scroll"><div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">Airport security bit</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var(--gold);width:92%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:&#39;DM Mono&#39;,monospace;width:28px;text-align:right;color:var(--gold);font-weight:600">9.2</div></div><div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">Dating app opener</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var(--gold);width:87%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:&#39;DM Mono&#39;,monospace;width:28px;text-align:right;color:var(--gold);font-weight:600">8.7</div></div><div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">Remote work WFH</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var(--gold);width:83%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:&#39;DM Mono&#39;,monospace;width:28px;text-align:right;color:var(--gold);font-weight:600">8.3</div></div><div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">First class vs coach</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var(--gold);width:81%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:&#39;DM Mono&#39;,monospace;width:28px;text-align:right;color:var(--gold);font-weight:600">8.1</div></div><div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">Mom texting</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var(--blue);width:79%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:&#39;DM Mono&#39;,monospace;width:28px;text-align:right;color:var(--text3);font-weight:600">7.9</div></div><div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">Grocery self-checkout</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var(--blue);width:78%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:&#39;DM Mono&#39;,monospace;width:28px;text-align:right;color:var(--text3);font-weight:600">7.8</div></div><div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">Social media algorithm</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var(--blue);width:73%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:&#39;DM Mono&#39;,monospace;width:28px;text-align:right;color:var(--text3);font-weight:600">7.3</div></div><div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">Coffee shop prices</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var(--blue);width:71%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:&#39;DM Mono&#39;,monospace;width:28px;text-align:right;color:var(--text3);font-weight:600">7.1</div></div><div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">Fitness tracker</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var(--blue);width:68%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:&#39;DM Mono&#39;,monospace;width:28px;text-align:right;color:var(--text3);font-weight:600">6.8</div></div></div>
           </div>
         </div>
       </div>
@@ -818,11 +817,11 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
         <div style="display:grid;grid-template-columns:275px 1fr;gap:14px;min-height:380px">
           <div class="card">
             <div class="ctitle">Airport Security Bit</div>
-            <div id="ver-list"></div>
+            <div id="ver-list"><div class="vitem vactive" onclick="showDiff(0)"><div style="font-family:&#39;DM Mono&#39;,monospace;color:var(--gold);font-size:10px;margin-bottom:2px;font-weight:700">v3 -- Current (Mar 22)</div><div style="font-size:11px;color:var(--text3)">Tightened setup by 8 seconds</div></div><div class="vitem " onclick="showDiff(1)"><div style="font-family:&#39;DM Mono&#39;,monospace;color:var(--gold);font-size:10px;margin-bottom:2px;font-weight:700">v2 -- Mar 14</div><div style="font-size:11px;color:var(--text3)">Added Tinder comparison</div></div><div class="vitem " onclick="showDiff(2)"><div style="font-family:&#39;DM Mono&#39;,monospace;color:var(--gold);font-size:10px;margin-bottom:2px;font-weight:700">v1 -- Mar 1</div><div style="font-size:11px;color:var(--text3)">Original draft</div></div></div>
           </div>
           <div class="card">
-            <div class="ctitle">Diff View <span class="csub" id="diff-label">v2 -> v3 (current)</span></div>
-            <div style="font-size:13px;line-height:1.9;color:var(--text2)" id="ver-diff"></div>
+            <div class="ctitle">Diff View <span class="csub" id="diff-label">v2 -&gt; v3 (current)</span></div>
+            <div style="font-size:13px;line-height:1.9;color:var(--text2)" id="ver-diff"><div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:600">Changes: v2 -&gt; v3</div><div style="background:var(--red-bg);border:1px solid #f0bfbb;border-radius:var(--r2);padding:9px 12px;margin-bottom:9px;font-size:13px;color:var(--red)">-- So I'm at the airport security line, right, and this guy in front of me, he's taking off his shoes and his belt and his watch and all his rings and his jacket and everything...</div><div style="background:var(--green-bg);border:1px solid #a8d8aa;border-radius:var(--r2);padding:9px 12px;font-size:13px;color:var(--green)">+ So I'm at the airport, right? The guy in front of me starts fully undressing. Shoes, belt, watch -- is this security or your Tinder profile photo?</div></div>
           </div>
         </div>
       </div>
@@ -867,16 +866,16 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
       </div>
       <div style="flex:1;display:flex;overflow:hidden">
         <div style="width:185px;flex-shrink:0;padding:10px 0;border-right:1px solid var(--border);background:var(--bg2)">
-          <div class="snav-item active" onclick="showTab('profile',this)">Profile</div>
-          <div class="snav-item" onclick="showTab('subscription',this)">Subscription</div>
-          <div class="snav-item" onclick="showTab('notifications',this)">Notifications</div>
-          <div class="snav-item" onclick="showTab('ai',this)">Brooks AI</div>
-          <div class="snav-item" onclick="showTab('sync',this)">Mobile Sync</div>
-          <div class="snav-item" onclick="showTab('appearance',this)">Appearance</div>
-          <div class="snav-item" onclick="showTab('export',this)">Data &amp; Export</div>
-          <div class="snav-item" onclick="showTab('keyboard',this)">Keyboard Shortcuts</div>
+          <div class="snav-item active" onclick="showTab(&#39;profile&#39;,this)">Profile</div>
+          <div class="snav-item" onclick="showTab(&#39;subscription&#39;,this)">Subscription</div>
+          <div class="snav-item" onclick="showTab(&#39;notifications&#39;,this)">Notifications</div>
+          <div class="snav-item" onclick="showTab(&#39;ai&#39;,this)">Brooks AI</div>
+          <div class="snav-item" onclick="showTab(&#39;sync&#39;,this)">Mobile Sync</div>
+          <div class="snav-item" onclick="showTab(&#39;appearance&#39;,this)">Appearance</div>
+          <div class="snav-item" onclick="showTab(&#39;export&#39;,this)">Data &amp; Export</div>
+          <div class="snav-item" onclick="showTab(&#39;keyboard&#39;,this)">Keyboard Shortcuts</div>
         </div>
-        <div style="flex:1;padding:22px 26px;overflow-y:auto;background:var(--bg)" class="scroll" id="settings-body"></div>
+        <div style="flex:1;padding:22px 26px;overflow-y:auto;background:var(--bg)" class="scroll" id="settings-body"><div style="max-width:460px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Profile</h3><div style="margin-bottom:12px"><label class="mlbl">Display Name</label><input class="minput" style="max-width:300px" value="Michael D&#39;Asaro"></div><div style="margin-bottom:12px"><label class="mlbl">Email</label><input class="minput" style="max-width:300px" value="michael@comedy4all.com"></div><div style="margin-bottom:12px"><label class="mlbl">Stage Name</label><input class="minput" style="max-width:300px" value="Mike D"></div><div style="margin-bottom:18px"><label class="mlbl">Bio</label><textarea class="minput" style="max-width:300px;height:85px">Stand-up comedian based in Dallas, TX. Performing since 2019. 1996 Olympian turned comic.</textarea></div><button class="btn btn-primary btn-sm" onclick="toast(&#39;Profile saved! ✓&#39;)">Save Profile</button></div></div>
       </div>
     </div>
 
@@ -888,7 +887,7 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
   <div class="onboard-box">
     <div style="text-align:center;margin-bottom:22px">
       <div style="font-size:36px;margin-bottom:8px" id="onboard-icon">🎤</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px;color:var(--text)" id="onboard-title">Welcome to Comedy 4 All</div>
+      <div style="font-family:&#39;DM Serif Display&#39;,serif;font-size:20px;margin-bottom:4px;color:var(--text)" id="onboard-title">Welcome to Comedy 4 All</div>
       <div style="font-size:12px;color:var(--text3)" id="onboard-sub">Your professional comedy workspace</div>
     </div>
     <div id="onboard-step-1" class="onboard-step active">
@@ -897,15 +896,15 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
         <strong>🎭 Rehearsal Mode</strong> — Run your set before every show<br>
         <strong>📅 Show History</strong> — Track what lands with real crowds
       </div>
-      <button onclick="onboardNext(2)" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Let's go →</button>
+      <button onclick="onboardNext(2)" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">Let's go →</button>
     </div>
     <div id="onboard-step-2" class="onboard-step">
       <div style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:16px">First — write your first joke. Even a rough idea works. You can polish it later.</div>
-      <div style="margin-bottom:12px"><label class="mlbl">Title / Hook</label><input class="minput" id="ob-title" placeholder="What's the bit about?"></div>
+      <div style="margin-bottom:12px"><label class="mlbl">Title / Hook</label><input class="minput" id="ob-title" placeholder="What&#39;s the bit about?"></div>
       <div style="margin-bottom:16px"><label class="mlbl">The Joke</label><textarea class="minput" id="ob-body" placeholder="Setup and punchline..." style="height:80px"></textarea></div>
       <div style="display:flex;gap:9px">
-        <button onclick="onboardSkip()" style="flex:1;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif">Skip for now</button>
-        <button onclick="onboardSaveJoke()" style="flex:2;padding:10px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Save & Continue →</button>
+        <button onclick="onboardSkip()" style="flex:1;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">Skip for now</button>
+        <button onclick="onboardSaveJoke()" style="flex:2;padding:10px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">Save &amp; Continue →</button>
       </div>
     </div>
     <div id="onboard-step-3" class="onboard-step">
@@ -913,7 +912,7 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
         <div style="font-size:48px;margin-bottom:12px">🎉</div>
         <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--text)">You're all set!</div>
         <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:20px">Your workspace is ready. After your next show, use <strong>Show History</strong> to log how each joke landed — that's where the real insights come from.</div>
-        <button onclick="onboardFinish()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Start Writing ✓</button>
+        <button onclick="onboardFinish()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif">Start Writing ✓</button>
       </div>
     </div>
     <div style="display:flex;gap:6px;justify-content:center;margin-top:18px">
@@ -936,7 +935,7 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
         <div id="sh-stars" style="display:flex;gap:3px;margin-top:6px"></div>
       </div>
     </div>
-    <div style="margin-bottom:14px"><label class="mlbl">Notes</label><textarea class="minput" id="sh-notes" placeholder="Crowd vibe, what worked, what didn't..." style="height:70px"></textarea></div>
+    <div style="margin-bottom:14px"><label class="mlbl">Notes</label><textarea class="minput" id="sh-notes" placeholder="Crowd vibe, what worked, what didn&#39;t..." style="height:70px"></textarea></div>
     <div style="margin-bottom:6px"><label class="mlbl">Joke Reactions — how did each land?</label></div>
     <div id="sh-reactions" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r2);padding:4px" class="scroll"></div>
     <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px">
@@ -959,17 +958,17 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
     <div style="margin-bottom:12px">
       <label class="mlbl">Tags</label>
       <div style="display:flex;flex-wrap:wrap;gap:5px" id="modal-tags">
-        <span class="tag tag-gold" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Travel')">Travel</span>
-        <span class="tag tag-blue" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Tech')">Tech</span>
-        <span class="tag tag-purple" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Dating')">Dating</span>
-        <span class="tag tag-green" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Family')">Family</span>
-        <span class="tag tag-gray" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Work')">Work</span>
-        <span class="tag tag-gray" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Current Events')">Current Events</span>
+        <span class="tag tag-gold" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,&#39;Travel&#39;)">Travel</span>
+        <span class="tag tag-blue" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,&#39;Tech&#39;)">Tech</span>
+        <span class="tag tag-purple" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,&#39;Dating&#39;)">Dating</span>
+        <span class="tag tag-green" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,&#39;Family&#39;)">Family</span>
+        <span class="tag tag-gray" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,&#39;Work&#39;)">Work</span>
+        <span class="tag tag-gray" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,&#39;Current Events&#39;)">Current Events</span>
         <span id="custom-tags-container"></span>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px">
-        <input id="custom-tag-input" type="text" placeholder="Add custom tag..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key==='Enter'){addCustomTag();event.preventDefault();}">
-        <button onclick="addCustomTag()" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">+ Add</button>
+        <input id="custom-tag-input" type="text" placeholder="Add custom tag..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:&#39;Inter&#39;,sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key===&#39;Enter&#39;){addCustomTag();event.preventDefault();}">
+        <button onclick="addCustomTag()" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600">+ Add</button>
       </div>
     </div>
     <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px">
@@ -1003,12 +1002,12 @@ He checks his phone. 47 unread texts from his mom asking if he's "still doing th
     <div style="margin-bottom:12px">
       <label class="mlbl">Tags</label>
       <div style="display:flex;flex-wrap:wrap;gap:5px" id="edit-modal-tags">
-        <span class="tag tag-gold edit-tag" onclick="toggleEditTag(this,'Travel')">Travel</span>
-        <span class="tag tag-blue edit-tag" onclick="toggleEditTag(this,'Tech')">Tech</span>
-        <span class="tag tag-purple edit-tag" onclick="toggleEditTag(this,'Dating')">Dating</span>
-        <span class="tag tag-green edit-tag" onclick="toggleEditTag(this,'Family')">Family</span>
-        <span class="tag tag-gray edit-tag" onclick="toggleEditTag(this,'Work')">Work</span>
-        <span class="tag tag-gray edit-tag" onclick="toggleEditTag(this,'Current Events')">Current Events</span>
+        <span class="tag tag-gold edit-tag" onclick="toggleEditTag(this,&#39;Travel&#39;)">Travel</span>
+        <span class="tag tag-blue edit-tag" onclick="toggleEditTag(this,&#39;Tech&#39;)">Tech</span>
+        <span class="tag tag-purple edit-tag" onclick="toggleEditTag(this,&#39;Dating&#39;)">Dating</span>
+        <span class="tag tag-green edit-tag" onclick="toggleEditTag(this,&#39;Family&#39;)">Family</span>
+        <span class="tag tag-gray edit-tag" onclick="toggleEditTag(this,&#39;Work&#39;)">Work</span>
+        <span class="tag tag-gray edit-tag" onclick="toggleEditTag(this,&#39;Current Events&#39;)">Current Events</span>
       </div>
     </div>
     <div style="display:flex;gap:9px;justify-content:space-between;margin-top:18px;align-items:center">
@@ -2266,7 +2265,8 @@ var settingsTabs={
   ai:'<div style="max-width:460px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Brooks AI Settings</h3>'+[['Background analysis','Continuously analyzes your jokes'],['Writing prompts','Daily prompts based on your style'],['Post-show insights','Auto-analysis after recordings'],['Tier suggestions','Auto-suggest A/B/C tier']].map(function(x){return '<div class="srow"><div><div style="font-size:13px;color:var(--text);font-weight:500">'+x[0]+'</div><div style="font-size:11px;color:var(--text3);margin-top:1px">'+x[1]+'</div></div><button class="stoggle on" onclick="this.classList.toggle(\'on\')"></button></div>';}).join('')+'</div>',
   sync:'<div style="max-width:460px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Mobile Sync</h3><div style="font-size:12.5px;color:var(--text2);margin-bottom:16px;line-height:1.7;background:var(--green-bg);border:1px solid #a8d8aa;border-radius:var(--r2);padding:11px 13px">\u2713 <strong>Connected</strong> -- Last synced: 2 minutes ago</div>'+[['Real-time sync','Instant sync across devices'],['Offline mode','Cache data when offline'],['Auto-backup','Daily cloud backup']].map(function(x){return '<div class="srow"><div><div style="font-size:13px;color:var(--text);font-weight:500">'+x[0]+'</div><div style="font-size:11px;color:var(--text3);margin-top:1px">'+x[1]+'</div></div><button class="stoggle on" onclick="this.classList.toggle(\'on\')"></button></div>';}).join('')+'<div style="margin-top:14px"><button class="btn btn-sm" onclick="toast(\'Force synced! \u2713\')">Force Sync Now</button></div></div>',
   export:'<div style="max-width:400px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Data &amp; Export</h3><div style="display:flex;flex-direction:column;gap:9px"><button class="btn" style="justify-content:flex-start;gap:9px;font-size:13px;padding:10px 14px" onclick="toast(\'Jokes exported!\')">📄 Export all jokes (PDF)</button><button class="btn" style="justify-content:flex-start;gap:9px;font-size:13px;padding:10px 14px" onclick="toast(\'Sets exported!\')">📄 Export all sets (PDF)</button><button class="btn" style="justify-content:flex-start;gap:9px;font-size:13px;padding:10px 14px" onclick="toast(\'Report exported!\')">📊 Analytics report (PDF)</button><button class="btn" style="justify-content:flex-start;gap:9px;font-size:13px;padding:10px 14px" onclick="toast(\'Backup downloaded!\')">💾 Full backup (JSON)</button><div style="height:1px;background:var(--border);margin:3px 0"></div><button class="btn" style="justify-content:flex-start;gap:9px;font-size:13px;padding:10px 14px;color:var(--red)" onclick="toast(\'Check email to confirm.\')">🗑 Delete account</button></div></div>',
-  appearance:'<div style="max-width:480px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Appearance</h3><div style="margin-bottom:20px"><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">Color Theme</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="theme-grid"><div class="theme-swatch" onclick="applyTheme(\'default\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--gold);padding:12px 10px;text-align:center;background:#f6f4f0"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#b07d10"></div><div style="width:14px;height:14px;border-radius:50%;background:#1a5aa0"></div><div style="width:14px;height:14px;border-radius:50%;background:#2d7a35"></div></div><div style="font-size:11px;font-weight:600;color:#1c1a17">Classic</div><div style="font-size:9px;color:#9a9590;margin-top:1px">Default</div></div><div class="theme-swatch" onclick="applyTheme(\'midnight\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--border);padding:12px 10px;text-align:center;background:#0f1117"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#6c63ff"></div><div style="width:14px;height:14px;border-radius:50%;background:#00d2ff"></div><div style="width:14px;height:14px;border-radius:50%;background:#ff6584"></div></div><div style="font-size:11px;font-weight:600;color:#e0e0e0">Midnight</div><div style="font-size:9px;color:#666;margin-top:1px">Dark purple</div></div><div class="theme-swatch" onclick="applyTheme(\'crimson\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--border);padding:12px 10px;text-align:center;background:#1a0a0a"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#e63946"></div><div style="width:14px;height:14px;border-radius:50%;background:#f4a261"></div><div style="width:14px;height:14px;border-radius:50%;background:#ffffff"></div></div><div style="font-size:11px;font-weight:600;color:#f0d0d0">Crimson</div><div style="font-size:9px;color:#886;margin-top:1px">Dark red</div></div><div class="theme-swatch" onclick="applyTheme(\'forest\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--border);padding:12px 10px;text-align:center;background:#f0f7f0"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#2d6a4f"></div><div style="width:14px;height:14px;border-radius:50%;background:#74c69d"></div><div style="width:14px;height:14px;border-radius:50%;background:#b7e4c7"></div></div><div style="font-size:11px;font-weight:600;color:#1b4332">Forest</div><div style="font-size:9px;color:#52796f;margin-top:1px">Green tones</div></div><div class="theme-swatch" onclick="applyTheme(\'slate\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--border);padding:12px 10px;text-align:center;background:#f8f9fb"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#3b4a6b"></div><div style="width:14px;height:14px;border-radius:50%;background:#6c8ebf"></div><div style="width:14px;height:14px;border-radius:50%;background:#a8b8d8"></div></div><div style="font-size:11px;font-weight:600;color:#2d3a52">Slate</div><div style="font-size:9px;color:#6b7a99;margin-top:1px">Cool blue-grey</div></div></div></div></div>','<div style="max-width:420px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Keyboard Shortcuts</h3>'+[['N','New joke'],['R','Rehearsal mode'],['B','Brooks AI'],['A','Analytics'],['Escape','Close modal'],['->','Next joke (rehearsal)'],['Space','Reveal punchline (rehearsal)']].map(function(x){return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text2)">'+x[1]+'</span><kbd style="background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:3px 11px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text);font-weight:500">'+x[0]+'</kbd></div>';}).join('')+'<div style="font-size:11px;color:var(--text3);margin-top:12px">Shortcuts inactive when typing in text fields.</div></div>'
+  appearance:'<div style="max-width:480px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Appearance</h3><div style="margin-bottom:20px"><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">Color Theme</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="theme-grid"><div class="theme-swatch" onclick="applyTheme(\'default\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--gold);padding:12px 10px;text-align:center;background:#f6f4f0"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#b07d10"></div><div style="width:14px;height:14px;border-radius:50%;background:#1a5aa0"></div><div style="width:14px;height:14px;border-radius:50%;background:#2d7a35"></div></div><div style="font-size:11px;font-weight:600;color:#1c1a17">Classic</div><div style="font-size:9px;color:#9a9590;margin-top:1px">Default</div></div><div class="theme-swatch" onclick="applyTheme(\'midnight\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--border);padding:12px 10px;text-align:center;background:#0f1117"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#6c63ff"></div><div style="width:14px;height:14px;border-radius:50%;background:#00d2ff"></div><div style="width:14px;height:14px;border-radius:50%;background:#ff6584"></div></div><div style="font-size:11px;font-weight:600;color:#e0e0e0">Midnight</div><div style="font-size:9px;color:#666;margin-top:1px">Dark purple</div></div><div class="theme-swatch" onclick="applyTheme(\'crimson\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--border);padding:12px 10px;text-align:center;background:#1a0a0a"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#e63946"></div><div style="width:14px;height:14px;border-radius:50%;background:#f4a261"></div><div style="width:14px;height:14px;border-radius:50%;background:#ffffff"></div></div><div style="font-size:11px;font-weight:600;color:#f0d0d0">Crimson</div><div style="font-size:9px;color:#886;margin-top:1px">Dark red</div></div><div class="theme-swatch" onclick="applyTheme(\'forest\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--border);padding:12px 10px;text-align:center;background:#f0f7f0"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#2d6a4f"></div><div style="width:14px;height:14px;border-radius:50%;background:#74c69d"></div><div style="width:14px;height:14px;border-radius:50%;background:#b7e4c7"></div></div><div style="font-size:11px;font-weight:600;color:#1b4332">Forest</div><div style="font-size:9px;color:#52796f;margin-top:1px">Green tones</div></div><div class="theme-swatch" onclick="applyTheme(\'slate\')" style="cursor:pointer;border-radius:10px;border:2px solid var(--border);padding:12px 10px;text-align:center;background:#f8f9fb"><div style="display:flex;gap:4px;justify-content:center;margin-bottom:7px"><div style="width:14px;height:14px;border-radius:50%;background:#3b4a6b"></div><div style="width:14px;height:14px;border-radius:50%;background:#6c8ebf"></div><div style="width:14px;height:14px;border-radius:50%;background:#a8b8d8"></div></div><div style="font-size:11px;font-weight:600;color:#2d3a52">Slate</div><div style="font-size:9px;color:#6b7a99;margin-top:1px">Cool blue-grey</div></div></div></div></div>',
+  keyboard:'<div style="max-width:420px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Keyboard Shortcuts</h3>'+[['N','New joke'],['R','Rehearsal mode'],['B','Brooks AI'],['A','Analytics'],['Escape','Close modal'],['->','Next joke (rehearsal)'],['Space','Reveal punchline (rehearsal)']].map(function(x){return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text2)">'+x[1]+'</span><kbd style="background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:3px 11px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text);font-weight:500">'+x[0]+'</kbd></div>';}).join('')+'<div style="font-size:11px;color:var(--text3);margin-top:12px">Shortcuts inactive when typing in text fields.</div></div>'
 };
 function showTab(tab,el){
   var items=document.querySelectorAll('.snav-item');
@@ -2879,5 +2879,6 @@ seekRec = function(v) {
 
 
 </script>
-</body>
-</html>
+
+
+</div></body></html>
