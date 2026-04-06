@@ -248,6 +248,7 @@ function setRecordingPendingUI(isPending) {
   }
   if (fallbackBtn) {
     fallbackBtn.textContent = _recMode === 'video' ? 'Use phone camera instead' : 'Import audio file instead';
+    fallbackBtn.style.display = isLikelyMobile() && _recMode === 'video' ? 'inline-flex' : 'none';
   }
 }
 
@@ -304,7 +305,7 @@ function updateRecordingAvailability() {
   var text = document.getElementById('recording-env-note-text');
   var fallbackBtn = document.getElementById('rec-phone-fallback-btn');
   if (!note || !text) return;
-  if (fallbackBtn) fallbackBtn.style.display = isLikelyMobile() ? 'inline-flex' : 'none';
+  if (fallbackBtn) fallbackBtn.style.display = isLikelyMobile() && _recMode === 'video' ? 'inline-flex' : 'none';
   if (shouldPreferCaptureFallback(_recMode)) {
     note.style.display = 'block';
     text.textContent = _recMode === 'video'
@@ -314,7 +315,7 @@ function updateRecordingAvailability() {
   }
   if (isLikelyMobile() && _recMode === 'audio') {
     note.style.display = 'block';
-    text.textContent = 'Audio recording uses your phone microphone directly in the browser. If you already recorded something elsewhere, use "Import audio file instead."';
+    text.textContent = 'Audio recording uses your phone microphone directly in the browser. Tap the red record button to start.';
     return;
   }
   if (isRecordingSecureContext()) {
