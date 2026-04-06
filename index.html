@@ -413,6 +413,9 @@
           </div>
           <button onclick="startRecording()" id="rec-big-btn" style="width:90px;height:90px;border-radius:50%;background:var(--red);border:none;font-size:32px;cursor:pointer;box-shadow:0 4px 18px rgba(184,50,40,.35);transition:transform .1s;display:inline-flex;align-items:center;justify-content:center" onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform='scale(1)'">&#127897;&#65039;</button>
           <div style="font-size:11px;color:var(--text3);margin-top:9px" id="rec-cta-label">Tap to record audio</div>
+          <button class="btn btn-sm" id="rec-phone-fallback-btn" style="margin-top:12px;display:none" onclick="triggerCaptureFallback()">Use phone recorder instead</button>
+          <input id="rec-audio-fallback" type="file" accept="audio/*" capture style="display:none" onchange="handleCaptureFallback(event,'audio')">
+          <input id="rec-video-fallback" type="file" accept="video/*" capture style="display:none" onchange="handleCaptureFallback(event,'video')">
         </div>
         <div id="live-rec-panel" style="display:none;margin-bottom:14px">
           <div class="rec-live">

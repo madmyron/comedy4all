@@ -168,6 +168,10 @@ var _recMode = 'audio';
 var _camStream = null;
 var recPlaying = false;
 
+function isLikelyMobile() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || window.innerWidth <= 700;
+}
+
 function isRecordingSecureContext() {
   if (window.isSecureContext) return true;
   var host = window.location.hostname;
@@ -287,7 +291,9 @@ function renderRecList() {
 function updateRecordingAvailability() {
   var note = document.getElementById('recording-env-note');
   var text = document.getElementById('recording-env-note-text');
+  var fallbackBtn = document.getElementById('rec-phone-fallback-btn');
   if (!note || !text) return;
+  if (fallbackBtn) fallbackBtn.style.display = isLikelyMobile() ? 'inline-flex' : 'none';
   if (isRecordingSecureContext()) {
     note.style.display = 'block';
     text.textContent = _recMode === 'video'
@@ -357,7 +363,12 @@ function startRecording() {
       } catch (fallbackErr) {
         stream.getTracks().forEach(function(t){t.stop();});
         setRecordingPendingUI(false);
-        toast('Recording is not supported on this device.');
+        if (isLikelyMobile()) {
+          toast('Live browser recording is not supported here. Use "Use phone recorder instead."');
+          triggerCaptureFallback();
+        } else {
+          toast('Recording is not supported on this device.');
+        }
         return;
       }
     }
@@ -411,8 +422,41 @@ function startRecording() {
   }).catch(function(err){
     setRecordingPendingUI(false);
     updateRecordingAvailability();
+    if (isLikelyMobile() && (err.name === 'NotAllowedError' || err.name === 'OverconstrainedError' || err.name === 'NotReadableError')) {
+      toast(getMediaErrorMessage(err, capturedMode) + ' You can also use the phone recorder fallback below.');
+      return;
+    }
     toast(getMediaErrorMessage(err, capturedMode));
   });
+}
+
+function triggerCaptureFallback() {
+  var input = document.getElementById(_recMode === 'video' ? 'rec-video-fallback' : 'rec-audio-fallback');
+  if (input) input.click();
+}
+
+function handleCaptureFallback(event, mode) {
+  var file = event && event.target && event.target.files && event.target.files[0];
+  if (!file) return;
+  var url = URL.createObjectURL(file);
+  var name = file.name ? file.name.replace(/\.[^/.]+$/, '') : ('Phone Recording ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+  var rec = {
+    id: Date.now(),
+    name: name,
+    blob: file,
+    url: url,
+    duration: 0,
+    notes: '',
+    type: mode,
+    ext: (file.name.split('.').pop() || getRecordingExtension(file.type || '', mode)).toLowerCase(),
+    mimeType: file.type || (mode === 'video' ? 'video/mp4' : 'audio/mp4')
+  };
+  _recordings.unshift(rec);
+  renderRecListReal();
+  loadRecording(rec.id);
+  renderMoments();
+  toast((mode === 'video' ? 'Video' : 'Audio') + ' imported from phone recorder.');
+  event.target.value = '';
 }
 function stopRecording() {
   if (_mediaRecorder && _mediaRecorder.state !== 'inactive') {
@@ -519,6 +563,16 @@ function loadRecording(id) {
   document.getElementById('rec-time').textContent = '0:00 / ' + fmtTime(r.duration);
   if (_audioEl) { _audioEl.pause(); _audioEl = null; }
   _audioEl = new Audio(r.url);
+  _audioEl.onloadedmetadata = function(){
+    if ((!r.duration || r.duration < 1) && isFinite(_audioEl.duration) && _audioEl.duration > 0) {
+      r.duration = Math.round(_audioEl.duration);
+      renderRecListReal();
+      document.getElementById('pb-meta').textContent = fmtTime(r.duration) + '  ' + new Date(id).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      document.getElementById('rec-time').textContent = '0:00 / ' + fmtTime(r.duration);
+      var seek = document.getElementById('rec-seek');
+      if (seek) seek.max = r.duration;
+    }
+  };
   _audioEl.ontimeupdate = function(){
     var sk = document.getElementById('rec-seek');
     var rt = document.getElementById('rec-time');
@@ -530,6 +584,16 @@ function loadRecording(id) {
     if(pb) pb.textContent = '> Play';
     recPlaying = false;
   };
+  var vidPlayback = document.getElementById('video-playback-el');
+  if (isVideo && vidPlayback) {
+    vidPlayback.onloadedmetadata = function() {
+      if ((!r.duration || r.duration < 1) && isFinite(vidPlayback.duration) && vidPlayback.duration > 0) {
+        r.duration = Math.round(vidPlayback.duration);
+        renderRecListReal();
+        document.getElementById('pb-meta').textContent = fmtTime(r.duration) + '  ' + new Date(id).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      }
+    };
+  }
   document.getElementById('perf-score').textContent = (7+Math.random()*2).toFixed(1);
   document.getElementById('perf-bars').innerHTML =
     '<div class="bar-row"><div class="bar-lbl">Energy</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(65+Math.random()*30)+'%"></div></div><div class="bar-val">'+(6.5+Math.random()*3).toFixed(1)+'</div></div>'+
