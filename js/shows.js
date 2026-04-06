@@ -167,6 +167,7 @@ var _audioEl = null;
 var _recMode = 'audio';
 var _camStream = null;
 var recPlaying = false;
+var _isRecording = false;
 
 function isLikelyMobile() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || window.innerWidth <= 700;
@@ -248,11 +249,17 @@ function setRecordingPendingUI(isPending) {
   if (startBtn) {
     startBtn.disabled = !!isPending;
     if (isPending) startBtn.textContent = 'Waiting for permission...';
+    else if (_isRecording) startBtn.textContent = '\u25a0 Stop';
     else startBtn.textContent = shouldPreferCaptureFallback(_recMode) ? (_recMode === 'video' ? 'Open Video Recorder' : 'Open Audio Recorder') : '\ud83d\udd34 Record';
   }
-  if (bigBtn) bigBtn.disabled = !!isPending;
+  if (bigBtn) {
+    bigBtn.disabled = !!isPending;
+    bigBtn.textContent = _isRecording ? '\u25a0' : (_recMode === 'video' ? '\ud83c\udfa5' : '\ud83c\udf99\ufe0f');
+    bigBtn.style.background = _isRecording ? '#7f1d1d' : 'var(--red)';
+  }
   if (label) {
     if (isPending) label.textContent = 'Allow microphone/camera access to begin recording';
+    else if (_isRecording) label.textContent = _recMode === 'video' ? 'Recording video... tap Stop when you are done' : 'Recording audio... tap Stop when you are done';
     else if (shouldPreferCaptureFallback(_recMode)) label.textContent = _recMode === 'video' ? 'Use your phone camera app to record a video clip' : 'Use your phone voice recorder to capture audio';
     else label.textContent = _recMode === 'video' ? 'Tap to record video' : 'Tap to record audio';
   }
@@ -350,7 +357,7 @@ function setRecMode(mode) {
   if (mode === 'video') {
     if (audioBtn) { audioBtn.style.background = 'transparent'; audioBtn.style.color = 'var(--text2)'; audioBtn.style.fontWeight = '500'; }
     if (videoBtn) { videoBtn.style.background = 'var(--gold)'; videoBtn.style.color = '#fff'; videoBtn.style.fontWeight = '600'; }
-    if (bigBtn) bigBtn.textContent = '\ud83c\udfa5';
+    if (bigBtn && !_isRecording) bigBtn.textContent = '\ud83c\udfa5';
     if (label) label.textContent = 'Tap to record video';
     if (!shouldPreferCaptureFallback('video') && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       requestRecordingStream('video').then(function(stream) {
@@ -366,12 +373,20 @@ function setRecMode(mode) {
   } else {
     if (audioBtn) { audioBtn.style.background = 'var(--gold)'; audioBtn.style.color = '#fff'; audioBtn.style.fontWeight = '600'; }
     if (videoBtn) { videoBtn.style.background = 'transparent'; videoBtn.style.color = 'var(--text2)'; videoBtn.style.fontWeight = '500'; }
-    if (bigBtn) bigBtn.textContent = '\ud83c\udf99\ufe0f';
+    if (bigBtn && !_isRecording) bigBtn.textContent = '\ud83c\udf99\ufe0f';
     if (label) label.textContent = 'Tap to record audio';
     if (previewWrap) previewWrap.style.display = 'none';
     if (_camStream) { _camStream.getTracks().forEach(function(t){t.stop();}); _camStream = null; }
   }
   setRecordingPendingUI(false);
+}
+
+function handleRecordingAction() {
+  if (_isRecording || (_mediaRecorder && _mediaRecorder.state !== 'inactive')) {
+    stopRecording();
+    return;
+  }
+  startRecording();
 }
 
 function startRecording() {
@@ -412,6 +427,7 @@ function startRecording() {
       }
     }
     _mediaRecorder.onerror = function() {
+      _isRecording = false;
       stream.getTracks().forEach(function(t){t.stop();});
       stopLiveUI();
       toast('Recording failed before the file could be saved.');
@@ -419,6 +435,7 @@ function startRecording() {
     _mediaRecorder.ondataavailable = function(e) { if(e.data.size>0) _audioChunks.push(e.data); };
     _mediaRecorder.onstop = function() {
       stream.getTracks().forEach(function(t){t.stop();});
+      _isRecording = false;
       if (!_audioChunks.length) {
         stopLiveUI();
         setRecordingPendingUI(false);
@@ -453,12 +470,13 @@ function startRecording() {
       var badge = document.getElementById('preview-badge');
       if (badge) badge.textContent = '\u25cf REC';
     }
+    _isRecording = true;
     _mediaRecorder.start(1000);
     setRecordingPendingUI(false);
     startLiveUI();
-    var bigBtn = document.getElementById('rec-big-btn');
-    if (bigBtn) bigBtn.disabled = true;
+    toast(capturedMode === 'video' ? 'Video recording started.' : 'Audio recording started.');
   }).catch(function(err){
+    _isRecording = false;
     setRecordingPendingUI(false);
     updateRecordingAvailability();
     if (isLikelyMobile() && (err.name === 'NotAllowedError' || err.name === 'OverconstrainedError' || err.name === 'NotReadableError')) {
@@ -509,17 +527,15 @@ function stopRecording() {
     try { _mediaRecorder.requestData(); } catch (e) {}
     _mediaRecorder.stop();
   }
-  var btn = document.getElementById('rec-start-btn');
-  if (btn) { btn.textContent = '\ud83d\udd34 Record'; btn.disabled = false; }
+  _isRecording = false;
+  setRecordingPendingUI(false);
   var badge = document.getElementById('preview-badge');
   if (badge) badge.textContent = 'PREVIEW';
 }
 function startLiveUI() {
   _liveSeconds = 0;
-  var cta = document.getElementById('rec-cta');
-  if (cta) cta.style.display = 'none';
   var startBtn = document.getElementById('rec-start-btn');
-  if (startBtn) { startBtn.textContent = '\u25cf Recording...'; startBtn.disabled = true; }
+  if (startBtn) { startBtn.textContent = '\u25a0 Stop'; startBtn.disabled = false; }
   document.getElementById('live-rec-panel').style.display = 'block';
   var el = document.getElementById('live-rec-time');
   if (el) el.textContent = '0:00';
@@ -534,13 +550,8 @@ function startLiveUI() {
 function stopLiveUI() {
   clearInterval(_liveTimer);
   document.getElementById('live-rec-panel').style.display = 'none';
-  var cta = document.getElementById('rec-cta');
-  if (cta) cta.style.display = 'block';
   updateRecordingAvailability();
-  var startBtn = document.getElementById('rec-start-btn');
-  if (startBtn) { startBtn.textContent = '\ud83d\udd34 Record'; startBtn.disabled = false; }
-  var bigBtn = document.getElementById('rec-big-btn');
-  if (bigBtn) bigBtn.disabled = false;
+  setRecordingPendingUI(false);
 }
 function animateLiveWave() {
   var wf = document.getElementById('live-waveform');

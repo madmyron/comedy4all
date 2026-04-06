@@ -399,7 +399,7 @@
           <button id="mode-audio-btn" onclick="setRecMode('audio')" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;background:var(--gold);color:#fff;font-family:'Inter',sans-serif">&#127897;&#65039; Audio</button>
           <button id="mode-video-btn" onclick="setRecMode('video')" style="padding:4px 12px;border:none;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--text2);font-family:'Inter',sans-serif">&#127909; Video</button>
         </div>
-        <button class="btn btn-sm btn-primary" id="rec-start-btn" onclick="startRecording()">&#128308; Record</button>
+        <button class="btn btn-sm btn-primary" id="rec-start-btn" onclick="handleRecordingAction()">&#128308; Record</button>
       </div>
       <div class="content scroll">
         <div id="recording-env-note" class="card" style="display:none;margin-bottom:12px;padding:12px 14px;background:var(--gold-bg);border-color:var(--gold-br)">
@@ -411,7 +411,7 @@
             <video id="video-preview" autoplay muted playsinline style="width:100%;border-radius:var(--r);border:2px solid var(--red);background:#000;display:block"></video>
             <div id="preview-badge" style="position:absolute;top:10px;left:10px;background:rgba(184,50,40,.85);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.04em">PREVIEW</div>
           </div>
-          <button onclick="startRecording()" id="rec-big-btn" style="width:90px;height:90px;border-radius:50%;background:var(--red);border:none;font-size:32px;cursor:pointer;box-shadow:0 4px 18px rgba(184,50,40,.35);transition:transform .1s;display:inline-flex;align-items:center;justify-content:center" onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform='scale(1)'">&#127897;&#65039;</button>
+          <button onclick="handleRecordingAction()" id="rec-big-btn" style="width:90px;height:90px;border-radius:50%;background:var(--red);border:none;font-size:32px;cursor:pointer;box-shadow:0 4px 18px rgba(184,50,40,.35);transition:transform .1s;display:inline-flex;align-items:center;justify-content:center" onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform='scale(1)'">&#127897;&#65039;</button>
           <div style="font-size:11px;color:var(--text3);margin-top:9px" id="rec-cta-label">Tap to record audio</div>
           <button class="btn btn-sm" id="rec-phone-fallback-btn" style="margin-top:12px;display:none" onclick="triggerCaptureFallback()">Use phone recorder instead</button>
           <input id="rec-audio-fallback" type="file" accept="audio/*" capture style="display:none" onchange="handleCaptureFallback(event,'audio')">
@@ -423,7 +423,7 @@
             <span>Recording</span>
             <span id="live-rec-time" style="font-family:'DM Mono',monospace;margin-left:4px;font-size:15px;font-weight:700;min-width:50px">0:00</span>
             <div class="rec-waveform-live" id="live-waveform" style="flex:1"></div>
-            <button onclick="stopRecording()" style="margin-left:auto;background:var(--red);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0">&#9632; Stop</button>
+            <button onclick="handleRecordingAction()" style="margin-left:auto;background:var(--red);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0">&#9632; Stop</button>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 275px;gap:14px">
