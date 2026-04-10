@@ -226,6 +226,18 @@ textarea.minput{height:95px;resize:vertical}
 body.dark{color-scheme:dark}
 .dark-toggle{width:32px;height:32px;border-radius:var(--r2);background:transparent;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;flex-shrink:0;transition:background .12s}
 .dark-toggle:hover{background:var(--bg3)}
+body.dark #screen-jokes .card{background:linear-gradient(180deg,rgba(36,31,28,.96),rgba(23,19,17,.98));border-color:var(--border)}
+body.dark #screen-jokes .jcard{background:linear-gradient(180deg,rgba(39,34,30,.98),rgba(24,21,18,.98));border-color:var(--border);box-shadow:0 12px 28px rgba(0,0,0,.28)}
+body.dark #screen-jokes .jcard:hover{background:linear-gradient(180deg,rgba(49,42,35,.98),rgba(32,27,22,.98));border-color:var(--gold);box-shadow:0 16px 30px rgba(0,0,0,.34)}
+body.dark #screen-jokes .jprev{color:var(--text2)}
+body.dark #screen-jokes .tag-gray{background:rgba(255,255,255,.04);color:var(--text2);border-color:var(--border2)}
+body.dark #screen-jokes #joke-detail{background:var(--bg2)!important;box-shadow:0 -10px 30px rgba(0,0,0,.45)}
+body.dark #screen-jokes .detail-actions{background:rgba(255,255,255,.03)}
+body.dark #screen-jokes .archive-badge{border-color:var(--border2)}
+body.dark #screen-jokes .btn-archive{border-color:var(--border2)}
+body.dark #screen-jokes .btn-danger{border-color:var(--border2)}
+body.dark #screen-jokes .confirm-box{border-color:var(--border2)}
+body.dark #screen-jokes .sect-title{color:var(--text2)}
 
 /* ONBOARDING */
 .onboard-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:800;display:flex;align-items:center;justify-content:center;padding:20px}
