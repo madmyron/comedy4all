@@ -336,6 +336,12 @@ function saveNewJoke() {
   toast('Joke saved: "' + title + '" \u2713');
 }
 
+// Helper to initialize custom sorting
+function initCustomSort() {
+  document.getElementById('sort-select').value = 'custom';
+  sortJokes('custom');
+}
+
 // - EDIT JOKE MODAL -
 function openEditModal(id) {
   var j = null;
