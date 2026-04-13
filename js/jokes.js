@@ -11,6 +11,7 @@ function renderJokes(list) {
   var grid = document.getElementById('joke-grid');
   var cnt = document.getElementById('joke-count');
   if (!grid) return;
+  rebuildTagDropdown();
   var isArchiveView = (list === archivedJokes || (list.length > 0 && list[0] && list[0].archived));
   if (cnt) cnt.textContent = list.length + (isArchiveView ? ' archived' : ' jokes');
   if (list.length === 0) {
@@ -146,6 +147,28 @@ function filterJokes(q) {
   }) : pool.slice();
   renderJokes(displayJokes);
 }
+function rebuildTagDropdown() {
+  var sel = document.getElementById('tag-filter-select');
+  if (!sel) return;
+  var current = sel.value;
+  var allTags = [];
+  var allJokes = jokes.concat(archivedJokes);
+  for (var i = 0; i < allJokes.length; i++) {
+    var tags = allJokes[i].tags || [];
+    for (var k = 0; k < tags.length; k++) {
+      if (allTags.indexOf(tags[k]) === -1) allTags.push(tags[k]);
+    }
+  }
+  allTags.sort();
+  sel.innerHTML = '<option value="">All Tags</option>';
+  for (var j = 0; j < allTags.length; j++) {
+    var opt = document.createElement('option');
+    opt.value = allTags[j];
+    opt.textContent = allTags[j];
+    if (allTags[j] === current) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
 function filterByTag(t) {
   displayJokes = t ? jokes.filter(function(j){return j.tags.indexOf(t)>-1;}) : jokes.slice();
   renderJokes(displayJokes);
@@ -218,7 +241,7 @@ function saveNewJoke() {
     id: nextId++,
     title: title,
     body: bodyEl ? bodyEl.value.trim() || 'No notes yet.' : 'No notes yet.',
-    tags: modalTags.length ? modalTags.slice() : ['Work'],
+    tags: modalTags.slice(),
     tier: modalRating >= 4 ? 'a' : modalRating >= 3 ? 'b' : 'c',
     rating: modalRating || 3,
     runtime: runtimeEl ? runtimeEl.value.trim() || '1:00' : '1:00',
@@ -267,10 +290,32 @@ function openEditModal(id) {
     }
   }
   modalTags = j.tags.slice();
-  var tagEls = document.querySelectorAll('#edit-modal-tags .edit-tag');
-  for (var i=0;i<tagEls.length;i++) {
-    var tagName = tagEls[i].textContent.trim();
-    tagEls[i].classList.toggle('off', j.tags.indexOf(tagName)===-1);
+  // rebuild edit modal tags to include any custom tags from all jokes
+  var editTagsEl = document.getElementById('edit-modal-tags');
+  if (editTagsEl) {
+    var hardcoded = ['Travel', 'Tech', 'Dating', 'Family', 'Work', 'Current Events'];
+    // collect all tags across jokes
+    var allKnown = hardcoded.slice();
+    var allJokes = jokes.concat(archivedJokes);
+    for (var ai = 0; ai < allJokes.length; ai++) {
+      var jt = allJokes[ai].tags || [];
+      for (var ak = 0; ak < jt.length; ak++) {
+        if (allKnown.indexOf(jt[ak]) === -1) allKnown.push(jt[ak]);
+      }
+    }
+    // also include tags from the joke being edited
+    for (var ti = 0; ti < j.tags.length; ti++) {
+      if (allKnown.indexOf(j.tags[ti]) === -1) allKnown.push(j.tags[ti]);
+    }
+    editTagsEl.innerHTML = '';
+    for (var eti = 0; eti < allKnown.length; eti++) {
+      var tname = allKnown[eti];
+      var sp = document.createElement('span');
+      sp.className = 'tag tag-' + tagColor(tname) + ' edit-tag' + (j.tags.indexOf(tname) === -1 ? ' off' : '');
+      sp.textContent = tname;
+      sp.onclick = (function(el, tag) { return function() { toggleEditTag(el, tag); }; })(sp, tname);
+      editTagsEl.appendChild(sp);
+    }
   }
 }
 function closeEditModal() {
@@ -306,7 +351,7 @@ function saveEditedJoke() {
       jokes[i].runtime = runtimeEl ? runtimeEl.value.trim() || jokes[i].runtime : jokes[i].runtime;
       jokes[i].tier = tierEl ? tierEl.value : jokes[i].tier;
       jokes[i].rating = modalRating || jokes[i].rating;
-      jokes[i].tags = modalTags.length ? modalTags.slice() : jokes[i].tags;
+      jokes[i].tags = modalTags.slice();
       jokes[i].score = parseFloat((6 + jokes[i].rating * 0.5).toFixed(1));
       break;
     }

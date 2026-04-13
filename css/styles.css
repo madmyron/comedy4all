@@ -419,6 +419,8 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
 .home-tile[data-tile="analytics"]{ --tile-accent: #2d7a35; --tile-icon-bg: #eef8ef; }
 .home-tile[data-tile="dashboard"]{ --tile-accent: #9a9590; --tile-icon-bg: #f0ede8; }
 
+#mobile-new-joke-btn { display: none; }
+
 @media(max-width: 900px) {
   .home-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
 }
@@ -509,4 +511,7 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   .studio-editor-head{align-items:stretch}
   .studio-action-row{width:100%}
   .studio-export-select{min-width:0;flex:1}
+  #joke-search{display:none}
+  #topbar-new-joke-btn{display:none}
+  #mobile-new-joke-btn{display:inline-flex!important}
 }

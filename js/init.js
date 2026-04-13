@@ -81,7 +81,7 @@ function onboardSaveJoke() {
   var t = (document.getElementById('ob-title')||{}).value||'';
   var b = (document.getElementById('ob-body')||{}).value||'';
   if (t.trim()) {
-    var newJ = {id:nextId++,title:t.trim(),body:b.trim()||'Work in progress.',tags:['Work'],tier:'c',rating:3,runtime:'1:00',score:7.0};
+    var newJ = {id:nextId++,title:t.trim(),body:b.trim()||'Work in progress.',tags:[],tier:'c',rating:3,runtime:'1:00',score:7.0};
     jokes.unshift(newJ); displayJokes = jokes.slice();
     renderJokes(displayJokes); updateCounts();
     toast('First joke saved! \u2713');

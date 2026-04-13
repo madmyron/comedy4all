@@ -275,13 +275,13 @@
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Joke Manager</div>
         <input id="joke-search" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:185px;transition:border .15s" placeholder="Search jokes..." oninput="filterJokes(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
-        <select class="btn" style="padding:6px 9px" onchange="filterByTag(this.value)">
-          <option value="">All Tags</option><option>Travel</option><option>Dating</option><option>Tech</option><option>Family</option><option>Work</option>
+        <select id="tag-filter-select" class="btn" style="padding:6px 9px" onchange="filterByTag(this.value)">
+          <option value="">All Tags</option>
         </select>
         <select class="btn" style="padding:6px 9px" onchange="sortJokes(this.value)">
           <option value="score">Rating &#8595;</option><option value="alpha">A-Z</option><option value="newest">Newest</option>
         </select>
-        <button class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
+        <button id="topbar-new-joke-btn" class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
       </div>
       <div style="display:flex;flex:1;overflow:hidden">
         <div class="content scroll" style="flex:1">
@@ -295,7 +295,7 @@
             </div>
             <div class="joke-toolbar-meta">
               <span style="font-size:11px;color:var(--text3)" id="joke-count">9 jokes</span>
-              <button class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
+              <button class="btn btn-sm btn-primary" id="mobile-new-joke-btn" onclick="openNewJoke()">+ New Joke</button>
             </div>
           </div>
           <div class="joke-grid" id="joke-grid"></div>

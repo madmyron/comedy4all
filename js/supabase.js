@@ -280,7 +280,7 @@ function _patchFunctions() {
     var nj = {
       title: title,
       body: bodyEl ? bodyEl.value.trim() : '',
-      tags: modalTags.length ? modalTags.slice() : ['Work'],
+      tags: modalTags.length ? modalTags.slice() : [],
       tier: modalRating >= 4 ? 'a' : modalRating >= 3 ? 'b' : 'c',
       rating: modalRating || 3,
       runtime: rtEl ? rtEl.value.trim() || '1:00' : '1:00',
@@ -319,7 +319,7 @@ function _patchFunctions() {
       title: title, body: bodyEl ? bodyEl.value.trim() : '',
       runtime: rtEl ? rtEl.value.trim() || '1:00' : '1:00',
       tier: tierEl ? tierEl.value : 'b', rating: modalRating || 3,
-      tags: modalTags.length ? modalTags.slice() : ['Work'],
+      tags: modalTags.length ? modalTags.slice() : [],
       score: parseFloat((6 + (modalRating || 3) * 0.5).toFixed(1))
     };
     var eid = editingId; closeEditModal();
