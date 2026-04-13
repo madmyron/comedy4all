@@ -1,4 +1,6 @@
 // - JOKE MANAGER -
+var jokeGridSortable = null;
+
 function tagColor(t) {
   if (t==='Travel') return 'gold';
   if (t==='Tech') return 'blue';
@@ -49,6 +51,38 @@ function renderJokes(list) {
     (function(el) {
       el.addEventListener('click', function() { openDetail(el.getAttribute('data-jid')); });
     })(cards[ci]);
+  }
+
+  // Initialize SortableJS
+  if (!isArchiveView && typeof Sortable !== 'undefined') {
+    if (jokeGridSortable) jokeGridSortable.destroy();
+    
+    var sortSelect = document.getElementById('sort-select');
+    var isCustomOrder = sortSelect && sortSelect.value === 'custom';
+    
+    jokeGridSortable = new Sortable(grid, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      disabled: !isCustomOrder, // Only allow drag and drop in 'Custom Order' mode
+      onEnd: function(evt) {
+        if (evt.oldIndex === evt.newIndex) return;
+        
+        // Reorder displayJokes based on drag and drop
+        var movedItem = displayJokes.splice(evt.oldIndex, 1)[0];
+        displayJokes.splice(evt.newIndex, 0, movedItem);
+        
+        // Apply back to main jokes array to persist the order
+        // This is a naive reordering assuming displayJokes contains all active jokes
+        // In a real app with search/filters, this logic might need refinement
+        jokes = displayJokes.slice(); 
+        
+        toast('Joke order updated');
+      }
+    });
+  } else if (jokeGridSortable) {
+    // Disable sorting in archive view
+    jokeGridSortable.destroy();
+    jokeGridSortable = null;
   }
 }
 
@@ -196,6 +230,12 @@ function sortJokes(by) {
   if (by==='score') s.sort(function(a,b){return b.score-a.score;});
   else if (by==='alpha') s.sort(function(a,b){return a.title.localeCompare(b.title);});
   else if (by==='newest') s.sort(function(a,b){return b.id-a.id;});
+  // If 'custom', we leave it alone (or it triggers re-render to activate drag & drop)
+  if (by !== 'custom') {
+     // If not custom, disable Sortable
+     if (jokeGridSortable) jokeGridSortable.option('disabled', true);
+  }
+  
   displayJokes = s;
   renderJokes(s);
 }

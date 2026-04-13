@@ -278,8 +278,8 @@
         <select id="tag-filter-select" class="btn" style="padding:6px 9px" onchange="filterByTag(this.value)">
           <option value="">All Tags</option>
         </select>
-        <select class="btn" style="padding:6px 9px" onchange="sortJokes(this.value)">
-          <option value="score">Top Rated</option><option value="alpha">A&ndash;Z</option><option value="newest">Newest First</option>
+        <select id="sort-select" class="btn" style="padding:6px 9px" onchange="sortJokes(this.value)">
+          <option value="custom">Custom Order</option><option value="score">Top Rated</option><option value="alpha">A&ndash;Z</option><option value="newest">Newest First</option>
         </select>
         <button id="topbar-new-joke-btn" class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
       </div>
@@ -904,6 +904,7 @@
 <script src="js/settings.js"></script>
 <script src="js/shows.js"></script>
 <script src="js/studio.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="js/init.js"></script>
 </body>
 </html>

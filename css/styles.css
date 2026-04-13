@@ -187,6 +187,11 @@ body::before{
 .jcard.ta::after{content:'';position:absolute;inset:0;background:url('data:image/svg+xml;utf8,<svg width="4" height="4" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="0.5" fill="%23cc6f2f" fill-opacity="0.1"/></svg>') repeat;pointer-events:none}
 .jcard.tb::after{content:'';position:absolute;inset:0;background:url('data:image/svg+xml;utf8,<svg width="4" height="4" xmlns="http://www.w3.org/2000/svg"><path d="M0 4L4 0M0 0l4 4" stroke="%233c67c7" stroke-width="0.5" stroke-opacity="0.08"/></svg>') repeat;pointer-events:none}
 .jcard.tc::after{content:'';position:absolute;inset:0;background:url('data:image/svg+xml;utf8,<svg width="4" height="4" xmlns="http://www.w3.org/2000/svg"><path d="M0 4L4 0" stroke="%23a27e72" stroke-width="0.5" stroke-opacity="0.1"/></svg>') repeat;pointer-events:none}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: var(--bg3);
+}
 .jtitle{font-size:13px;font-weight:600;margin-bottom:4px;color:var(--text)}
 .jprev{font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .jmeta{display:flex;align-items:center;justify-content:space-between;font-size:10px}
