@@ -279,7 +279,7 @@
           <option value="">All Tags</option>
         </select>
         <select class="btn" style="padding:6px 9px" onchange="sortJokes(this.value)">
-          <option value="score">Rating &#8595;</option><option value="alpha">A-Z</option><option value="newest">Newest</option>
+          <option value="score">Top Rated</option><option value="alpha">A&ndash;Z</option><option value="newest">Newest First</option>
         </select>
         <button id="topbar-new-joke-btn" class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
       </div>
@@ -287,9 +287,9 @@
         <div class="content scroll" style="flex:1">
           <div class="joke-toolbar">
             <div class="joke-toolbar-tags">
-              <span class="tag tag-gold" style="cursor:pointer" onclick="filterByTier('a')">A-Tier</span>
-              <span class="tag tag-blue" style="cursor:pointer" onclick="filterByTier('b')">B-Tier</span>
-              <span class="tag tag-gray" style="cursor:pointer" onclick="filterByTier('c')">C-Tier</span>
+              <span class="tag tag-tier-a" style="cursor:pointer" onclick="filterByTier('a')">A-Tier</span>
+              <span class="tag tag-tier-b" style="cursor:pointer" onclick="filterByTier('b')">B-Tier</span>
+              <span class="tag tag-tier-c" style="cursor:pointer" onclick="filterByTier('c')">C-Tier</span>
               <span class="tag tag-gray" style="cursor:pointer" onclick="filterByTier('')">All</span>
               <span class="tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid #b8d4f4;cursor:pointer" onclick="filterByTier('archived')">&#128230; Archived</span>
             </div>
@@ -771,8 +771,8 @@
         <span class="tag tag-blue" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Tech')">Tech</span>
         <span class="tag tag-purple" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Dating')">Dating</span>
         <span class="tag tag-green" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Family')">Family</span>
-        <span class="tag tag-gray" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Work')">Work</span>
-        <span class="tag tag-gray" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Current Events')">Current Events</span>
+        <span class="tag tag-yellow" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Work')">Work</span>
+        <span class="tag tag-teal" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Current Events')">Current Events</span>
         <span id="custom-tags-container"></span>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px">
@@ -815,8 +815,12 @@
         <span class="tag tag-blue edit-tag" onclick="toggleEditTag(this,'Tech')">Tech</span>
         <span class="tag tag-purple edit-tag" onclick="toggleEditTag(this,'Dating')">Dating</span>
         <span class="tag tag-green edit-tag" onclick="toggleEditTag(this,'Family')">Family</span>
-        <span class="tag tag-gray edit-tag" onclick="toggleEditTag(this,'Work')">Work</span>
-        <span class="tag tag-gray edit-tag" onclick="toggleEditTag(this,'Current Events')">Current Events</span>
+        <span class="tag tag-yellow edit-tag" onclick="toggleEditTag(this,'Work')">Work</span>
+        <span class="tag tag-teal edit-tag" onclick="toggleEditTag(this,'Current Events')">Current Events</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <input id="edit-custom-tag-input" type="text" placeholder="Add custom tag..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key==='Enter'){addEditCustomTag();event.preventDefault();}">
+        <button onclick="addEditCustomTag()" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">+ Add</button>
       </div>
     </div>
     <div style="display:flex;gap:9px;justify-content:space-between;margin-top:18px;align-items:center">

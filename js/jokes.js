@@ -4,7 +4,17 @@ function tagColor(t) {
   if (t==='Tech') return 'blue';
   if (t==='Dating') return 'purple';
   if (t==='Family') return 'green';
-  return 'gray';
+  if (t==='Work') return 'yellow';
+  if (t==='Current Events') return 'teal';
+  
+  // Assign a consistent color based on string hash for custom tags
+  var hash = 0;
+  for (var i = 0; i < t.length; i++) {
+    hash = t.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  var colors = ['red', 'pink', 'teal', 'blue', 'purple', 'green', 'gold'];
+  var index = Math.abs(hash) % colors.length;
+  return colors[index];
 }
 
 function renderJokes(list) {
@@ -31,7 +41,7 @@ function renderJokes(list) {
       +'<div class="jtitle">'+j.title+ageBadge+'</div>'
       +'<div class="jprev">'+(j.body||'')+'</div>'
       +'<div style="margin-bottom:8px">'+j.tags.map(function(t){return '<span class="tag tag-'+tagColor(t)+'">'+t+'</span>';}).join('')+'</div>'
-      +'<div class="jmeta"><span class="stars">'+stars+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--text3);font-size:10px">'+j.runtime+'</span><span style="color:var('+(j.score>=8?'--gold':j.score>=7?'--blue':'--text3')+');font-weight:600">'+j.score+'</span></div>'
+      +'<div class="jmeta"><span class="stars">'+stars+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--text3);font-size:10px">'+j.runtime+'</span></div>'
       +'</div>';
   }).join('');
   var cards = grid.querySelectorAll('[data-jid]');
@@ -51,7 +61,7 @@ function openDetail(id) {
   var panel = document.getElementById('joke-detail');
   var stars = '';
   for (var s=1;s<=5;s++) stars += (s<=j.rating?'\u2605':'\u2606');
-  var tierLabel = j.tier==='a'?'<span class="tag tag-gold">A-Tier</span>':j.tier==='b'?'<span class="tag tag-blue">B-Tier</span>':'<span class="tag tag-gray">C-Tier</span>';
+  var tierLabel = j.tier==='a'?'<span class="tag tag-tier-a">A-Tier</span>':j.tier==='b'?'<span class="tag tag-tier-b">B-Tier</span>':'<span class="tag tag-tier-c">C-Tier</span>';
   var mobileBar = '<div class="detail-close-bar" style="display:none;align-items:center;justify-content:center;padding:10px 14px 8px;border-bottom:1px solid var(--border);flex-shrink:0;position:relative">'
     +'<div style="width:40px;height:4px;background:var(--border2);border-radius:2px"></div>'
     +'<button onclick="closeDetail()" style="position:absolute;right:12px;top:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;font-size:12px;font-weight:600;color:var(--text2);padding:5px 14px;cursor:pointer;">x Close</button>'
@@ -63,7 +73,7 @@ function openDetail(id) {
     +'<button class="btn btn-sm" onclick="closeDetail()" style="flex-shrink:0;padding:3px 8px;font-size:11px">x</button>'
     +'</div>'
     +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+j.tags.map(function(t){return '<span class="tag tag-'+tagColor(t)+'">'+t+'</span>';}).join('')+' '+tierLabel+'</div>'
-    +'<div style="display:flex;gap:14px;font-size:11px;color:var(--text3)"><span> '+j.runtime+'</span><span style="color:var(--gold)">'+stars+'</span><span style="color:var('+(j.score>=8?'--gold':'--blue')+');font-weight:600">'+j.score+'/10</span></div>'
+    +'<div style="display:flex;gap:14px;font-size:11px;color:var(--text3)"><span> '+j.runtime+'</span><span style="color:var(--gold)">'+stars+'</span></div>'
     +'</div>'
     +'<div style="flex:1;overflow-y:auto;padding:14px" class="scroll">'
     +'<div class="sect-title">Material</div>'
@@ -231,6 +241,32 @@ function toggleTag(el, tag) {
   if (idx > -1) { modalTags.splice(idx,1); el.style.opacity = '.4'; }
   else { modalTags.push(tag); el.style.opacity = '1'; }
 }
+function addCustomTag() {
+  var input = document.getElementById('custom-tag-input');
+  if (!input) return;
+  var tag = input.value.trim();
+  if (!tag) return;
+  if (modalTags.indexOf(tag) === -1) {
+    modalTags.push(tag);
+    var container = document.getElementById('modal-tags');
+    if (container) {
+      var sp = document.createElement('span');
+      sp.className = 'tag tag-' + tagColor(tag);
+      sp.style.cursor = 'pointer';
+      sp.style.opacity = '1';
+      sp.textContent = tag;
+      sp.onclick = (function(t){ return function() { toggleTag(this, t); }; })(tag);
+      var customTagsContainer = document.getElementById('custom-tags-container');
+      if (customTagsContainer) {
+        container.insertBefore(sp, customTagsContainer);
+      } else {
+        container.appendChild(sp);
+      }
+    }
+  }
+  input.value = '';
+}
+
 function saveNewJoke() {
   var titleEl = document.getElementById('nj-title');
   var bodyEl = document.getElementById('nj-body');
@@ -336,6 +372,25 @@ function toggleEditTag(el, tag) {
   if (idx > -1) modalTags.splice(idx, 1);
   else modalTags.push(tag);
 }
+function addEditCustomTag() {
+  var input = document.getElementById('edit-custom-tag-input');
+  if (!input) return;
+  var tag = input.value.trim();
+  if (!tag) return;
+  if (modalTags.indexOf(tag) === -1) {
+    modalTags.push(tag);
+    var container = document.getElementById('edit-modal-tags');
+    if (container) {
+      var sp = document.createElement('span');
+      sp.className = 'tag tag-' + tagColor(tag) + ' edit-tag';
+      sp.textContent = tag;
+      sp.onclick = (function(t){ return function() { toggleEditTag(this, t); }; })(tag);
+      container.appendChild(sp);
+    }
+  }
+  input.value = '';
+}
+
 function saveEditedJoke() {
   if (!editingId) return;
   var titleEl = document.getElementById('ej-title');
@@ -371,7 +426,7 @@ function renderSet() {
       var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
       return '<div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'" onclick="toast(\'Added: '+j.title.replace(/'/g,'&#39;')+'\')">'
         +'<div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:'+color+';flex-shrink:0"></div>'
-        +'<div><div style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+' - '+j.score+'/10</div></div>'
+        +'<div><div style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div></div>'
         +'</div>';
     }).join('');
   }
@@ -385,7 +440,7 @@ function renderSet() {
       t += parseInt(parts[0])*60+(parseInt(parts[1])||0);
       var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
       return '<div class="sslot"><div class="sslot-num">'+(i+1)+'</div>'
-        +'<div class="sslot-card" style="border-left:3px solid '+color+'"><div style="font-size:12px;font-weight:600;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace">'+j.runtime+' - '+j.score+'/10</div></div>'
+        +'<div class="sslot-card" style="border-left:3px solid '+color+'"><div style="font-size:12px;font-weight:600;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace">'+j.runtime+'</div></div>'
         +'<div class="sslot-time">'+ts+'</div></div>'
         +(i<setJ.length-1?'<div style="margin-left:24px;margin-bottom:6px"><div class="sslot-card segue" onclick="toast(\'Add segue here\')"><div style="font-size:10px;color:var(--text3)">+ segue / crowd work</div></div></div>':'');
     }).join('');
