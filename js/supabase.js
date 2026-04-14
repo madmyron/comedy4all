@@ -192,6 +192,18 @@ function sbLoadJokes() {
       if (res.error) { setSyncStatus('error'); return; }
       var all = res.data || [];
       jokes = all.filter(function(j) { return !j.archived; });
+      try {
+        var savedOrder = JSON.parse(localStorage.getItem('c4a_joke_order') || '[]');
+        if (savedOrder.length) {
+          jokes.sort(function(a, b) {
+            var ai = savedOrder.indexOf(String(a.id));
+            var bi = savedOrder.indexOf(String(b.id));
+            if (ai === -1) return 1;
+            if (bi === -1) return -1;
+            return ai - bi;
+          });
+        }
+      } catch(e) {}
       archivedJokes = all.filter(function(j) { return j.archived; });
       displayJokes = jokes.slice();
       var scr = document.getElementById('screen-jokes');

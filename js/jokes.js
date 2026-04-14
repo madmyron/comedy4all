@@ -73,7 +73,16 @@ function renderJokes(list) {
         var movedItem = displayJokes.splice(evt.oldIndex, 1)[0];
         displayJokes.splice(evt.newIndex, 0, movedItem);
         jokes = displayJokes.slice();
-        toast('Joke order updated');
+        try {
+          localStorage.setItem('c4a_joke_order', JSON.stringify(jokes.map(function(j){ return String(j.id); })));
+        } catch(e) {}
+        toast('Order saved \u2713');
+        if (currentUser && _sb) {
+          var updates = jokes.map(function(j, i) {
+            return _sb.from('jokes').update({ sort_order: i }).eq('id', j.id);
+          });
+          Promise.all(updates).catch(function() {});
+        }
       }
     });
   } else if (jokeGridSortable) {
@@ -465,6 +474,15 @@ function saveEditedJoke() {
 var setLibSortable = null;
 var setCanvasSortable = null;
 
+function saveCurrentSet() {
+  var canvas = document.getElementById('set-canvas');
+  if (!canvas) return;
+  var ids = [];
+  canvas.querySelectorAll('.sslot[data-jid]').forEach(function(s){ ids.push(String(s.getAttribute('data-jid'))); });
+  try { localStorage.setItem('c4a_active_set', JSON.stringify(ids)); } catch(e) {}
+  toast('Set saved \u2713');
+}
+
 function syncLibraryToCanvas() {
   var canvas = document.getElementById('set-canvas');
   var lib = document.getElementById('set-lib');
@@ -602,6 +620,32 @@ function renderSet() {
         }
       });
       recalcSetRuntime();
+      try {
+        var savedSet = JSON.parse(localStorage.getItem('c4a_active_set') || '[]');
+        if (savedSet.length && canvas.querySelectorAll('.sslot').length === 0) {
+          var hint = canvas.querySelector('.set-empty-hint');
+          if (hint) hint.remove();
+          savedSet.forEach(function(jid) {
+            var j = jokes.find(function(x){ return String(x.id) === String(jid); });
+            if (!j) return;
+            var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
+            var slot = document.createElement('div');
+            slot.className = 'sslot';
+            slot.setAttribute('data-jid', String(j.id));
+            slot.innerHTML = '<div class="sslot-num"></div>'
+              +'<div class="sslot-card" style="border-left:3px solid '+color+'">'
+              +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+              +'<div style="font-size:12px;font-weight:600;color:var(--text)">'+j.title+'</div>'
+              +'<div style="cursor:pointer;color:var(--text3);font-size:14px;line-height:1;margin-top:-2px;" onclick="removeSetSlot(this)">&times;</div>'
+              +'</div>'
+              +'<div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace" class="slot-runtime" data-rt="'+j.runtime+'">'+j.runtime+'</div></div>'
+              +'<div class="sslot-time"></div>';
+            canvas.appendChild(slot);
+          });
+          recalcSetRuntime();
+          syncLibraryToCanvas();
+        }
+      } catch(e) {}
     }
   }
 }
