@@ -1,5 +1,6 @@
 // - JOKE MANAGER -
 var jokeGridSortable = null;
+var _currentSearchQuery = '';
 
 function tagColor(t) {
   if (t==='Travel') return 'gold';
@@ -92,6 +93,13 @@ function renderJokes(list) {
   }
 }
 
+function highlightText(text, query) {
+  if (!query || !query.trim()) return text;
+  var escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  var regex = new RegExp('(' + escaped + ')', 'gi');
+  return text.replace(regex, '<mark style="background:#ffe066;color:#26150f;border-radius:2px;padding:0 2px">$1</mark>');
+}
+
 function openDetail(id) {
   var j = null;
   for (var i=0;i<jokes.length;i++) { if(String(jokes[i].id)==String(id)){j=jokes[i];break;} }
@@ -109,7 +117,7 @@ function openDetail(id) {
   panel.innerHTML = mobileBar
     +'<div style="padding:14px;border-bottom:1px solid var(--border);flex-shrink:0">'
     +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">'
-    +'<div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.4">'+j.title+(isArchived?'<span class="archive-badge">[archived] Archived</span>':'')+'</div>'
+    +'<div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.4">'+highlightText(j.title, _currentSearchQuery)+(isArchived?'<span class="archive-badge">[archived] Archived</span>':'')+'</div>'
     +'<button class="btn btn-sm" onclick="closeDetail()" style="flex-shrink:0;padding:3px 8px;font-size:11px">x</button>'
     +'</div>'
     +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+j.tags.map(function(t){return '<span class="tag tag-'+tagColor(t)+'">'+t+'</span>';}).join('')+' '+tierLabel+'</div>'
@@ -117,7 +125,7 @@ function openDetail(id) {
     +'</div>'
     +'<div style="flex:1;overflow-y:auto;padding:14px" class="scroll">'
     +'<div class="sect-title">Material</div>'
-    +'<div style="font-size:12.5px;line-height:1.85;color:var(--text2);margin-bottom:16px;white-space:pre-wrap">'+j.body+'</div>'
+    +'<div style="font-size:12.5px;line-height:1.85;color:var(--text2);margin-bottom:16px;white-space:pre-wrap">'+highlightText(j.body, _currentSearchQuery)+'</div>'
     +'<div class="sect-title">Brooks Notes</div>'
     +'<div style="font-size:11.5px;color:var(--text2);background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);padding:10px 12px;line-height:1.65;margin-bottom:6px">Strong '+j.tier.toUpperCase()+'-tier material. '+(j.score>=8?'Consistent crowd pleaser -- protect it in your set.':'Room to tighten the setup. Try cutting 10-15 seconds from the lead-in.')+'</div>'
     +'</div>'
@@ -191,12 +199,14 @@ function unarchiveJoke(id) {
 }
 
 function filterJokes(q) {
+  _currentSearchQuery = q || '';
   var pool = jokes;
   displayJokes = q ? pool.filter(function(j){
     return j.title.toLowerCase().indexOf(q.toLowerCase())>-1 || j.body.toLowerCase().indexOf(q.toLowerCase())>-1;
   }) : pool.slice();
   renderJokes(displayJokes);
 }
+
 function rebuildTagDropdown() {
   var sel = document.getElementById('tag-filter-select');
   if (!sel) return;
