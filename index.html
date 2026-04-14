@@ -309,6 +309,7 @@
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Set Builder</div>
         <select class="btn topbar-select" style="padding:6px 9px" aria-label="Current set"><option>The Weekender</option><option>Corporate Gig</option><option>Late Night Pilot</option></select>
+        <input id="set-search" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:160px;transition:border .15s" placeholder="Search library..." oninput="filterSetLibraryBySearch(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
         <select id="set-tag-filter" class="btn" style="padding:6px 9px;max-width:120px" onchange="filterSetLibrary(this.value)">
           <option value="">All Tags</option>
         </select>

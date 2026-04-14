@@ -536,7 +536,8 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   .studio-editor-head{align-items:stretch}
   .studio-action-row{width:100%}
   .studio-export-select{min-width:0;flex:1}
-  #joke-search{display:none}
+  #joke-search{display:inline-flex;width:100%;max-width:160px}
+  #set-search{display:none}
   #topbar-new-joke-btn{display:none}
   #mobile-new-joke-btn{display:inline-flex!important}
 }

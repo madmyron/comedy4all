@@ -513,6 +513,23 @@ function filterSetLibrary(tag) {
   syncLibraryToCanvas();
 }
 
+function filterSetLibraryBySearch(q) {
+  var lib = document.getElementById('set-lib');
+  if (!lib) return;
+  var lower = q.toLowerCase().trim();
+  lib.querySelectorAll('.set-lib-item').forEach(function(item) {
+    var jid = item.getAttribute('data-jid');
+    var j = jokes.find(function(x){ return String(x.id) === String(jid); });
+    if (!j) return;
+    var match = !lower
+      || j.title.toLowerCase().indexOf(lower) !== -1
+      || (j.body && j.body.toLowerCase().indexOf(lower) !== -1)
+      || (j.tags && j.tags.some(function(t){ return t.toLowerCase().indexOf(lower) !== -1; }));
+    item.style.display = match ? '' : 'none';
+  });
+  syncLibraryToCanvas();
+}
+
 var _libLastTouch = 0;
 function renderSet() {
   var setTagFilter = document.getElementById('set-tag-filter');
