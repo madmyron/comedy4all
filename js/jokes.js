@@ -498,6 +498,7 @@ function filterSetLibrary(tag) {
   syncLibraryToCanvas();
 }
 
+var _libLastTouch = 0;
 function renderSet() {
   var setTagFilter = document.getElementById('set-tag-filter');
   if (setTagFilter) {
@@ -517,7 +518,7 @@ function renderSet() {
         +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
         +'</div>'
         +'<div style="width:6px;height:6px;border-radius:50%;margin-top:0;background:'+color+';flex-shrink:0"></div>'
-        +'<div><div style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div></div>'
+        +'<div><div style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">hold to open</div></div>'
         +'</div>';
     }).join('');
     
@@ -525,36 +526,26 @@ function renderSet() {
     for (var li = 0; li < libItems.length; li++) {
       (function(item) {
         var pressTimer = null;
-        var didLongPress = false;
 
         item.addEventListener('touchstart', function(e) {
           if (e.target.closest('.drag-handle')) return;
-          didLongPress = false;
+          _libLastTouch = Date.now();
           pressTimer = setTimeout(function() {
-            didLongPress = true;
+            pressTimer = null;
             var jid = item.getAttribute('data-jid');
             openDetail(jid);
-            // Brief visual feedback
             item.style.background = 'var(--gold-bg)';
             setTimeout(function(){ item.style.background = ''; }, 400);
-          }, 600);
+          }, 800);
         }, { passive: true });
 
-        item.addEventListener('touchend', function(e) {
+        item.addEventListener('touchend', function() {
           if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
         });
 
-        item.addEventListener('touchmove', function(e) {
+        item.addEventListener('touchmove', function() {
           if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-        });
-
-        // Desktop: keep click working normally for mouse users
-        item.addEventListener('click', function(e) {
-          if (e.target.closest('.drag-handle')) return;
-          if (didLongPress) { didLongPress = false; return; }
-          var jid = item.getAttribute('data-jid');
-          openDetail(jid);
-        });
+        }, { passive: true });
       })(libItems[li]);
     }
 
