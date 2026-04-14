@@ -489,6 +489,8 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   .rec-live .live-stop-btn{grid-column:1 / -1;width:100%;margin-left:0!important;display:flex;justify-content:center}
   .joke-grid{grid-template-columns:1fr 1fr!important}
   .topbar input[type=text], .topbar select:not(:first-of-type){display:none}
+  #joke-search{display:inline-flex!important;width:120px!important;min-width:0!important;font-size:11px!important}
+  #screen-jokes .topbar-title{display:none}
   #sets-topbar .topbar-title{display:none}
   #sets-topbar .btn:not(.btn-primary){display:none}
   #screen-sets .topbar select{display:inline-flex!important;max-width:160px}
