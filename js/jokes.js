@@ -64,20 +64,15 @@ function renderJokes(list) {
       animation: 150,
       ghostClass: 'sortable-ghost',
       disabled: !isCustomOrder,
-      delay: 800,
+      delay: 400,
       delayOnTouchOnly: true,
+      swap: true,
+      swapClass: 'sortable-swap-highlight',
       onEnd: function(evt) {
         if (evt.oldIndex === evt.newIndex) return;
-        
-        // Reorder displayJokes based on drag and drop
         var movedItem = displayJokes.splice(evt.oldIndex, 1)[0];
         displayJokes.splice(evt.newIndex, 0, movedItem);
-        
-        // Apply back to main jokes array to persist the order
-        // This is a naive reordering assuming displayJokes contains all active jokes
-        // In a real app with search/filters, this logic might need refinement
-        jokes = displayJokes.slice(); 
-        
+        jokes = displayJokes.slice();
         toast('Joke order updated');
       }
     });
