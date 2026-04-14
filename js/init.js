@@ -1,3 +1,4 @@
+if (typeof Sortable !== 'undefined' && Sortable.mount && typeof Sortable.Swap !== 'undefined') { Sortable.mount(new Sortable.Swap()); }
 // - INIT -
 function runIfAvailable(fn) {
   if (typeof fn === 'function') fn();
