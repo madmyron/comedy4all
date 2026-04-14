@@ -534,18 +534,36 @@ function filterSetLibrary(tag) {
 function filterSetLibraryBySearch(q) {
   var lib = document.getElementById('set-lib');
   if (!lib) return;
+  _currentSearchQuery = q || '';
   var lower = q.toLowerCase().trim();
+  var canvas = document.getElementById('set-canvas');
+  var usedIds = [];
+  if (canvas) {
+    canvas.querySelectorAll('.sslot[data-jid]').forEach(function(slot) {
+      usedIds.push(String(slot.getAttribute('data-jid')));
+    });
+  }
   lib.querySelectorAll('.set-lib-item').forEach(function(item) {
-    var jid = item.getAttribute('data-jid');
-    var j = jokes.find(function(x){ return String(x.id) === String(jid); });
+    var jid = String(item.getAttribute('data-jid'));
+    if (usedIds.indexOf(jid) !== -1) { item.style.display = 'none'; return; }
+    var j = jokes.find(function(x){ return String(x.id) === jid; });
     if (!j) return;
-    var match = !lower
-      || j.title.toLowerCase().indexOf(lower) !== -1
+    if (!lower) { item.style.display = ''; return; }
+    var match = j.title.toLowerCase().indexOf(lower) !== -1
       || (j.body && j.body.toLowerCase().indexOf(lower) !== -1)
       || (j.tags && j.tags.some(function(t){ return t.toLowerCase().indexOf(lower) !== -1; }));
     item.style.display = match ? '' : 'none';
+    if (match && lower) {
+      var titleEl = item.querySelector('div > div:first-child');
+      if (titleEl) {
+        var escaped = lower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        titleEl.innerHTML = j.title.replace(new RegExp('(' + escaped + ')', 'gi'), '<mark style="background:#ffe066;color:#26150f;border-radius:2px;padding:0 1px">$1</mark>');
+      }
+    } else {
+      var titleEl2 = item.querySelector('div > div:first-child');
+      if (titleEl2) titleEl2.textContent = j.title;
+    }
   });
-  syncLibraryToCanvas();
 }
 
 var _libLastTouch = 0;
@@ -586,7 +604,7 @@ function renderSet() {
             openDetail(jid);
             item.style.background = 'var(--gold-bg)';
             setTimeout(function(){ item.style.background = ''; }, 400);
-          }, 800);
+          }, 500);
         }, { passive: true });
 
         item.addEventListener('touchend', function() {
@@ -596,6 +614,15 @@ function renderSet() {
         item.addEventListener('touchmove', function() {
           if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
         }, { passive: true });
+
+        item.addEventListener('click', function(e) {
+          if (e.target.closest('.drag-handle')) return;
+          var now = Date.now();
+          if (now - _libLastTouch > 600) {
+            var jid = item.getAttribute('data-jid');
+            openDetail(jid);
+          }
+        });
       })(libItems[li]);
     }
 

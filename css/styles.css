@@ -492,7 +492,7 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   #joke-search{display:inline-flex!important;width:120px!important;min-width:0!important;font-size:11px!important}
   #screen-jokes .topbar-title{display:none}
   #sets-topbar .topbar-title{display:none}
-  #sets-topbar .btn:not(.btn-primary){display:none}
+  #sets-topbar .btn:not(.btn-primary):not(#set-search){display:none}
   #screen-sets .topbar select{display:inline-flex!important;max-width:160px}
   #sets-layout{display:flex!important;flex-direction:row!important;flex:1!important;height:0!important;overflow:hidden!important}
   #sets-layout > div:first-child{width:120px!important;min-width:120px!important;flex-shrink:0!important;overflow-y:auto!important;border-right:1px solid var(--border)!important;display:block!important}
@@ -538,7 +538,7 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   .studio-editor-head{align-items:stretch}
   .studio-action-row{width:100%}
   .studio-export-select{min-width:0;flex:1}
-  #set-search{display:none}
+  #set-search{display:inline-flex!important;width:110px!important;min-width:0!important;font-size:11px!important}
   #topbar-new-joke-btn{display:none}
   #mobile-new-joke-btn{display:inline-flex!important}
 }
