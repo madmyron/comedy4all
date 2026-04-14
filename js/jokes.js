@@ -63,7 +63,9 @@ function renderJokes(list) {
     jokeGridSortable = new Sortable(grid, {
       animation: 150,
       ghostClass: 'sortable-ghost',
-      disabled: !isCustomOrder, // Only allow drag and drop in 'Custom Order' mode
+      disabled: !isCustomOrder,
+      delay: 800,
+      delayOnTouchOnly: true,
       onEnd: function(evt) {
         if (evt.oldIndex === evt.newIndex) return;
         
