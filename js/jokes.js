@@ -465,30 +465,149 @@ function saveEditedJoke() {
   toast('Joke updated! \u2713');
 }
 
+var setLibSortable = null;
+var setCanvasSortable = null;
+
 function renderSet() {
   var lib = document.getElementById('set-lib');
   if (lib) {
     lib.innerHTML = jokes.map(function(j){
       var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
-      return '<div style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'" onclick="toast(\'Added: '+j.title.replace(/'/g,'&#39;')+'\')">'
+      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:grab;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
         +'<div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:'+color+';flex-shrink:0"></div>'
         +'<div><div style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div></div>'
         +'</div>';
     }).join('');
+    
+    if (setLibSortable) setLibSortable.destroy();
+    
+    if (typeof Sortable !== 'undefined') {
+      setLibSortable = new Sortable(lib, {
+        group: { name: 'setbuilder', pull: 'clone', put: false },
+        sort: false,
+        animation: 150
+      });
+    }
   }
+
   var canvas = document.getElementById('set-canvas');
-  var setJ = jokes.slice(0, 7);
-  var t = 0;
   if (canvas) {
-    canvas.innerHTML = setJ.map(function(j,i){
-      var m=Math.floor(t/60), s=t%60, ts=m+':'+(s<10?'0':'')+s;
-      var parts=j.runtime.split(':');
-      t += parseInt(parts[0])*60+(parseInt(parts[1])||0);
-      var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
-      return '<div class="sslot"><div class="sslot-num">'+(i+1)+'</div>'
-        +'<div class="sslot-card" style="border-left:3px solid '+color+'"><div style="font-size:12px;font-weight:600;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace">'+j.runtime+'</div></div>'
-        +'<div class="sslot-time">'+ts+'</div></div>'
-        +(i<setJ.length-1?'<div style="margin-left:24px;margin-bottom:6px"><div class="sslot-card segue" onclick="toast(\'Add segue here\')"><div style="font-size:10px;color:var(--text3)">+ segue / crowd work</div></div></div>':'');
-    }).join('');
+    if (!setCanvasSortable && typeof Sortable !== 'undefined') {
+      canvas.innerHTML = '<div class="set-empty-hint" style="text-align:center;padding:30px;color:var(--text3);font-size:12px;border:2px dashed var(--border2);border-radius:var(--r2)">&larr; Drag jokes from the left to build your set</div>';
+      
+      setCanvasSortable = new Sortable(canvas, {
+        group: { name: 'setbuilder', pull: true, put: true },
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        draggable: '.sslot',
+        filter: '.segue-wrapper, .set-empty-hint',
+        onAdd: function(evt) {
+          var hint = canvas.querySelector('.set-empty-hint');
+          if (hint) hint.remove();
+          
+          var item = evt.item;
+          var jid = item.getAttribute('data-jid');
+          var j = null;
+          for (var k=0; k<jokes.length; k++) {
+            if (String(jokes[k].id) === String(jid)) { j = jokes[k]; break; }
+          }
+          if (!j) return;
+          var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
+          item.className = 'sslot';
+          item.removeAttribute('style'); 
+          item.innerHTML = '<div class="sslot-num"></div>'
+            +'<div class="sslot-card" style="border-left:3px solid '+color+'">'
+            +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+            +'<div style="font-size:12px;font-weight:600;color:var(--text)">'+j.title+'</div>'
+            +'<div style="cursor:pointer;color:var(--text3);font-size:14px;line-height:1;margin-top:-2px;" onclick="removeSetSlot(this)">&times;</div>'
+            +'</div>'
+            +'<div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace" class="slot-runtime" data-rt="'+j.runtime+'">'+j.runtime+'</div></div>'
+            +'<div class="sslot-time"></div>';
+          recalcSetRuntime();
+        },
+        onEnd: function() {
+          recalcSetRuntime();
+        },
+        onRemove: function() {
+          recalcSetRuntime();
+        }
+      });
+      recalcSetRuntime();
+    }
   }
+}
+
+function removeSetSlot(btn) {
+  var el = btn;
+  while (el && !el.classList.contains('sslot')) { el = el.parentElement; }
+  if (el) {
+    var canvas = document.getElementById('set-canvas');
+    el.remove(); 
+    if (canvas && canvas.querySelectorAll('.sslot').length === 0) {
+      canvas.innerHTML = '<div class="set-empty-hint" style="text-align:center;padding:30px;color:var(--text3);font-size:12px;border:2px dashed var(--border2);border-radius:var(--r2)">&larr; Drag jokes from the left to build your set</div>';
+    }
+    recalcSetRuntime(); 
+  }
+}
+
+function recalcSetRuntime() {
+  var canvas = document.getElementById('set-canvas');
+  if (!canvas) return;
+  
+  // Remove existing segues
+  var segues = canvas.querySelectorAll('.segue-wrapper');
+  for (var i=0; i<segues.length; i++) {
+    segues[i].remove();
+  }
+  
+  var slots = canvas.querySelectorAll('.sslot');
+  var t = 0;
+  
+  for (var k=0; k<slots.length; k++) {
+    var slot = slots[k];
+    
+    // Set slot number
+    var numEl = slot.querySelector('.sslot-num');
+    if (numEl) numEl.textContent = (k + 1);
+    
+    // Get timestamp
+    var m = Math.floor(t/60);
+    var s = t%60;
+    var tsStr = m + ':' + (s<10?'0':'') + s;
+    
+    // Apply timestamp
+    var timeEl = slot.querySelector('.sslot-time');
+    if (timeEl) timeEl.textContent = tsStr;
+    
+    // Calculate new total
+    var rtEl = slot.querySelector('.slot-runtime');
+    if (rtEl) {
+      var rt = rtEl.getAttribute('data-rt') || '0:00';
+      var parts = rt.split(':');
+      t += parseInt(parts[0])*60 + (parseInt(parts[1])||0);
+    }
+    
+    // Add segue if not last
+    if (k < slots.length - 1) {
+      slot.insertAdjacentHTML('afterend', '<div class="segue-wrapper" style="margin-left:24px;margin-bottom:6px"><div class="sslot-card segue" onclick="toast(\'Add segue here\')"><div style="font-size:10px;color:var(--text3)">+ segue / crowd work</div></div></div>');
+    }
+  }
+  
+  // Update totals (target 30 mins = 1800 secs)
+  var totalM = Math.floor(t/60);
+  var totalS = t%60;
+  var totalStr = totalM + ':' + (totalS<10?'0':'') + totalS;
+  var pct = Math.min(100, Math.round((t / 1800) * 100));
+  
+  var timeTop = document.getElementById('set-time-top');
+  var timeSide = document.getElementById('set-time-side');
+  var barTop = document.getElementById('set-bar-top');
+  var barSide = document.getElementById('set-bar-side');
+  var pctSide = document.getElementById('set-pct-side');
+  
+  if (timeTop) timeTop.textContent = totalStr;
+  if (timeSide) timeSide.textContent = totalStr;
+  if (barTop) barTop.style.width = pct + '%';
+  if (barSide) barSide.style.width = pct + '%';
+  if (pctSide) pctSide.textContent = pct + '% of 30min target';
 }
