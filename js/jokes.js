@@ -468,6 +468,23 @@ function saveEditedJoke() {
 var setLibSortable = null;
 var setCanvasSortable = null;
 
+function syncLibraryToCanvas() {
+  var canvas = document.getElementById('set-canvas');
+  var lib = document.getElementById('set-lib');
+  if (!canvas || !lib) return;
+  var usedIds = [];
+  canvas.querySelectorAll('.sslot[data-jid]').forEach(function(slot) {
+    usedIds.push(String(slot.getAttribute('data-jid')));
+  });
+  lib.querySelectorAll('[data-jid]').forEach(function(item) {
+    if (usedIds.indexOf(String(item.getAttribute('data-jid'))) !== -1) {
+      item.style.display = 'none';
+    } else {
+      item.style.display = '';
+    }
+  });
+}
+
 function renderSet() {
   var lib = document.getElementById('set-lib');
   if (lib) {
@@ -485,7 +502,13 @@ function renderSet() {
       setLibSortable = new Sortable(lib, {
         group: { name: 'setbuilder', pull: 'clone', put: false },
         sort: false,
-        animation: 150
+        animation: 150,
+        scroll: true,
+        scrollSensitivity: 80,
+        scrollSpeed: 10,
+        touchStartThreshold: 10,
+        delay: 150,
+        delayOnTouchOnly: true
       });
     }
   }
@@ -524,6 +547,7 @@ function renderSet() {
             +'<div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace" class="slot-runtime" data-rt="'+j.runtime+'">'+j.runtime+'</div></div>'
             +'<div class="sslot-time"></div>';
           recalcSetRuntime();
+          syncLibraryToCanvas();
         },
         onEnd: function() {
           recalcSetRuntime();
@@ -547,6 +571,7 @@ function removeSetSlot(btn) {
       canvas.innerHTML = '<div class="set-empty-hint" style="text-align:center;padding:30px;color:var(--text3);font-size:12px;border:2px dashed var(--border2);border-radius:var(--r2)">&larr; Drag jokes from the left to build your set</div>';
     }
     recalcSetRuntime(); 
+    syncLibraryToCanvas();
   }
 }
 
