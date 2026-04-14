@@ -490,8 +490,8 @@ function renderSet() {
   if (lib) {
     lib.innerHTML = jokes.map(function(j){
       var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
-      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
-        +'<div class="drag-handle" style="display:flex;flex-direction:column;gap:2px;padding:4px 4px 4px 0;cursor:grab;flex-shrink:0;touch-action:none">'
+      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer" onclick="openDetail(\''+j.id+'\')" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+        +'<div class="drag-handle" style="display:flex;flex-direction:column;gap:2px;padding:4px 4px 4px 0;cursor:grab;flex-shrink:0;touch-action:none" onclick="event.stopPropagation()">'
         +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
         +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
         +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
