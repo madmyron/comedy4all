@@ -318,6 +318,9 @@
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Set Builder</div>
         <select class="btn topbar-select" style="padding:6px 9px" aria-label="Current set"><option>The Weekender</option><option>Corporate Gig</option><option>Late Night Pilot</option></select>
+        <select id="set-tag-filter" class="btn" style="padding:6px 9px;max-width:120px" onchange="filterSetLibrary(this.value)">
+          <option value="">All Tags</option>
+        </select>
         <button class="btn btn-sm" onclick="toast('Exported!')">&#8595; Export</button>
         <button class="btn btn-sm btn-primary" onclick="toast('Set saved! &#10003;')">Save Set</button>
       </div>

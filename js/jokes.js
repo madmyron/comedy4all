@@ -485,12 +485,25 @@ function syncLibraryToCanvas() {
   });
 }
 
+function filterSetLibrary(tag) {
+  var lib = document.getElementById('set-lib');
+  if (!lib) return;
+  lib.querySelectorAll('.set-lib-item').forEach(function(item) {
+    var jid = item.getAttribute('data-jid');
+    var j = jokes.find(function(x){ return String(x.id) === String(jid); });
+    if (!j) return;
+    var visible = !tag || j.tags.indexOf(tag) !== -1;
+    item.style.display = visible ? '' : 'none';
+  });
+  syncLibraryToCanvas();
+}
+
 function renderSet() {
   var lib = document.getElementById('set-lib');
   if (lib) {
     lib.innerHTML = jokes.map(function(j){
       var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
-      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer" onclick="openDetail(\''+j.id+'\')" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
         +'<div class="drag-handle" style="display:flex;flex-direction:column;gap:2px;padding:4px 4px 4px 0;cursor:grab;flex-shrink:0;touch-action:none" onclick="event.stopPropagation()">'
         +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
         +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
@@ -501,6 +514,32 @@ function renderSet() {
         +'</div>';
     }).join('');
     
+    var libItems = lib.querySelectorAll('.set-lib-item');
+    for (var li = 0; li < libItems.length; li++) {
+      (function(item) {
+        var tapped = false;
+        item.addEventListener('touchend', function(e) {
+          if (e.target.closest('.drag-handle')) return;
+          tapped = true;
+          var jid = item.getAttribute('data-jid');
+          openDetail(jid);
+        });
+        item.addEventListener('click', function(e) {
+          if (e.target.closest('.drag-handle')) return;
+          if (tapped) { tapped = false; return; }
+          var jid = item.getAttribute('data-jid');
+          openDetail(jid);
+        });
+      })(libItems[li]);
+    }
+
+    var setTagFilter = document.getElementById('set-tag-filter');
+    if (setTagFilter) {
+      var allTags = [];
+      jokes.forEach(function(j){ j.tags.forEach(function(t){ if (allTags.indexOf(t)===-1) allTags.push(t); }); });
+      setTagFilter.innerHTML = '<option value="">All Tags</option>' + allTags.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
+    }
+
     if (setLibSortable) setLibSortable.destroy();
     
     if (typeof Sortable !== 'undefined') {
