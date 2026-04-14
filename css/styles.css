@@ -483,8 +483,9 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   .rec-live .live-stop-btn{grid-column:1 / -1;width:100%;margin-left:0!important;display:flex;justify-content:center}
   .joke-grid{grid-template-columns:1fr 1fr!important}
   .topbar input[type=text], .topbar select:not(:first-of-type){display:none}
-  #screen-sets > div:last-child{grid-template-columns:1fr!important;height:auto!important;overflow:auto!important}
-  #screen-sets > div:last-child > div:first-child{display:none}
+  #screen-sets > div:last-child{grid-template-columns:1fr!important;grid-template-rows:auto 1fr!important;height:auto!important;overflow:auto!important}
+  #screen-sets > div:last-child > div:first-child{display:block!important;max-height:180px;overflow-y:auto;border-right:none!important;border-bottom:1px solid var(--border)}
+  #screen-sets > div:last-child > div:nth-child(2){min-height:300px;padding:10px}
   #screen-sets > div:last-child > div:last-child{display:none}
   #screen-studio > div:last-child{grid-template-columns:1fr!important;grid-template-rows:minmax(140px,180px) 1fr!important;height:calc(100% - 50px)!important}
   #screen-studio > div:last-child > div:first-child{display:block!important;border-right:none!important;border-bottom:1px solid var(--border)}
