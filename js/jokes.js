@@ -524,16 +524,34 @@ function renderSet() {
     var libItems = lib.querySelectorAll('.set-lib-item');
     for (var li = 0; li < libItems.length; li++) {
       (function(item) {
-        var tapped = false;
-        item.addEventListener('touchend', function(e) {
+        var pressTimer = null;
+        var didLongPress = false;
+
+        item.addEventListener('touchstart', function(e) {
           if (e.target.closest('.drag-handle')) return;
-          tapped = true;
-          var jid = item.getAttribute('data-jid');
-          openDetail(jid);
+          didLongPress = false;
+          pressTimer = setTimeout(function() {
+            didLongPress = true;
+            var jid = item.getAttribute('data-jid');
+            openDetail(jid);
+            // Brief visual feedback
+            item.style.background = 'var(--gold-bg)';
+            setTimeout(function(){ item.style.background = ''; }, 400);
+          }, 600);
+        }, { passive: true });
+
+        item.addEventListener('touchend', function(e) {
+          if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
         });
+
+        item.addEventListener('touchmove', function(e) {
+          if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+        });
+
+        // Desktop: keep click working normally for mouse users
         item.addEventListener('click', function(e) {
           if (e.target.closest('.drag-handle')) return;
-          if (tapped) { tapped = false; return; }
+          if (didLongPress) { didLongPress = false; return; }
           var jid = item.getAttribute('data-jid');
           openDetail(jid);
         });
