@@ -616,10 +616,9 @@ function renderSet() {
 
         item.addEventListener('click', function(e) {
           if (e.target.closest('.drag-handle')) return;
-          var now = Date.now();
-          if (now - _libLastTouch > 600) {
+          if (e.target.closest('.set-lib-item')) {
             var jid = item.getAttribute('data-jid');
-            openDetail(jid);
+            if (jid) openDetail(jid);
           }
         });
       })(libItems[li]);
