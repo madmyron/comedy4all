@@ -490,8 +490,13 @@ function renderSet() {
   if (lib) {
     lib.innerHTML = jokes.map(function(j){
       var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
-      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:flex-start;gap:7px;padding:8px 12px;cursor:grab;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
-        +'<div style="width:6px;height:6px;border-radius:50%;margin-top:5px;background:'+color+';flex-shrink:0"></div>'
+      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+        +'<div class="drag-handle" style="display:flex;flex-direction:column;gap:2px;padding:4px 4px 4px 0;cursor:grab;flex-shrink:0;touch-action:none">'
+        +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
+        +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
+        +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
+        +'</div>'
+        +'<div style="width:6px;height:6px;border-radius:50%;margin-top:0;background:'+color+';flex-shrink:0"></div>'
         +'<div><div style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div></div>'
         +'</div>';
     }).join('');
@@ -503,12 +508,7 @@ function renderSet() {
         group: { name: 'setbuilder', pull: 'clone', put: false },
         sort: false,
         animation: 150,
-        scroll: true,
-        scrollSensitivity: 80,
-        scrollSpeed: 10,
-        touchStartThreshold: 10,
-        delay: 150,
-        delayOnTouchOnly: true
+        handle: '.drag-handle'
       });
     }
   }
