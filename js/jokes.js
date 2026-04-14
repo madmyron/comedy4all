@@ -319,27 +319,35 @@ function saveNewJoke() {
   var runtimeEl = document.getElementById('nj-runtime');
   var title = titleEl ? titleEl.value.trim() : '';
   if (!title) { toast('Please add a title!'); return; }
-  var newJoke = {
-    id: nextId++,
+  var nj = {
     title: title,
-    body: bodyEl ? bodyEl.value.trim() || 'No notes yet.' : 'No notes yet.',
-    tags: modalTags.slice(),
+    body: bodyEl ? bodyEl.value.trim() || '' : '',
+    tags: modalTags.length ? modalTags.slice() : [],
     tier: modalRating >= 4 ? 'a' : modalRating >= 3 ? 'b' : 'c',
     rating: modalRating || 3,
     runtime: runtimeEl ? runtimeEl.value.trim() || '1:00' : '1:00',
-    score: parseFloat((6 + modalRating * 0.5).toFixed(1))
+    score: parseFloat((6 + (modalRating || 3) * 0.5).toFixed(1)),
+    archived: false
   };
-  jokes.unshift(newJoke);
-  displayJokes = jokes.slice();
   closeNewJoke();
-  updateCounts();
-  if (document.getElementById('screen-jokes').classList.contains('active')) {
-    renderJokes(displayJokes);
+  if (currentUser && _sb) {
+    setSyncStatus('syncing');
+    _sb.from('jokes').insert(Object.assign({}, nj, { user_id: currentUser.id })).select().single()
+      .then(function(res) {
+        if (res.error) { toast('Save failed: ' + res.error.message); return; }
+        jokes.unshift(res.data); displayJokes = jokes.slice(); updateCounts();
+        var scr = document.getElementById('screen-jokes');
+        if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
+        setSyncStatus('synced');
+        toast('Joke saved: "' + title + '" \u2713');
+      });
+  } else {
+    nj.id = 'local-' + Date.now();
+    jokes.unshift(nj); displayJokes = jokes.slice(); updateCounts();
+    var scr = document.getElementById('screen-jokes');
+    if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
+    toast('Saved locally (sign in to sync)');
   }
-  if (document.getElementById('screen-analytics').classList.contains('active')) {
-    renderAnalytics();
-  }
-  toast('Joke saved: "' + title + '" \u2713');
 }
 
 // Helper to initialize custom sorting
