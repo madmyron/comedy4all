@@ -314,14 +314,14 @@
 
     <!-- SET BUILDER -->
     <div id="screen-sets" class="screen">
-      <div class="topbar">
+      <div class="topbar" id="sets-topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Set Builder</div>
         <select class="btn topbar-select" style="padding:6px 9px" aria-label="Current set"><option>The Weekender</option><option>Corporate Gig</option><option>Late Night Pilot</option></select>
         <button class="btn btn-sm" onclick="toast('Exported!')">&#8595; Export</button>
         <button class="btn btn-sm btn-primary" onclick="toast('Set saved! &#10003;')">Save Set</button>
       </div>
-      <div style="display:grid;grid-template-columns:228px 1fr 250px;height:calc(100% - 54px);overflow:hidden">
+      <div id="sets-layout" style="height:calc(100% - 54px);overflow:hidden">
         <div style="background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto" class="scroll">
           <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:12px 13px 6px">Joke Library</div>
           <div id="set-lib"></div>
