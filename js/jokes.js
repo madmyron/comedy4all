@@ -499,6 +499,13 @@ function filterSetLibrary(tag) {
 }
 
 function renderSet() {
+  var setTagFilter = document.getElementById('set-tag-filter');
+  if (setTagFilter) {
+    var allTags = [];
+    jokes.forEach(function(j){ j.tags.forEach(function(t){ if (allTags.indexOf(t)===-1) allTags.push(t); }); });
+    setTagFilter.innerHTML = '<option value="">All Tags</option>' + allTags.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
+  }
+
   var lib = document.getElementById('set-lib');
   if (lib) {
     lib.innerHTML = jokes.map(function(j){
@@ -531,13 +538,6 @@ function renderSet() {
           openDetail(jid);
         });
       })(libItems[li]);
-    }
-
-    var setTagFilter = document.getElementById('set-tag-filter');
-    if (setTagFilter) {
-      var allTags = [];
-      jokes.forEach(function(j){ j.tags.forEach(function(t){ if (allTags.indexOf(t)===-1) allTags.push(t); }); });
-      setTagFilter.innerHTML = '<option value="">All Tags</option>' + allTags.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
     }
 
     if (setLibSortable) setLibSortable.destroy();

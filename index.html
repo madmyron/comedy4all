@@ -300,15 +300,6 @@
           </div>
           <div class="joke-grid" id="joke-grid"></div>
         </div>
-        <div id="joke-detail" style="background:var(--bg2);border-left:1px solid var(--border);width:295px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden">
-          <div class="detail-close-bar" style="display:none;align-items:center;justify-content:space-between;padding:10px 14px 6px;border-bottom:1px solid var(--border);flex-shrink:0">
-            <div style="width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto"></div>
-            <button onclick="closeDetail()" style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;color:var(--text2);padding:4px 12px;cursor:pointer;position:absolute;right:14px;top:10px">&#10005; Close</button>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:12px;flex-direction:column;gap:10px;padding:20px;text-align:center">
-            <div style="font-size:30px">&#128221;</div><div>Click a joke to view details &amp; Brooks notes</div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -686,10 +677,20 @@
           <div class="snav-item" onclick="showTab('ai',this)">Brooks AI</div>
           <div class="snav-item" onclick="showTab('sync',this)">Mobile Sync</div>
           <div class="snav-item" onclick="showTab('theme',this)">Theme</div>
-          <div class="snav-item" onclick="showTab('export',this)">Data &amp; Export</div>
+          <div class="snav-item" onclick="showTab('export',this)">Data & Export</div>
           <div class="snav-item" onclick="showTab('keyboard',this)">Keyboard Shortcuts</div>
         </div>
         <div style="flex:1;padding:22px 26px;overflow-y:auto;background:var(--bg)" class="scroll" id="settings-body"></div>
+      </div>
+    </div>
+
+    <div id="joke-detail" style="background:var(--bg2);border-left:1px solid var(--border);width:295px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden">
+      <div class="detail-close-bar" style="display:none;align-items:center;justify-content:space-between;padding:10px 14px 6px;border-bottom:1px solid var(--border);flex-shrink:0">
+        <div style="width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto"></div>
+        <button onclick="closeDetail()" style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;color:var(--text2);padding:4px 12px;cursor:pointer;position:absolute;right:14px;top:10px">&#10005; Close</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:12px;flex-direction:column;gap:10px;padding:20px;text-align:center">
+        <div style="font-size:30px">&#128221;</div><div>Click a joke to view details & Brooks notes</div>
       </div>
     </div>
 
