@@ -569,9 +569,11 @@ function renderSet() {
     if (typeof Sortable !== 'undefined') {
       setLibSortable = new Sortable(lib, {
         group: { name: 'setbuilder', pull: 'clone', put: false },
-        sort: false,
+        sort: true,
         animation: 150,
-        handle: '.drag-handle'
+        handle: '.drag-handle',
+        delay: 300,
+        delayOnTouchOnly: true
       });
     }
   }
