@@ -296,6 +296,76 @@ var themePresets = {
       '--sidebar-text':'#ffffff','--sidebar-active-text':'#ffe0e8'
     }
   },
+  lime: {
+    name: 'Lime',
+    copy: 'A loud green room with neon energy and a bright comic-book edge.',
+    swatches: ['#f4fff4','#c0ffc0','#00cc00','#002200'],
+    dark: false,
+    vars: {
+      '--bg':'#f4fff4','--bg2':'#e0ffe0','--bg3':'#c0ffc0','--bg4':'#a0ffa0',
+      '--border':'#40dd40','--border2':'#20bb20',
+      '--text':'#002200','--text2':'#005500','--text3':'#008800',
+      '--gold':'#00cc00','--gold-bg':'#e0ffe0','--gold-br':'#80ff80',
+      '--sidebar-grad1':'#00cc00','--sidebar-grad2':'#008800',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#e0ffe0'
+    }
+  },
+  cherry: {
+    name: 'Cherry',
+    copy: 'A bright red pop-art palette with clean contrast and punch.',
+    swatches: ['#ffffff','#fff0f0','#ff0000','#1a0000'],
+    dark: false,
+    vars: {
+      '--bg':'#ffffff','--bg2':'#fff0f0','--bg3':'#ffd0d0','--bg4':'#ffb0b0',
+      '--border':'#ff2020','--border2':'#cc0000',
+      '--text':'#1a0000','--text2':'#660000','--text3':'#cc0000',
+      '--gold':'#ff0000','--gold-bg':'#fff0f0','--gold-br':'#ff8080',
+      '--sidebar-grad1':'#ff0000','--sidebar-grad2':'#aa0000',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#fff0f0'
+    }
+  },
+  lemon: {
+    name: 'Lemon',
+    copy: 'A zesty yellow palette with sharp daylight brightness.',
+    swatches: ['#fffff0','#ffffd0','#cccc00','#1a1a00'],
+    dark: false,
+    vars: {
+      '--bg':'#fffff0','--bg2':'#ffffd0','--bg3':'#ffff90','--bg4':'#ffff50',
+      '--border':'#dddd00','--border2':'#aaaa00',
+      '--text':'#1a1a00','--text2':'#555500','--text3':'#888800',
+      '--gold':'#cccc00','--gold-bg':'#fffff0','--gold-br':'#eeee80',
+      '--sidebar-grad1':'#cccc00','--sidebar-grad2':'#888800',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#fffff0'
+    }
+  },
+  tangerine: {
+    name: 'Tangerine',
+    copy: 'A warm orange glow with soft cream surfaces and stage heat.',
+    swatches: ['#fffaf5','#fff0e0','#ff7700','#1a0800'],
+    dark: false,
+    vars: {
+      '--bg':'#fffaf5','--bg2':'#fff0e0','--bg3':'#ffd8a8','--bg4':'#ffbf70',
+      '--border':'#ff8800','--border2':'#dd6600',
+      '--text':'#1a0800','--text2':'#663300','--text3':'#cc6600',
+      '--gold':'#ff7700','--gold-bg':'#fff0e0','--gold-br':'#ffaa55',
+      '--sidebar-grad1':'#ff7700','--sidebar-grad2':'#cc4400',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#fff0e0'
+    }
+  },
+  tropical: {
+    name: 'Tropical',
+    copy: 'A breezy aqua-and-mint palette with bright island contrast.',
+    swatches: ['#f0fffc','#d0fff5','#00cc99','#001a14'],
+    dark: false,
+    vars: {
+      '--bg':'#f0fffc','--bg2':'#d0fff5','--bg3':'#a0ffe8','--bg4':'#60ffd8',
+      '--border':'#00ddaa','--border2':'#00aa80',
+      '--text':'#001a14','--text2':'#005540','--text3':'#008860',
+      '--gold':'#00cc99','--gold-bg':'#d0fff5','--gold-br':'#80ffdd',
+      '--sidebar-grad1':'#00cc99','--sidebar-grad2':'#008866',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#d0fff5'
+    }
+  },
   midnight: {
     name: 'Midnight Club',
     copy: 'A smoky charcoal club with gold accents and low-light warmth.',
