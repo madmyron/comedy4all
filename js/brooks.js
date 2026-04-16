@@ -164,49 +164,53 @@ function runStoryMining(type) {
         brooksHistory.push({role:'assistant', content: reply});
         t.innerHTML = '<div class="mfrom">BROOKS AI</div>' + reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
 
-        var followUps = [];
-        if (type === 'sitcom') {
-          followUps = [
-            'Develop the pilot premise further',
-            'Write a logline and pitch paragraph',
-            'Suggest 5 episode titles',
-            'Build out the main character'
-          ];
-        } else if (type === 'movie') {
-          followUps = [
-            'Write a full movie pitch',
-            'Develop the three-act structure',
-            'Cast suggestions and character descriptions',
-            'Write the opening scene'
-          ];
-        } else if (type === 'special') {
-          followUps = [
-            'Write transitions between acts',
-            'Develop the anchor bit further',
-            'Write the opening minute',
-            'Suggest a title for the special'
-          ];
-        } else if (type === 'sitcom-diversity') {
-          followUps = [
-            'Write 3 new jokes for the gaps you found',
-            'Develop the strongest recurring theme',
-            'Build a character from my material',
-            'Suggest 5 topics I should write about'
-          ];
-        }
-
-        if (followUps.length) {
+        var followPrompt = 'You just gave story mining results. Now generate exactly 4 short follow-up questions (under 10 words each) that would help develop the single most promising idea you found. Return ONLY a JSON array of 4 strings, nothing else. Example: ["Who is the main character?","What\'s the recurring conflict?","Single or multi-camera?","Write the pilot cold open"]';
+        var followFallback = [
+          'Develop the strongest idea further',
+          'Write a pitch paragraph',
+          'Name the main character',
+          'Write the opening scene'
+        ];
+        var renderFollowUps = function(options, heading) {
           var followDiv = document.createElement('div');
           followDiv.className = 'cmsg ai';
           followDiv.style.marginTop = '8px';
-          var followHTML = '<div class="mfrom">BROOKS AI</div><div style="margin-bottom:8px">Want me to dig deeper? Pick one:</div>';
-          followUps.forEach(function(option) {
+          var followHTML = '<div class="mfrom">BROOKS AI</div><div style="margin-bottom:8px">' + heading + '</div>';
+          options.forEach(function(option) {
             followHTML += '<div class="sugg" onclick="fillBrooks(\'' + option.replace(/'/g, "\\'") + '\');document.getElementById(\'brooks-input\').focus()" style="margin-bottom:6px"><div>' + option + '</div></div>';
           });
           followDiv.innerHTML = followHTML;
           msgs.appendChild(followDiv);
           msgs.scrollTop = msgs.scrollHeight;
-        }
+        };
+        var followPayload = JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:300,
+          system:BROOKS_SYS,
+          messages:brooksHistory.concat([{role:'user',content:followPrompt}])
+        });
+        var followXHR = new XMLHttpRequest();
+        followXHR.open('POST', 'https://api.anthropic.com/v1/messages');
+        followXHR.setRequestHeader('Content-Type', 'application/json');
+        followXHR.setRequestHeader('x-api-key', key);
+        followXHR.setRequestHeader('anthropic-version', '2023-06-01');
+        followXHR.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+        followXHR.onload = function() {
+          try {
+            if (followXHR.status !== 200) throw new Error('follow-up request failed');
+            var followData = JSON.parse(followXHR.responseText);
+            var followText = followData.content && followData.content[0] && followData.content[0].text ? followData.content[0].text : '';
+            var parsed = JSON.parse(followText);
+            if (!parsed || !parsed.length) throw new Error('invalid follow-up json');
+            renderFollowUps(parsed, "That one's got legs. Let's develop it — pick a direction:");
+          } catch (e) {
+            renderFollowUps(followFallback, "That one's got legs. Let's develop it — pick a direction:");
+          }
+        };
+        followXHR.onerror = function() {
+          renderFollowUps(followFallback, "That one's got legs. Let's develop it — pick a direction:");
+        };
+        followXHR.send(followPayload);
       } catch(e) { t.innerHTML = '<div class="mfrom">BROOKS AI</div>Parse error. Try again.'; }
     } else if (xhr.status === 401) {
       t.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Invalid API key.</span>';
