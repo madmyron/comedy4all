@@ -366,6 +366,34 @@ var themePresets = {
       '--sidebar-text':'#ffffff','--sidebar-active-text':'#d0fff5'
     }
   },
+  sunshine: {
+    name: 'Sunshine',
+    copy: 'A bright yellow stage-light palette with a sharp daytime punch.',
+    swatches: ['#ffffff','#fffde0','#f5c400','#1a1400'],
+    dark: false,
+    vars: {
+      '--bg':'#ffffff','--bg2':'#fffde0','--bg3':'#fff99a','--bg4':'#fff500',
+      '--border':'#f0d000','--border2':'#c0a000',
+      '--text':'#1a1400','--text2':'#4a3c00','--text3':'#8a7000',
+      '--gold':'#f5c400','--gold-bg':'#fffde0','--gold-br':'#ffe860',
+      '--sidebar-grad1':'#f5c400','--sidebar-grad2':'#c09000',
+      '--sidebar-text':'#1a1400','--sidebar-active-text':'#ffffff'
+    }
+  },
+  'neon-green': {
+    name: 'Neon Green',
+    copy: 'A hard-edged electric green theme with a clean, high-voltage look.',
+    swatches: ['#ffffff','#f0fff0','#00dd00','#001a00'],
+    dark: false,
+    vars: {
+      '--bg':'#ffffff','--bg2':'#f0fff0','--bg3':'#ccffcc','--bg4':'#99ff99',
+      '--border':'#00ee00','--border2':'#00bb00',
+      '--text':'#001a00','--text2':'#004400','--text3':'#007700',
+      '--gold':'#00dd00','--gold-bg':'#eeffee','--gold-br':'#66ff66',
+      '--sidebar-grad1':'#00dd00','--sidebar-grad2':'#009900',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#eeffee'
+    }
+  },
   midnight: {
     name: 'Midnight Club',
     copy: 'A smoky charcoal club with gold accents and low-light warmth.',
