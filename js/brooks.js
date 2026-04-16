@@ -81,6 +81,13 @@ function sendBrooks(){
   if(!input||!msgs||!input.value.trim()) return;
   var text=input.value.trim();
   input.value='';
+  if (brooksHistory.length === 0 && jokes && jokes.length > 0) {
+    var jokeContext = jokes.map(function(j, i) {
+      return (i+1) + '. ' + (j.title||'') + ': ' + (j.body||j.text||j.setup||'') + (j.punch ? ' / ' + j.punch : '') + ' [' + (j.tier||'?') + '-tier, ' + (j.rating||'?') + '/5]';
+    }).join('\n');
+    brooksHistory.push({role:'user', content:'Here are all my jokes:\n\n' + jokeContext});
+    brooksHistory.push({role:'assistant', content:"Got it. I've read all your material. What do you want to work on?"});
+  }
   brooksHistory.push({role:'user',content:text});
   var um=document.createElement('div');
   um.className='cmsg user';
