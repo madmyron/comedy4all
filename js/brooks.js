@@ -1,6 +1,7 @@
 // - BROOKS AI -
 var BROOKS_SYS='You are Brooks -- a seasoned comedy writing veteran who genuinely wants Michael to succeed. You are sharp, witty, and direct -- but your default mode is collaborative and encouraging, not cutting. You roast weak material with affection, not contempt. You celebrate strong bits with real enthusiasm. You give specific, actionable notes -- not vague praise or dismissal. Think: the best writing partner in the room.\n\nYour job is to help Michael D\'Asaro -- stand-up comedian, entrepreneur, 1996 Olympian, based in Dallas TX -- sharpen his material. Top joke is the Airport security bit (9.2/10), tech jokes avg 8.3, relationship material avg 7.4. Upcoming show Friday at Addison Improv, 20 min set.\n\nYour style: open with a brief observation before diving in. Be a character but keep the focus on helping. Never say "Great question!" -- that is hack. Max 3 short punchy paragraphs unless writing actual material. Use numbered lists when giving options.';
 var BROOKS_TRIAL_CODES=['BROOKS-FRIEND-2026','BROOKS-VIP-PASS','SITCOM-SCAN'];
+var currentBrooksConversationId = null;
 
 function getStoredBrooksInviteCode(){
   try{return localStorage.getItem('c4a_brooks_invite_code')||'';}catch(e){}
@@ -76,6 +77,33 @@ function syncBrooksApiKeyInputs(value){
   if (saki) saki.value = key;
 }
 
+function sbSaveBrooksConversation() {
+  if (!currentUser || !_sb) return;
+  var title = 'Brooks Session';
+  for (var i = 0; i < brooksHistory.length; i++) {
+    if (brooksHistory[i].role === 'user' && brooksHistory[i].content.indexOf('Here are all my jokes:') !== 0) {
+      title = brooksHistory[i].content.substring(0, 60);
+      if (brooksHistory[i].content.length > 60) title += '...';
+      break;
+    }
+  }
+  var now = new Date().toISOString();
+  if (!currentBrooksConversationId) {
+    _sb.from('brooks_conversations')
+      .insert({ user_id: currentUser.id, title: title, messages: brooksHistory, created_at: now, updated_at: now })
+      .select('id').single()
+      .then(function(res) {
+        if (res.error) { console.error('Brooks save error:', res.error); return; }
+        currentBrooksConversationId = res.data.id;
+      });
+  } else {
+    _sb.from('brooks_conversations')
+      .update({ messages: brooksHistory, updated_at: now })
+      .eq('id', currentBrooksConversationId)
+      .then(function(res) { if (res.error) console.error('Brooks update error:', res.error); });
+  }
+}
+
 function saveApiKey(v){
   console.log('saveApiKey called with:', v);
   var trimmed=v.trim();
@@ -130,6 +158,7 @@ function sendBrooks(){
         var data=JSON.parse(xhr.responseText);
         var reply=(data.content||[]).filter(function(c){return c.type==='text';}).map(function(c){return c.text;}).join('')||'No response.';
         brooksHistory.push({role:'assistant',content:reply});
+        sbSaveBrooksConversation();
         typing.innerHTML='<div class="mfrom">BROOKS AI</div>'+reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
       }catch(e){typing.innerHTML='<div class="mfrom">BROOKS AI</div>Parse error. Try again.';}
     } else if(xhr.status===401){
@@ -209,6 +238,7 @@ function runStoryMining(type) {
         var d = JSON.parse(xhr.responseText);
         var reply = d.content && d.content[0] && d.content[0].text ? d.content[0].text : 'No response.';
         brooksHistory.push({role:'assistant', content: reply});
+        sbSaveBrooksConversation();
         t.innerHTML = '<div class="mfrom">BROOKS AI</div>' + reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
 
         var followPrompt = 'You just gave story mining results. Now generate exactly 4 short follow-up questions (under 10 words each) that would help develop the single most promising idea you found. Return ONLY a JSON array of 4 strings, nothing else. Example: ["Who is the main character?","What\'s the recurring conflict?","Single or multi-camera?","Write the pilot cold open"]';
@@ -297,4 +327,4 @@ function renderBrooksGreeting(){
   el.innerHTML='<div class="mfrom">BROOKS AI</div>'+greetings[Math.floor(Math.random()*greetings.length)];
 }
 renderBrooksGreeting();
-function clearBrooks(){brooksHistory=[];var msgs=document.getElementById('chat-msgs');if(msgs)msgs.innerHTML='<div class="cmsg ai"><div class="mfrom">BROOKS AI</div>New session started. What are we working on?</div>';toast('New session started!');}
+function clearBrooks(){brooksHistory=[];currentBrooksConversationId=null;var msgs=document.getElementById('chat-msgs');if(msgs)msgs.innerHTML='<div class="cmsg ai"><div class="mfrom">BROOKS AI</div>New session started. What are we working on?</div>';toast('New session started!');}
