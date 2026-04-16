@@ -123,6 +123,14 @@ function sendBrooks(){
     typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error. Make sure you\'re online and your API key is correct.</span>';
     msgs.scrollTop=msgs.scrollHeight;
   };
+  // Ensure messages alternate user/assistant - remove consecutive duplicates
+  var cleanHistory = [];
+  for (var i = 0; i < brooksHistory.length; i++) {
+    if (cleanHistory.length === 0 || cleanHistory[cleanHistory.length-1].role !== brooksHistory[i].role) {
+      cleanHistory.push(brooksHistory[i]);
+    }
+  }
+  brooksHistory = cleanHistory;
   console.log('Brooks payload:', payload);
   xhr.send(payload);
 }
@@ -241,6 +249,14 @@ function runStoryMining(type) {
     var t = document.getElementById('brooks-typing');
     if (t) t.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error. Check your connection.</span>';
   };
+  // Ensure messages alternate user/assistant - remove consecutive duplicates
+  var cleanHistory = [];
+  for (var i = 0; i < brooksHistory.length; i++) {
+    if (cleanHistory.length === 0 || cleanHistory[cleanHistory.length-1].role !== brooksHistory[i].role) {
+      cleanHistory.push(brooksHistory[i]);
+    }
+  }
+  brooksHistory = cleanHistory;
   var payload = JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:1500, system: BROOKS_SYS, messages: brooksHistory});
   xhr.send(payload);
 }
