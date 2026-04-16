@@ -42,6 +42,7 @@ function go(name) {
   for (var i=0;i<navItems.length;i++) navItems[i].classList.remove('active');
   var el = document.getElementById('screen-'+name);
   if (el) el.classList.add('active');
+  if (name==='brooks' && typeof updateBrooksContext === 'function') updateBrooksContext();
   var ni = document.querySelectorAll('.nav-item[data-screen="'+name+'"]');
   for (var i=0;i<ni.length;i++) ni[i].classList.add('active');
   if (name==='home') {}
@@ -68,6 +69,11 @@ function go(name) {
   if (name==='settings') showTab('profile', document.querySelector('.snav-item'));
   if (name==='brooks') {
     updateBrooksContext();
+    if (apiKey && apiKey.length > 10) {
+      document.querySelectorAll('.cmsg.ai').forEach(function(el) {
+        if (el.textContent.indexOf('SETUP') !== -1) el.style.display = 'none';
+      });
+    }
     if (typeof syncBrooksApiKeyInputs === 'function') syncBrooksApiKeyInputs();
     try {
       var saved = localStorage.getItem('c4a_apikey') || '';

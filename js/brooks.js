@@ -45,6 +45,13 @@ function updateBrooksContext(){
       ? 'Brooks AI is currently <strong style="color:var(--green)">Unlocked</strong>.<br>'+(userEmail==='michael@comedy4all.com'?'Friend trial code: <strong style="color:var(--gold)">BROOKS-FRIEND-2026</strong>':'Friend access is active on this device.')
       : 'Brooks AI is a <strong style="color:var(--gold)">Premium</strong> feature.<br>Enter a friend code below or upgrade to unlock it.';
   }
+  if (apiKey && apiKey.length > 10) {
+    document.querySelectorAll('.cmsg.ai').forEach(function(el) {
+      if (el.textContent.indexOf('SETUP') !== -1) {
+        el.style.display = 'none';
+      }
+    });
+  }
 }
 
 function syncBrooksApiKeyInputs(value){
@@ -56,8 +63,10 @@ function syncBrooksApiKeyInputs(value){
 }
 
 function saveApiKey(v){
+  console.log('saveApiKey called with:', v);
   var trimmed=v.trim();
   try{localStorage.setItem('c4a_apikey',trimmed);}catch(e){}
+  console.log('saved to localStorage:', (function(){ try { return localStorage.getItem('c4a_apikey'); } catch(e) { return ''; } })());
   apiKey=trimmed;
   syncBrooksApiKeyInputs(trimmed);
   updateBrooksContext();

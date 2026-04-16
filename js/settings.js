@@ -50,7 +50,11 @@ function showTab(tab,el){
     body.innerHTML=tab==='profile' ? renderProfileSettings() : (tab==='subscription' ? renderSubscriptionSettings() : (tab==='theme' ? renderThemeSettings() : (settingsTabs[tab]||'')));
     if (tab === 'ai') {
       var saki = document.getElementById('settings-api-key-input');
-      if (saki) saki.value = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
+      if (saki) {
+        var existingKey = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
+        saki.value = existingKey;
+        if (existingKey) saveApiKey(existingKey);
+      }
     }
     if (tab === 'theme' && typeof syncThemeCards === 'function') syncThemeCards();
   }

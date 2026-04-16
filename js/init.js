@@ -52,6 +52,7 @@ showAuthScreen();
   initSupabase(url, key);
   try { localStorage.setItem('c4a_sb_url', url); localStorage.setItem('c4a_sb_key', key); } catch(e) {}
   try { apiKey = localStorage.getItem('c4a_apikey') || ''; } catch(e) {}
+  if (typeof updateBrooksContext === 'function') updateBrooksContext();
   setTimeout(function() {
     var ki2 = document.getElementById('api-key-input');
     if (ki2 && apiKey) ki2.value = apiKey;
