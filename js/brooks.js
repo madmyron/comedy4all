@@ -123,11 +123,12 @@ function sendBrooks(){
     typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error. Make sure you\'re online and your API key is correct.</span>';
     msgs.scrollTop=msgs.scrollHeight;
   };
-  // Ensure messages alternate user/assistant - remove consecutive duplicates
-  var cleanHistory = [];
-  for (var i = 0; i < brooksHistory.length; i++) {
-    if (cleanHistory.length === 0 || cleanHistory[cleanHistory.length-1].role !== brooksHistory[i].role) {
-      cleanHistory.push(brooksHistory[i]);
+  // Force alternating messages - API requires user/assistant/user/assistant
+  var cleanHistory = [brooksHistory[brooksHistory.length - 1]];
+  for (var i = brooksHistory.length - 2; i >= 0; i--) {
+    if (brooksHistory[i].role !== cleanHistory[0].role) {
+      cleanHistory.unshift(brooksHistory[i]);
+      if (cleanHistory.length >= 10) break;
     }
   }
   brooksHistory = cleanHistory;
