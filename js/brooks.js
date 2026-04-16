@@ -8,9 +8,14 @@ function getStoredBrooksInviteCode(){
 }
 
 function hasBrooksAccess(){
-  var userEmail=(window._c4aUserEmail||'').toLowerCase();
+  var userEmail=(window._c4aUserEmail||'').toLowerCase().trim();
   var inviteCode=getStoredBrooksInviteCode();
-  return userEmail==='michael@comedy4all.com' || userEmail==='michael@dasaroland.com' || !!apiKey || BROOKS_TRIAL_CODES.indexOf(inviteCode)!==-1;
+  var creatorEmails=['michael@comedy4all.com','michael@dasaroland.com'];
+  if(creatorEmails.indexOf(userEmail)!==-1) return true;
+  if(apiKey && apiKey.length>10) return true;
+  if(BROOKS_TRIAL_CODES.indexOf(inviteCode)!==-1) return true;
+  try{ var k=localStorage.getItem('c4a_apikey')||''; if(k.length>10) return true; }catch(e){}
+  return false;
 }
 
 function redeemBrooksCode(){
