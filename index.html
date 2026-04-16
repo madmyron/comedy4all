@@ -529,6 +529,12 @@
               <em style="font-size:11px;color:var(--text3)">Your key is stored only in this browser session and never sent anywhere except api.anthropic.com</em>
             </div>
           </div>
+          <div id="brooks-mobile-mining" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0">
+            <button class="btn btn-sm" style="background:var(--purple-bg);border-color:var(--purple);color:var(--purple)" onclick="runStoryMining('sitcom')">🎬 Sitcom Ideas</button>
+            <button class="btn btn-sm" style="background:var(--blue-bg);border-color:var(--blue);color:var(--blue)" onclick="runStoryMining('movie')">🎬 Movie Ideas</button>
+            <button class="btn btn-sm" style="background:var(--gold-bg);border-color:var(--gold-br);color:var(--gold)" onclick="runStoryMining('special')">✨ Special Arc</button>
+            <button class="btn btn-sm" style="background:#f7f0ff;border-color:#b088db;color:#7a43b5" onclick="runStoryMining('sitcom-diversity')">🎭 Diversity Audit</button>
+          </div>
           <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;background:var(--bg2)">
             <textarea id="brooks-input" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:none;height:60px;line-height:1.5;transition:all .15s" placeholder="Ask Brooks anything about your material..." onkeydown="handleBrooksKey(event)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
             <button class="btn btn-primary btn-sm" onclick="sendBrooks()" id="send-btn" style="height:40px;padding:0 16px">Send</button>

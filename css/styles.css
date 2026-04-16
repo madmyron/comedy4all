@@ -507,6 +507,7 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   #screen-brooks > div:last-child{grid-template-columns:1fr!important}
   #screen-brooks > div:last-child > div:last-child{display:none}
   #screen-brooks > div:last-child > div:first-child{height:calc(100vh - 160px);overflow-y:auto}
+  #brooks-mobile-mining{display:flex!important}
   .screen,.content{max-width:100vw;overflow-x:hidden}
   #recording-main-grid{grid-template-columns:1fr!important}
   #recording-main-grid > div:last-child{display:none}

@@ -163,6 +163,50 @@ function runStoryMining(type) {
         var reply = d.content && d.content[0] && d.content[0].text ? d.content[0].text : 'No response.';
         brooksHistory.push({role:'assistant', content: reply});
         t.innerHTML = '<div class="mfrom">BROOKS AI</div>' + reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+
+        var followUps = [];
+        if (type === 'sitcom') {
+          followUps = [
+            'Develop the pilot premise further',
+            'Write a logline and pitch paragraph',
+            'Suggest 5 episode titles',
+            'Build out the main character'
+          ];
+        } else if (type === 'movie') {
+          followUps = [
+            'Write a full movie pitch',
+            'Develop the three-act structure',
+            'Cast suggestions and character descriptions',
+            'Write the opening scene'
+          ];
+        } else if (type === 'special') {
+          followUps = [
+            'Write transitions between acts',
+            'Develop the anchor bit further',
+            'Write the opening minute',
+            'Suggest a title for the special'
+          ];
+        } else if (type === 'sitcom-diversity') {
+          followUps = [
+            'Write 3 new jokes for the gaps you found',
+            'Develop the strongest recurring theme',
+            'Build a character from my material',
+            'Suggest 5 topics I should write about'
+          ];
+        }
+
+        if (followUps.length) {
+          var followDiv = document.createElement('div');
+          followDiv.className = 'cmsg ai';
+          followDiv.style.marginTop = '8px';
+          var followHTML = '<div class="mfrom">BROOKS AI</div><div style="margin-bottom:8px">Want me to dig deeper? Pick one:</div>';
+          followUps.forEach(function(option) {
+            followHTML += '<div class="sugg" onclick="fillBrooks(\'' + option.replace(/'/g, "\\'") + '\');document.getElementById(\'brooks-input\').focus()" style="margin-bottom:6px"><div>' + option + '</div></div>';
+          });
+          followDiv.innerHTML = followHTML;
+          msgs.appendChild(followDiv);
+          msgs.scrollTop = msgs.scrollHeight;
+        }
       } catch(e) { t.innerHTML = '<div class="mfrom">BROOKS AI</div>Parse error. Try again.'; }
     } else if (xhr.status === 401) {
       t.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Invalid API key.</span>';
