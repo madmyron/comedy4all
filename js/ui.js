@@ -43,6 +43,7 @@ function go(name) {
   var el = document.getElementById('screen-'+name);
   if (el) el.classList.add('active');
   if (name==='brooks' && typeof updateBrooksContext === 'function') updateBrooksContext();
+  if (name==='brooks' && typeof sbLoadBrooksConversations === 'function') sbLoadBrooksConversations();
   var ni = document.querySelectorAll('.nav-item[data-screen="'+name+'"]');
   for (var i=0;i<ni.length;i++) ni[i].classList.add('active');
   if (name==='home') {}
