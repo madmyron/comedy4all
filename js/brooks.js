@@ -225,4 +225,17 @@ function runStoryMining(type) {
 }
 function fillBrooks(t){var input=document.getElementById('brooks-input');if(input){input.value=t;input.focus();}}
 function handleBrooksKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendBrooks();}}
+function renderBrooksGreeting(){
+  var el=document.getElementById('brooks-welcome');
+  if(!el) return;
+  var greetings=[
+    "Alright, kid. Let's see if this material's got a pulse or if we're just embalming it in punchlines.",
+    "Pull up a chair. I've been around long enough to know where the laugh is hiding, and where it's pretending to be.",
+    "Okay, rookie. Hand me the jokes and I'll tell you which ones are road-ready and which ones belong in witness protection.",
+    "I've got news: the audience is mean, time is short, and your opener better know how to fight.",
+    "Let's go through this pile and separate the gold from the cafeteria tray."
+  ];
+  el.innerHTML='<div class="mfrom">BROOKS AI</div>'+greetings[Math.floor(Math.random()*greetings.length)];
+}
+renderBrooksGreeting();
 function clearBrooks(){brooksHistory=[];var msgs=document.getElementById('chat-msgs');if(msgs)msgs.innerHTML='<div class="cmsg ai"><div class="mfrom">BROOKS AI</div>New session started. What are we working on?</div>';toast('New session started!');}
