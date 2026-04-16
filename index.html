@@ -514,7 +514,16 @@
       <div class="topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Brooks AI <span style="color:var(--gold);font-size:11px;font-weight:400">&#10022; Comedy Writing Assistant</span></div>
+        <button class="btn btn-sm" id="quick-prompts-toggle" onclick="toggleQuickPrompts()" style="display:none">⚡ Prompts</button>
         <button class="btn btn-sm" onclick="clearBrooks()">+ New Session</button>
+      </div>
+      <div id="mobile-quick-prompts" style="display:none;padding:10px 12px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:6px;flex-shrink:0">
+        <div class="sugg" onclick="fillBrooks('Punch up my airport security bit for Friday');toggleQuickPrompts()"><div class="slbl">Punch Up</div>Punch up the airport bit</div>
+        <div class="sugg" onclick="fillBrooks('Analyze my set order and flow');toggleQuickPrompts()"><div class="slbl">Set Flow</div>Analyze my set order</div>
+        <div class="sugg" onclick="fillBrooks('Give me 5 fresh angles on my WFH material');toggleQuickPrompts()"><div class="slbl">New Angles</div>5 fresh WFH angles</div>
+        <div class="sugg" onclick="fillBrooks('Find and fix my weakest joke');toggleQuickPrompts()"><div class="slbl">Critique</div>Find my weakest joke</div>
+        <div class="sugg" onclick="fillBrooks('Write me 3 new joke premises I could develop');toggleQuickPrompts()"><div class="slbl">New Material</div>3 new premises</div>
+        <div class="sugg" onclick="fillBrooks('Help me write a strong closer for a 20 minute set');toggleQuickPrompts()"><div class="slbl">Closer</div>Write a strong closer</div>
       </div>
       <div style="flex:1;display:grid;grid-template-columns:1fr 262px;overflow:hidden;min-height:0">
         <div style="display:flex;flex-direction:column;min-height:0;">

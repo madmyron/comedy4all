@@ -30,6 +30,15 @@ function redeemBrooksCode(){
   toast('Brooks unlocked with friend access.');
 }
 
+function toggleQuickPrompts() {
+  var panel = document.getElementById('mobile-quick-prompts');
+  var btn = document.getElementById('quick-prompts-toggle');
+  if (!panel) return;
+  var isOpen = panel.style.display === 'flex';
+  panel.style.display = isOpen ? 'none' : 'flex';
+  if (btn) btn.textContent = isOpen ? '⚡ Prompts' : '✕ Close';
+}
+
 function updateBrooksContext(){
   var el=document.getElementById('brooks-context-display');
   var accessEl=document.getElementById('brooks-access-status');
