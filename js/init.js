@@ -55,6 +55,8 @@ showAuthScreen();
   setTimeout(function() {
     var ki2 = document.getElementById('api-key-input');
     if (ki2 && apiKey) ki2.value = apiKey;
+    var ki3 = document.getElementById('settings-api-key-input');
+    if (ki3 && apiKey) ki3.value = apiKey;
   }, 500);
   try {
     var savedTheme = localStorage.getItem('c4a_theme') || (localStorage.getItem('c4a_dark') === '1' ? 'midnight' : 'spotlight');
