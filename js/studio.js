@@ -194,6 +194,7 @@ function saveNewScript() {
   scripts.unshift(script);
   activeScriptId = script.id;
   persistStudioState();
+  sbSaveScript(script);
   closeNewScript();
   renderStudio();
   toast('Script created! \u2713');
@@ -224,8 +225,9 @@ function saveActiveScript(isAutoSave) {
   if (bodyEl) script.body = bodyEl.value;
   script.updated = new Date().toISOString();
   persistStudioState();
+  sbSaveScript(script);
   renderStudioProjectList();
-  setStudioStatus(isAutoSave ? 'Saved locally' : 'Saved just now', false);
+  setStudioStatus(isAutoSave ? 'Saving...' : 'Saving...', true);
   if (!isAutoSave) toast('Script saved. \u2713');
 }
 
@@ -233,9 +235,11 @@ function deleteActiveScript() {
   loadStudioState();
   if (!activeScriptId) return;
   if (!confirm('Delete this script? This cannot be undone.')) return;
+  var deletingScript = getActiveScript();
   scripts = scripts.filter(function(s) { return s.id !== activeScriptId; });
   activeScriptId = scripts.length ? scripts[0].id : null;
   persistStudioState();
+  if (deletingScript) sbDeleteScript(deletingScript.supabase_id);
   renderStudio();
   toast('Script deleted.');
 }
@@ -330,4 +334,81 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+// - SUPABASE SYNC -
+
+function sbSaveScript(script) {
+  if (!_sb || !currentUser || !script) return;
+  var now = new Date().toISOString();
+  var row = {
+    user_id: currentUser.id,
+    title: script.title,
+    content: script.body,
+    format: script.formatKey,
+    updated_at: now
+  };
+  if (script.supabase_id) {
+    _sb.from('studio_scripts').update(row).eq('id', script.supabase_id)
+      .then(function(res) {
+        if (res.error) { console.error('Studio sync error:', res.error); return; }
+        setStudioStatus('Synced \u2713', false);
+      });
+  } else {
+    row.created_at = now;
+    _sb.from('studio_scripts').insert(row).select('id').single()
+      .then(function(res) {
+        if (res.error) { console.error('Studio sync error:', res.error); return; }
+        script.supabase_id = res.data.id;
+        persistStudioState();
+        setStudioStatus('Synced \u2713', false);
+      });
+  }
+}
+
+function sbDeleteScript(supabaseId) {
+  if (!_sb || !currentUser || !supabaseId) return;
+  _sb.from('studio_scripts').delete().eq('id', supabaseId)
+    .then(function(res) { if (res.error) console.error('Studio delete error:', res.error); });
+}
+
+function sbLoadScripts() {
+  if (!_sb || !currentUser) return;
+  _sb.from('studio_scripts')
+    .select('id, title, content, format, created_at, updated_at')
+    .eq('user_id', currentUser.id)
+    .order('updated_at', { ascending: false })
+    .then(function(res) {
+      if (res.error || !res.data || res.data.length === 0) return;
+      var remoteIds = {};
+      res.data.forEach(function(row) { remoteIds[row.id] = true; });
+      // Update existing local scripts that have a supabase_id match
+      scripts.forEach(function(s) {
+        if (s.supabase_id && remoteIds[s.supabase_id]) {
+          var row = res.data.find(function(r) { return r.id === s.supabase_id; });
+          if (row && new Date(row.updated_at) > new Date(s.updated)) {
+            s.title = row.title;
+            s.body = row.content;
+            s.formatKey = row.format;
+            s.updated = row.updated_at;
+          }
+          delete remoteIds[s.supabase_id];
+        }
+      });
+      // Add remote scripts not yet local
+      res.data.forEach(function(row) {
+        if (!remoteIds[row.id]) return;
+        scripts.unshift({
+          id: scriptNextId++,
+          supabase_id: row.id,
+          title: row.title,
+          formatKey: row.format,
+          body: row.content,
+          created: row.created_at,
+          updated: row.updated_at
+        });
+      });
+      persistStudioState();
+      renderStudio();
+    });
 }
