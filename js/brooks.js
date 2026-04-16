@@ -123,6 +123,7 @@ function sendBrooks(){
     typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error. Make sure you\'re online and your API key is correct.</span>';
     msgs.scrollTop=msgs.scrollHeight;
   };
+  console.log('Brooks payload:', payload);
   xhr.send(payload);
 }
 
