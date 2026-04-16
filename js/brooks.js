@@ -10,7 +10,7 @@ function getStoredBrooksInviteCode(){
 function hasBrooksAccess(){
   var userEmail=(window._c4aUserEmail||'').toLowerCase();
   var inviteCode=getStoredBrooksInviteCode();
-  return userEmail==='michael@comedy4all.com' || !!apiKey || BROOKS_TRIAL_CODES.indexOf(inviteCode)!==-1;
+  return userEmail==='michael@comedy4all.com' || userEmail==='michael@dasaroland.com' || !!apiKey || BROOKS_TRIAL_CODES.indexOf(inviteCode)!==-1;
 }
 
 function redeemBrooksCode(){
