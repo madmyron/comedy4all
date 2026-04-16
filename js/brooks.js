@@ -94,7 +94,7 @@ function sendBrooks(){
   msgs.scrollTop=msgs.scrollHeight;
   var btn=document.getElementById('send-btn');
   if(btn){btn.disabled=true;btn.textContent='...';}
-  var payload=JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:BROOKS_SYS,messages:brooksHistory});
+  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,system:BROOKS_SYS,messages:brooksHistory});
   var xhr=new XMLHttpRequest();
   xhr.open('POST','https://api.anthropic.com/v1/messages',true);
   xhr.setRequestHeader('Content-Type','application/json');
@@ -200,7 +200,7 @@ function runStoryMining(type) {
           msgs.scrollTop = msgs.scrollHeight;
         };
         var followPayload = JSON.stringify({
-          model:'claude-sonnet-4-20250514',
+          model:'claude-haiku-4-5-20251001',
           max_tokens:300,
           system:BROOKS_SYS,
           messages:brooksHistory.concat([{role:'user',content:followPrompt}])
@@ -240,7 +240,7 @@ function runStoryMining(type) {
     var t = document.getElementById('brooks-typing');
     if (t) t.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error. Check your connection.</span>';
   };
-  var payload = JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1500, system: BROOKS_SYS, messages: brooksHistory});
+  var payload = JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:1500, system: BROOKS_SYS, messages: brooksHistory});
   xhr.send(payload);
 }
 function fillBrooks(t){var input=document.getElementById('brooks-input');if(input){input.value=t;input.focus();}}
