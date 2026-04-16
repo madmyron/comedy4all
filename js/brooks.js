@@ -29,6 +29,7 @@ function updateBrooksContext(){
   var el=document.getElementById('brooks-context-display');
   var accessEl=document.getElementById('brooks-access-status');
   var inviteInput=document.getElementById('brooks-invite-input');
+  var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
   var top = null;
   for (var i=0;i<jokes.length;i++) {
     if (!top || (jokes[i].score||0) > (top.score||0)) top = jokes[i];
@@ -37,8 +38,7 @@ function updateBrooksContext(){
   var inviteCode=getStoredBrooksInviteCode();
   var userEmail=(window._c4aUserEmail||'').toLowerCase();
   if(el) el.innerHTML='\u2713 '+jokes.length+' joke'+(jokes.length===1?'':'s')+' in your library<br>\u2713 Top scoring joke: '+(top?top.title:'None yet')+(top?' ('+(top.score||0)+')':'')+'<br>\u2713 Brooks access: '+(access?'<span style="color:var(--green)">Unlocked</span>':'<span style="color:var(--text3)">Premium only</span>');
-  var ki=document.getElementById('api-key-input');
-  if(ki && apiKey) ki.value=apiKey;
+  syncBrooksApiKeyInputs(key);
   if(inviteInput && inviteCode) inviteInput.value=inviteCode;
   if(accessEl){
     accessEl.innerHTML=access
@@ -47,12 +47,19 @@ function updateBrooksContext(){
   }
 }
 
+function syncBrooksApiKeyInputs(value){
+  var key = typeof value === 'string' ? value : (apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })());
+  var ki = document.getElementById('api-key-input');
+  if (ki) ki.value = key;
+  var saki = document.getElementById('settings-api-key-input');
+  if (saki) saki.value = key;
+}
+
 function saveApiKey(v){
   var trimmed=v.trim();
   try{localStorage.setItem('c4a_apikey',trimmed);}catch(e){}
   apiKey=trimmed;
-  var ki=document.getElementById('api-key-input');
-  if(ki) ki.value=trimmed;
+  syncBrooksApiKeyInputs(trimmed);
   updateBrooksContext();
 }
 

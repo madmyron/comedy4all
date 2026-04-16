@@ -48,6 +48,10 @@ function showTab(tab,el){
   var body=document.getElementById('settings-body');
   if(body) {
     body.innerHTML=tab==='profile' ? renderProfileSettings() : (tab==='subscription' ? renderSubscriptionSettings() : (tab==='theme' ? renderThemeSettings() : (settingsTabs[tab]||'')));
+    if (tab === 'ai') {
+      var saki = document.getElementById('settings-api-key-input');
+      if (saki) saki.value = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
+    }
     if (tab === 'theme' && typeof syncThemeCards === 'function') syncThemeCards();
   }
 }

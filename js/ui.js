@@ -68,12 +68,12 @@ function go(name) {
   if (name==='settings') showTab('profile', document.querySelector('.snav-item'));
   if (name==='brooks') {
     updateBrooksContext();
+    if (typeof syncBrooksApiKeyInputs === 'function') syncBrooksApiKeyInputs();
     try {
       var saved = localStorage.getItem('c4a_apikey') || '';
       if (saved) {
         apiKey = saved;
-        var ki = document.getElementById('api-key-input');
-        if (ki) ki.value = saved;
+        if (typeof syncBrooksApiKeyInputs === 'function') syncBrooksApiKeyInputs(saved);
       }
     } catch(e) {}
   }
