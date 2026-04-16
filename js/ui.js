@@ -240,6 +240,62 @@ var themePresets = {
       '--content-wash':'radial-gradient(circle at top left, rgba(255,193,122,.24), transparent 28%), radial-gradient(circle at top right, rgba(138,79,160,.10), transparent 24%), linear-gradient(180deg,#fff8f1 0%,#fff1e4 52%,#fde9dd 100%)'
     }
   },
+  spring: {
+    name: 'Spring',
+    copy: 'Soft floral pinks with a warmer, lighter club-lounge feel.',
+    swatches: ['#fdf6fb','#f7eef7','#c45fa0','#3a1a3a'],
+    dark: false,
+    vars: {
+      '--bg':'#fdf6fb','--bg2':'#f7eef7','--bg3':'#efe0ef','--bg4':'#e8d5e8',
+      '--border':'#dbb8db','--border2':'#cfa0cf',
+      '--text':'#3a1a3a','--text2':'#6b3d6b','--text3':'#9a6a9a',
+      '--gold':'#c45fa0','--gold-bg':'#fce8f5','--gold-br':'#e8a0d0',
+      '--sidebar-grad1':'#c45fa0','--sidebar-grad2':'#a03880',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#fce8f5'
+    }
+  },
+  summer: {
+    name: 'Summer',
+    copy: 'Bright citrus warmth with a clean daylight glow.',
+    swatches: ['#fff9f0','#fff0d6','#ff6b1a','#2d1a00'],
+    dark: false,
+    vars: {
+      '--bg':'#fff9f0','--bg2':'#fff0d6','--bg3':'#ffe5b8','--bg4':'#ffd99a',
+      '--border':'#ffbe5c','--border2':'#ff9f1c',
+      '--text':'#2d1a00','--text2':'#7a4400','--text3':'#b36a00',
+      '--gold':'#ff6b1a','--gold-bg':'#fff0e0','--gold-br':'#ffb380',
+      '--sidebar-grad1':'#ff6b1a','--sidebar-grad2':'#cc4400',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#fff0e0'
+    }
+  },
+  ocean: {
+    name: 'Ocean',
+    copy: 'Cool blue water tones with a clean, open-air feel.',
+    swatches: ['#f0f8ff','#dff0ff','#0090e0','#001a33'],
+    dark: false,
+    vars: {
+      '--bg':'#f0f8ff','--bg2':'#dff0ff','--bg3':'#c0e4ff','--bg4':'#a0d4ff',
+      '--border':'#60b0f0','--border2':'#2080d0',
+      '--text':'#001a33','--text2':'#004080','--text3':'#0060c0',
+      '--gold':'#0090e0','--gold-bg':'#e0f4ff','--gold-br':'#80ccff',
+      '--sidebar-grad1':'#0090e0','--sidebar-grad2':'#0050a0',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#e0f4ff'
+    }
+  },
+  sunset: {
+    name: 'Sunset',
+    copy: 'Warm rose and ember tones with a softer late-night glow.',
+    swatches: ['#fff5f5','#ffe8e8','#ff3366','#2d0000'],
+    dark: false,
+    vars: {
+      '--bg':'#fff5f5','--bg2':'#ffe8e8','--bg3':'#ffd0d0','--bg4':'#ffb8b8',
+      '--border':'#ff8080','--border2':'#ff4040',
+      '--text':'#2d0000','--text2':'#800000','--text3':'#c00000',
+      '--gold':'#ff3366','--gold-bg':'#ffe0e8','--gold-br':'#ff99aa',
+      '--sidebar-grad1':'#ff3366','--sidebar-grad2':'#cc0044',
+      '--sidebar-text':'#ffffff','--sidebar-active-text':'#ffe0e8'
+    }
+  },
   midnight: {
     name: 'Midnight Club',
     copy: 'A smoky charcoal club with gold accents and low-light warmth.',
