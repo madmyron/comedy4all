@@ -155,7 +155,6 @@ function sbLoadBrooksConversations() {
           item.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
           item.onclick = function() {
             if (brooksHistory && brooksHistory.length > 2) {
-              if (!confirm('Load this conversation? Your current unsaved session will be saved first.')) return;
               currentBrooksConversationId = null;
               sbSaveBrooksConversation();
             }
@@ -429,7 +428,7 @@ function clearBrooks() {
     toast('Session saved and started fresh!');
   }
   if (brooksHistory && brooksHistory.length > 2) {
-    toast('Saving session...');
+    currentBrooksConversationId = null;
     sbSaveBrooksConversation(resetUI);
   } else {
     resetUI();
@@ -495,3 +494,9 @@ function sendToWritingStudio() {
   });
   xhr.send(payload);
 }
+
+setInterval(function() {
+  if (brooksHistory && brooksHistory.length > 2) {
+    sbSaveBrooksConversation();
+  }
+}, 120000);
