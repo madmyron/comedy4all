@@ -553,4 +553,6 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   .show-mobile{display:inline-flex!important}
   #screen-brooks .topbar .hide-mobile{display:none!important}
   .topbar-title{font-size:14px}
+  #screen-brooks{padding-bottom:env(safe-area-inset-bottom,0px)}
+  #screen-brooks .input-bar{flex-shrink:0;padding-bottom:max(12px,env(safe-area-inset-bottom))}
 }
