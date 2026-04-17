@@ -519,6 +519,7 @@
       <div class="topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Brooks AI <span style="color:var(--gold);font-size:11px;font-weight:400">&#10022; Comedy Writing Assistant</span></div>
+        <input id="brooks-convo-title" type="text" placeholder="Untitled conversation..." style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;padding:4px 8px;min-width:0;max-width:300px" onchange="saveBrooksTitle(this.value)" onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='var(--border)'">
         <button class="btn btn-sm" id="quick-prompts-toggle" onclick="toggleQuickPrompts()" style="display:none">⚡ Prompts</button>
         <button class="btn btn-sm" id="past-convos-toggle" onclick="togglePastConvos()" style="display:none">🕐 History</button>
         <button class="btn btn-sm" onclick="sendToWritingStudio()" title="Send conversation to Writing Studio">✍️ To Studio</button>

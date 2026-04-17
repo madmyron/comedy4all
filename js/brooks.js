@@ -45,6 +45,20 @@ function clearBrooksImage() {
   if (input) input.value = '';
 }
 
+function saveBrooksTitle(title) {
+  if (!title.trim() || !currentBrooksConversationId || !_sb || !currentUser) return;
+  _sb.from('brooks_conversations')
+    .update({ title: title.trim() })
+    .eq('id', currentBrooksConversationId)
+    .eq('user_id', currentUser.id)
+    .then(function(result) {
+      if (!result.error) {
+        toast('Conversation title saved!');
+        if (typeof sbLoadBrooksConversations === 'function') sbLoadBrooksConversations();
+      }
+    });
+}
+
 function getStoredBrooksInviteCode(){
   try{return localStorage.getItem('c4a_brooks_invite_code')||'';}catch(e){}
   return '';
@@ -142,6 +156,8 @@ function sbSaveBrooksConversation(callback) {
       .then(function(res) {
         if (res.error) { console.error('Brooks save error:', res.error); if (typeof callback === 'function') callback(); return; }
         currentBrooksConversationId = res.data.id;
+        var titleInput = document.getElementById('brooks-convo-title');
+        if (titleInput && !titleInput.value) titleInput.value = title;
         if (typeof callback === 'function') callback();
       });
   } else {
@@ -206,6 +222,8 @@ function sbLoadBrooksConversations() {
             msgs.innerHTML = '';
             brooksHistory = convo.messages || [];
             currentBrooksConversationId = convo.id;
+            var titleInput = document.getElementById('brooks-convo-title');
+            if (titleInput) titleInput.value = convo.title || '';
             brooksHistory.forEach(function(m) {
               if (m.role === 'user' && m.content && m.content.indexOf('Here are all my jokes:') === 0) return;
               var div = document.createElement('div');
@@ -479,6 +497,8 @@ function clearBrooks() {
   function resetUI() {
     brooksHistory = [];
     currentBrooksConversationId = null;
+    var titleInput = document.getElementById('brooks-convo-title');
+    if (titleInput) titleInput.value = '';
     if (msgs) msgs.innerHTML = '';
     var div = document.createElement('div');
     div.className = 'cmsg ai';
