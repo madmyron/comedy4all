@@ -133,15 +133,15 @@ function sbLoadBrooksConversations() {
     .select('id, title, updated_at, messages')
     .eq('user_id', currentUser.id)
     .order('updated_at', { ascending: false })
-    .limit(20)
+    .limit(50)
     .then(function(result) {
+      if (list) list.innerHTML = '';
+      if (mobileList) mobileList.innerHTML = '';
       if (result.error || !result.data || result.data.length === 0) {
         if (list) list.innerHTML = emptyMsg;
         if (mobileList) mobileList.innerHTML = emptyMsg;
         return;
       }
-      if (list) list.innerHTML = '';
-      if (mobileList) mobileList.innerHTML = '';
       result.data.forEach(function(convo) {
         var targets = [];
         if (list) targets.push(list);
@@ -154,6 +154,11 @@ function sbLoadBrooksConversations() {
           var date = new Date(convo.updated_at).toLocaleDateString();
           item.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
           item.onclick = function() {
+            if (brooksHistory && brooksHistory.length > 2) {
+              if (!confirm('Load this conversation? Your current unsaved session will be saved first.')) return;
+              currentBrooksConversationId = null;
+              sbSaveBrooksConversation();
+            }
             var msgs = document.getElementById('chat-msgs');
             if (!msgs) return;
             msgs.innerHTML = '';
