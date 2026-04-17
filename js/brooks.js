@@ -54,6 +54,13 @@ function saveBrooksTitle(title) {
     .then(function(result) {
       if (!result.error) {
         toast('Conversation title saved!');
+        var titleInput = document.getElementById('brooks-convo-title');
+        if (titleInput) {
+          var now = new Date();
+          var stamp = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          titleInput.setAttribute('data-saved-title', title.trim());
+          titleInput.placeholder = 'Saved at ' + stamp;
+        }
         if (typeof sbLoadBrooksConversations === 'function') sbLoadBrooksConversations();
       }
     });
@@ -158,6 +165,13 @@ function sbSaveBrooksConversation(callback) {
         currentBrooksConversationId = res.data.id;
         var titleInput = document.getElementById('brooks-convo-title');
         if (titleInput && !titleInput.value) titleInput.value = title;
+        if (titleInput) {
+          var now = new Date();
+          var stamp = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          titleInput.title = 'Last saved at ' + stamp;
+          titleInput.style.borderBottomColor = 'var(--green)';
+          setTimeout(function(){ titleInput.style.borderBottomColor = 'var(--border)'; }, 2000);
+        }
         if (typeof callback === 'function') callback();
       });
   } else {
@@ -166,6 +180,16 @@ function sbSaveBrooksConversation(callback) {
       .eq('id', currentBrooksConversationId)
       .then(function(res) {
         if (res.error) console.error('Brooks update error:', res.error);
+        if (!res.error) {
+          var titleInput = document.getElementById('brooks-convo-title');
+          if (titleInput) {
+            var now = new Date();
+            var stamp = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            titleInput.title = 'Last saved at ' + stamp;
+            titleInput.style.borderBottomColor = 'var(--green)';
+            setTimeout(function(){ titleInput.style.borderBottomColor = 'var(--border)'; }, 2000);
+          }
+        }
         if (typeof callback === 'function') callback();
       });
   }
