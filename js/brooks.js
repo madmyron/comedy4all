@@ -497,6 +497,7 @@ function clearBrooks() {
   function resetUI() {
     brooksHistory = [];
     currentBrooksConversationId = null;
+    _brooksTitlePrompted = false;
     var titleInput = document.getElementById('brooks-convo-title');
     if (titleInput) titleInput.value = '';
     if (msgs) msgs.innerHTML = '';
@@ -575,8 +576,23 @@ function sendToWritingStudio() {
   xhr.send(payload);
 }
 
+var _brooksTitlePrompted = false;
+
 setInterval(function() {
-  if (brooksHistory && brooksHistory.length > 2) {
+  if (!brooksHistory || brooksHistory.length < 3) return;
+  var titleInput = document.getElementById('brooks-convo-title');
+  var hasTitle = titleInput && titleInput.value.trim().length > 0;
+  if (hasTitle) {
+    sbSaveBrooksConversation();
+  } else if (!_brooksTitlePrompted) {
+    _brooksTitlePrompted = true;
+    var userTitle = prompt('Give this conversation a title to save it (or cancel to save without a title):');
+    if (userTitle && userTitle.trim()) {
+      if (titleInput) titleInput.value = userTitle.trim();
+      saveBrooksTitle(userTitle.trim());
+    }
+    sbSaveBrooksConversation();
+  } else {
     sbSaveBrooksConversation();
   }
-}, 120000);
+}, 300000);
