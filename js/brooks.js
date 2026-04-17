@@ -254,8 +254,9 @@ function sendBrooks(){
   } else {
     um.textContent = text;
   }
+  var hadImages = brooksImages && brooksImages.length > 0;
   var userContent;
-  if (brooksImages && brooksImages.length > 0) {
+  if (hadImages) {
     userContent = brooksImages.map(function(img) {
       return { type: 'image', source: { type: 'base64', media_type: img.type, data: img.data } };
     });
@@ -319,7 +320,7 @@ function sendBrooks(){
     }
   }
   brooksHistory = cleanHistory;
-  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,system:BROOKS_SYS,messages:brooksHistory});
+  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:hadImages?2000:1000,system:BROOKS_SYS,messages:brooksHistory});
   xhr.send(payload);
 }
 
