@@ -173,6 +173,7 @@ function syncBrooksApiKeyInputs(value){
 
 function sbSaveBrooksConversation(callback) {
   if (!currentUser || !_sb) { if (typeof callback === 'function') callback(); return; }
+  if (!currentBrooksConversationId && brooksHistory.length === 0) { if (typeof callback === 'function') callback(); return; }
   var now = Date.now();
   if (now - _lastBrooksSave < 300000 && currentBrooksConversationId) return;
   _lastBrooksSave = now;
@@ -281,10 +282,6 @@ function sbLoadBrooksConversations() {
           var date = new Date(convo.updated_at).toLocaleDateString();
           item.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
           item.onclick = function() {
-            if (brooksHistory && brooksHistory.length > 2) {
-              currentBrooksConversationId = null;
-              sbSaveBrooksConversation();
-            }
             var msgs = document.getElementById('chat-msgs');
             if (!msgs) return;
             msgs.innerHTML = '';
@@ -577,7 +574,6 @@ function clearBrooks() {
     toast('Session saved and started fresh!');
   }
   if (brooksHistory && brooksHistory.length > 2) {
-    currentBrooksConversationId = null;
     sbSaveBrooksConversation(resetUI);
   } else {
     resetUI();
