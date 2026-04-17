@@ -124,11 +124,12 @@ function sbSaveBrooksConversation(callback) {
   var title = '';
   for (var i = 0; i < brooksHistory.length; i++) {
     var m = brooksHistory[i];
-    if (m.role === 'user' && m.content.length < 200
-      && m.content.indexOf('Here are all my jokes') === -1
-      && m.content.indexOf('You are a TV development') === -1
-      && m.content.indexOf('Read ALL of my jokes') === -1) {
-      title = m.content.substring(0, 60);
+    var contentText = typeof m.content === 'string' ? m.content : (Array.isArray(m.content) ? ((m.content.find(function(c){ return c.type === 'text'; }) || {}).text || '[image]') : '[image]');
+    if (m.role === 'user' && contentText.length < 200
+      && contentText.indexOf('Here are all my jokes') === -1
+      && contentText.indexOf('You are a TV development') === -1
+      && contentText.indexOf('Read ALL of my jokes') === -1) {
+      title = contentText.substring(0, 60);
       break;
     }
   }
