@@ -211,9 +211,14 @@ function togglePastConvos() {
 }
 
 function sbLoadBrooksConversations() {
-  if (!_sb || !currentUser) return;
   var list = document.getElementById('brooks-history-list');
-  var mobileList = document.getElementById('mobile-brooks-history-list');
+  var mlist = document.getElementById('mobile-brooks-history-list');
+  if (!window._sb || !currentUser) {
+    if (list) list.innerHTML = '<div style="font-size:11px;color:var(--text3)">Not connected.</div>';
+    if (mlist) mlist.innerHTML = '<div style="font-size:11px;color:var(--text3)">Not connected.</div>';
+    return;
+  }
+  var mobileList = mlist;
   var emptyMsg = '<div style="font-size:11px;color:var(--text3)">No past conversations yet.</div>';
   if (list) list.innerHTML = '<div style="font-size:11px;color:var(--text3)">Loading...</div>';
   if (mobileList) mobileList.innerHTML = '<div style="font-size:11px;color:var(--text3)">Loading...</div>';
