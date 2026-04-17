@@ -336,6 +336,38 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+// - MOBILE SCRIPTS DRAWER -
+
+function toggleStudioScripts() {
+  var panel = document.getElementById('mobile-studio-scripts');
+  var btn = document.getElementById('studio-scripts-toggle');
+  if (!panel) return;
+  var isOpen = panel.style.display === 'flex';
+  panel.style.display = isOpen ? 'none' : 'flex';
+  if (btn) btn.textContent = isOpen ? '📝 Scripts' : '✕ Close';
+  if (!isOpen) renderMobileStudioScripts();
+}
+
+function renderMobileStudioScripts() {
+  var list = document.getElementById('mobile-studio-scripts-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!scripts || scripts.length === 0) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--text3)">No scripts yet.</div>';
+    return;
+  }
+  scripts.forEach(function(s) {
+    var item = document.createElement('div');
+    item.style.cssText = 'padding:8px 10px;border-radius:var(--r2);cursor:pointer;font-size:13px;color:var(--text);margin-bottom:4px;background:var(--bg3)';
+    item.innerHTML = '<div style="font-weight:600">' + (s.title||'Untitled') + '</div><div style="font-size:11px;color:var(--text3)">' + (s.formatKey||'') + '</div>';
+    item.onclick = function() {
+      openScript(s.id);
+      toggleStudioScripts();
+    };
+    list.appendChild(item);
+  });
+}
+
 // - SUPABASE SYNC -
 
 function sbSaveScript(script) {

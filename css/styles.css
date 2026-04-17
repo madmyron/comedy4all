@@ -546,4 +546,5 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
 }
 @media(max-width:768px){
   #past-convos-toggle{display:inline-flex!important}
+  #studio-scripts-toggle{display:inline-flex!important}
 }
