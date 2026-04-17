@@ -112,11 +112,23 @@ function sbSaveBrooksConversation(callback) {
   }
 }
 
+function togglePastConvos() {
+  var panel = document.getElementById('mobile-past-convos');
+  var btn = document.getElementById('past-convos-toggle');
+  if (!panel) return;
+  var isOpen = panel.style.display === 'flex';
+  panel.style.display = isOpen ? 'none' : 'flex';
+  if (btn) btn.textContent = isOpen ? '🕐 History' : '✕ Close';
+  if (!isOpen) sbLoadBrooksConversations();
+}
+
 function sbLoadBrooksConversations() {
   if (!_sb || !currentUser) return;
   var list = document.getElementById('brooks-history-list');
-  if (!list) return;
-  list.innerHTML = '<div style="font-size:11px;color:var(--text3)">Loading...</div>';
+  var mobileList = document.getElementById('mobile-brooks-history-list');
+  var emptyMsg = '<div style="font-size:11px;color:var(--text3)">No past conversations yet.</div>';
+  if (list) list.innerHTML = '<div style="font-size:11px;color:var(--text3)">Loading...</div>';
+  if (mobileList) mobileList.innerHTML = '<div style="font-size:11px;color:var(--text3)">Loading...</div>';
   _sb.from('brooks_conversations')
     .select('id, title, updated_at, messages')
     .eq('user_id', currentUser.id)
@@ -124,34 +136,45 @@ function sbLoadBrooksConversations() {
     .limit(20)
     .then(function(result) {
       if (result.error || !result.data || result.data.length === 0) {
-        list.innerHTML = '<div style="font-size:11px;color:var(--text3)">No past conversations yet.</div>';
+        if (list) list.innerHTML = emptyMsg;
+        if (mobileList) mobileList.innerHTML = emptyMsg;
         return;
       }
-      list.innerHTML = '';
+      if (list) list.innerHTML = '';
+      if (mobileList) mobileList.innerHTML = '';
       result.data.forEach(function(convo) {
-        var item = document.createElement('div');
-        item.style.cssText = 'padding:6px 8px;border-radius:var(--r2);cursor:pointer;font-size:12px;color:var(--text2);border:1px solid transparent;margin-bottom:4px;line-height:1.4';
-        item.onmouseover = function(){ this.style.background='var(--bg3)'; };
-        item.onmouseout = function(){ this.style.background=''; };
-        var date = new Date(convo.updated_at).toLocaleDateString();
-        item.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
-        item.onclick = function() {
-          var msgs = document.getElementById('chat-msgs');
-          if (!msgs) return;
-          msgs.innerHTML = '';
-          brooksHistory = convo.messages || [];
-          currentBrooksConversationId = convo.id;
-          brooksHistory.forEach(function(m) {
-            if (m.role === 'user' && m.content && m.content.indexOf('Here are all my jokes:') === 0) return;
-            var div = document.createElement('div');
-            div.className = 'cmsg ' + (m.role === 'user' ? 'user' : 'ai');
-            if (m.role === 'assistant') div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + m.content.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
-            else div.textContent = m.content;
-            msgs.appendChild(div);
-          });
-          msgs.scrollTop = msgs.scrollHeight;
-        };
-        list.appendChild(item);
+        var targets = [];
+        if (list) targets.push(list);
+        if (mobileList) targets.push(mobileList);
+        targets.forEach(function(container) {
+          var item = document.createElement('div');
+          item.style.cssText = 'padding:6px 8px;border-radius:var(--r2);cursor:pointer;font-size:12px;color:var(--text2);border:1px solid transparent;margin-bottom:4px;line-height:1.4';
+          item.onmouseover = function(){ this.style.background='var(--bg3)'; };
+          item.onmouseout = function(){ this.style.background=''; };
+          var date = new Date(convo.updated_at).toLocaleDateString();
+          item.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
+          item.onclick = function() {
+            var msgs = document.getElementById('chat-msgs');
+            if (!msgs) return;
+            msgs.innerHTML = '';
+            brooksHistory = convo.messages || [];
+            currentBrooksConversationId = convo.id;
+            brooksHistory.forEach(function(m) {
+              if (m.role === 'user' && m.content && m.content.indexOf('Here are all my jokes:') === 0) return;
+              var div = document.createElement('div');
+              div.className = 'cmsg ' + (m.role === 'user' ? 'user' : 'ai');
+              if (m.role === 'assistant') div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + m.content.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+              else div.textContent = m.content;
+              msgs.appendChild(div);
+            });
+            msgs.scrollTop = msgs.scrollHeight;
+            var mpanel = document.getElementById('mobile-past-convos');
+            var mbtn = document.getElementById('past-convos-toggle');
+            if (mpanel) mpanel.style.display = 'none';
+            if (mbtn) mbtn.textContent = '🕐 History';
+          };
+          container.appendChild(item);
+        });
       });
     });
 }

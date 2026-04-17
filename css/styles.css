@@ -544,3 +544,6 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   #topbar-new-joke-btn{display:none}
   #mobile-new-joke-btn{display:inline-flex!important}
 }
+@media(max-width:768px){
+  #past-convos-toggle{display:inline-flex!important}
+}
