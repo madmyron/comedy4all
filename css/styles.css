@@ -545,6 +545,7 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   #mobile-new-joke-btn{display:inline-flex!important}
 }
 .show-mobile{display:none}
+#brooks-convo-title{display:block!important;min-height:20px}
 @media(max-width:768px){
   #past-convos-toggle{display:inline-flex!important}
   #studio-scripts-toggle{display:inline-flex!important}
