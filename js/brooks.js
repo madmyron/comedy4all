@@ -79,14 +79,18 @@ function syncBrooksApiKeyInputs(value){
 
 function sbSaveBrooksConversation() {
   if (!currentUser || !_sb) return;
-  var title = 'Brooks Session';
+  var title = '';
   for (var i = 0; i < brooksHistory.length; i++) {
-    if (brooksHistory[i].role === 'user' && brooksHistory[i].content.indexOf('Here are all my jokes:') !== 0) {
-      title = brooksHistory[i].content.substring(0, 60);
-      if (brooksHistory[i].content.length > 60) title += '...';
+    var m = brooksHistory[i];
+    if (m.role === 'user' && m.content.length < 200
+      && m.content.indexOf('Here are all my jokes') === -1
+      && m.content.indexOf('You are a TV development') === -1
+      && m.content.indexOf('Read ALL of my jokes') === -1) {
+      title = m.content.substring(0, 60);
       break;
     }
   }
+  if (!title) title = 'Brooks Session ' + new Date().toLocaleDateString();
   var now = new Date().toISOString();
   if (!currentBrooksConversationId) {
     _sb.from('brooks_conversations')
