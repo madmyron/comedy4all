@@ -553,4 +553,5 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   .hide-mobile{display:none!important}
   .show-mobile{display:inline!important}
   .topbar-title{font-size:14px}
+  #screen-brooks .topbar-title{display:none!important}
 }
