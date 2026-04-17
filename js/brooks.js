@@ -77,8 +77,8 @@ function syncBrooksApiKeyInputs(value){
   if (saki) saki.value = key;
 }
 
-function sbSaveBrooksConversation() {
-  if (!currentUser || !_sb) return;
+function sbSaveBrooksConversation(callback) {
+  if (!currentUser || !_sb) { if (typeof callback === 'function') callback(); return; }
   var title = '';
   for (var i = 0; i < brooksHistory.length; i++) {
     var m = brooksHistory[i];
@@ -97,14 +97,18 @@ function sbSaveBrooksConversation() {
       .insert({ user_id: currentUser.id, title: title, messages: brooksHistory, created_at: now, updated_at: now })
       .select('id').single()
       .then(function(res) {
-        if (res.error) { console.error('Brooks save error:', res.error); return; }
+        if (res.error) { console.error('Brooks save error:', res.error); if (typeof callback === 'function') callback(); return; }
         currentBrooksConversationId = res.data.id;
+        if (typeof callback === 'function') callback();
       });
   } else {
     _sb.from('brooks_conversations')
       .update({ messages: brooksHistory, updated_at: now })
       .eq('id', currentBrooksConversationId)
-      .then(function(res) { if (res.error) console.error('Brooks update error:', res.error); });
+      .then(function(res) {
+        if (res.error) console.error('Brooks update error:', res.error);
+        if (typeof callback === 'function') callback();
+      });
   }
 }
 
@@ -375,4 +379,31 @@ function renderBrooksGreeting(){
   el.innerHTML='<div class="mfrom">BROOKS AI</div>'+greetings[Math.floor(Math.random()*greetings.length)];
 }
 renderBrooksGreeting();
-function clearBrooks(){brooksHistory=[];currentBrooksConversationId=null;var msgs=document.getElementById('chat-msgs');if(msgs)msgs.innerHTML='<div class="cmsg ai"><div class="mfrom">BROOKS AI</div>New session started. What are we working on?</div>';toast('New session started!');}
+function clearBrooks() {
+  var msgs = document.getElementById('chat-msgs');
+  var openers = [
+    "Okay, rookie. Hand me the jokes and I'll tell you which ones are road-ready and which ones belong in witness protection.",
+    "Pull up a chair. I've been around long enough to know where the laugh is hiding, and where it's pretending to be.",
+    "Alright, kid. Let's see if this material's got a pulse or if we're just embalming it in punchlines.",
+    "I've got news: the audience is mean, time is short, and your opener better know how to fight.",
+    "New session. Same standards. Let's see what you've got."
+  ];
+  var opener = openers[Math.floor(Math.random() * openers.length)];
+  function resetUI() {
+    brooksHistory = [];
+    currentBrooksConversationId = null;
+    if (msgs) msgs.innerHTML = '';
+    var div = document.createElement('div');
+    div.className = 'cmsg ai';
+    div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + opener;
+    if (msgs) msgs.appendChild(div);
+    if (typeof sbLoadBrooksConversations === 'function') sbLoadBrooksConversations();
+    toast('Session saved and started fresh!');
+  }
+  if (brooksHistory && brooksHistory.length > 2) {
+    toast('Saving session...');
+    sbSaveBrooksConversation(resetUI);
+  } else {
+    resetUI();
+  }
+}
