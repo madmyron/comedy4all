@@ -516,16 +516,16 @@
 
     <!-- BROOKS AI -->
     <div id="screen-brooks" class="screen" style="position:relative">
-      <div class="topbar" style="flex-direction:column;align-items:stretch;padding:8px 14px;gap:4px">
+      <div class="topbar" style="flex-direction:column;align-items:stretch;padding:6px 14px 6px 14px;gap:2px;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:6px">
           <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
-          <div style="flex:1;font-weight:600;font-size:15px;color:var(--text)">Brooks AI</div>
-          <button class="btn btn-sm" onclick="sendToWritingStudio()" title="Send to Writing Studio">&#9997;&#65039; <span class="hide-mobile">To Studio</span></button>
-          <button class="btn btn-sm" onclick="clearBrooks()" title="New Session">+ <span class="hide-mobile">New Session</span></button>
-          <button class="btn btn-sm show-mobile" onclick="toggleBrooksMenu()" style="padding:0 10px">Actions</button>
+          <div style="flex:1;font-weight:700;font-size:16px;color:var(--text)">Brooks AI</div>
+          <button class="btn btn-sm hide-mobile" onclick="sendToWritingStudio()">&#9997;&#65039; To Studio</button>
+          <button class="btn btn-sm hide-mobile" onclick="clearBrooks()">+ New Session</button>
+          <button class="btn btn-sm show-mobile" onclick="toggleBrooksMenu()">Actions</button>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;padding-left:36px">
-          <input id="brooks-convo-title" type="text" placeholder="Tap to add title..." style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--blue);font-size:12px;font-weight:600;font-family:'Inter',sans-serif;outline:none;padding:2px 4px;min-width:0" onchange="saveBrooksTitle(this.value)" onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='var(--border)'">
+        <div style="padding-left:36px">
+          <input id="brooks-convo-title" type="text" placeholder="Tap to name this conversation..." style="width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);color:#2196F3;font-size:12px;font-weight:600;font-family:'Inter',sans-serif;outline:none;padding:2px 4px;box-sizing:border-box" onchange="saveBrooksTitle(this.value)" onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='var(--border)'">
         </div>
       </div>
       <div id="brooks-mobile-menu" style="display:none;position:absolute;top:52px;right:10px;z-index:200;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:160px">

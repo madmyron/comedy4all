@@ -548,8 +548,7 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
 @media(max-width:768px){
   #past-convos-toggle{display:inline-flex!important}
   #studio-scripts-toggle{display:inline-flex!important}
-  #brooks-topbar-actions{gap:4px}
   .hide-mobile{display:none!important}
-  .show-mobile{display:inline!important}
+  .show-mobile{display:inline-flex!important}
   .topbar-title{font-size:14px}
 }
