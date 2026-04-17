@@ -436,36 +436,57 @@ function sendToWritingStudio() {
     toast('Nothing to send yet — have a conversation with Brooks first!');
     return;
   }
+  var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey')||''; } catch(e){ return ''; } })();
+  if (!key) { toast('Add your API key in Settings to use this feature.'); return; }
   var transcript = '';
   brooksHistory.forEach(function(m) {
     if (m.role === 'user' && (m.content.indexOf('Here are all my jokes') !== -1 || m.content.length > 200)) return;
     var label = m.role === 'user' ? 'MICHAEL' : 'BROOKS';
     transcript += label + ':\n' + m.content + '\n\n';
   });
-  if (!transcript.trim()) {
-    toast('No conversation content to send.');
-    return;
-  }
-  var title = 'From Brooks: ';
+  var title = 'New Script';
   for (var i = 0; i < brooksHistory.length; i++) {
     var m = brooksHistory[i];
     if (m.role === 'user' && m.content.length < 200 && m.content.indexOf('Here are all my jokes') === -1) {
-      title += m.content.substring(0, 50);
+      title = m.content.substring(0, 50);
       break;
     }
   }
-  if (typeof go === 'function') go('studio');
-  setTimeout(function() {
-    if (typeof newScript === 'function') {
-      newScript();
+  toast('Brooks is writing your script...');
+  var prompt = 'Based on this development conversation, write a proper TV pilot script outline. Include: a title page, logline, character descriptions, a cold open scene, Act One outline with 3-4 scenes, Act Two outline with 3-4 scenes, and a tag scene. Use proper screenplay formatting. Base everything specifically on the ideas discussed.\n\nCONVERSATION:\n' + transcript;
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.anthropic.com/v1/messages');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('x-api-key', key);
+  xhr.setRequestHeader('anthropic-version', '2023-06-01');
+  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try {
+        var d = JSON.parse(xhr.responseText);
+        var script = d.content && d.content[0] && d.content[0].text ? d.content[0].text : '';
+        if (typeof go === 'function') go('studio');
+        setTimeout(function() {
+          if (typeof newScript === 'function') newScript();
+          setTimeout(function() {
+            var titleInput = document.getElementById('studio-script-title-input');
+            var bodyInput = document.getElementById('studio-script-body');
+            if (titleInput) titleInput.value = title;
+            if (bodyInput) bodyInput.value = script;
+            if (typeof saveActiveScript === 'function') saveActiveScript();
+            toast('Script created in Writing Studio!');
+          }, 400);
+        }, 400);
+      } catch(e) { toast('Error creating script. Try again.'); }
+    } else {
+      toast('Error ' + xhr.status + '. Check your API key.');
     }
-    setTimeout(function() {
-      var titleInput = document.getElementById('studio-script-title-input');
-      var bodyInput = document.getElementById('studio-script-body');
-      if (titleInput) titleInput.value = title;
-      if (bodyInput) bodyInput.value = transcript;
-      if (typeof saveActiveScript === 'function') saveActiveScript();
-      toast('Conversation sent to Writing Studio!');
-    }, 400);
-  }, 400);
+  };
+  xhr.onerror = function() { toast('Network error. Try again.'); };
+  var payload = JSON.stringify({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 2000,
+    messages: [{ role: 'user', content: prompt }]
+  });
+  xhr.send(payload);
 }
