@@ -45,6 +45,55 @@ function clearBrooksImage() {
   if (input) input.value = '';
 }
 
+function loadBrooksHistory() {
+  window.supabase.auth.getUser().then(function(res) {
+    var user = res.data.user;
+    if (!user) return;
+
+    window.supabase.from('brooks_messages')
+      .select('role, content')
+      .order('created_at', { ascending: true })
+      .then(function(result) {
+        if (result.error) {
+          console.error('Error loading Brooks history:', result.error);
+          return;
+        }
+        var messages = result.data;
+        if (messages) {
+          brooksHistory = messages.map(function(m) { return { role: m.role, content: m.content }; });
+          var msgs = document.getElementById('chat-msgs');
+          if (msgs) {
+            msgs.innerHTML = '';
+            brooksHistory.forEach(function(m) {
+              var div = document.createElement('div');
+              div.className = 'cmsg ' + (m.role === 'user' ? 'user' : 'ai');
+              if (m.role === 'assistant') {
+                div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + m.content.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+              } else {
+                div.textContent = m.content;
+              }
+              msgs.appendChild(div);
+            });
+            msgs.scrollTop = msgs.scrollHeight;
+          }
+        }
+      });
+  });
+}
+
+function capBrooksMessages(userId) {
+  window.supabase.from('brooks_messages')
+    .select('id', { count: 'exact' })
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .then(function(res) {
+      if (res.error || !res.count || res.count <= 50) return;
+      var toDelete = res.count - 50;
+      var oldest = res.data.slice(0, toDelete).map(function(m) { return m.id; });
+      window.supabase.from('brooks_messages').delete().in('id', oldest);
+    });
+}
+
 function saveBrooksTitle(title) {
   if (!title.trim() || !currentBrooksConversationId || !_sb || !currentUser) return;
   _sb.from('brooks_conversations')
@@ -329,6 +378,15 @@ function sendBrooks(){
     brooksHistory.push({role:'assistant', content:"Got it. I've read all your material. What do you want to work on?"});
   }
   brooksHistory.push({role:'user',content:userContent});
+  window.supabase.auth.getUser().then(function(res) {
+    var user = res.data.user;
+    if (user) {
+      var contentText = typeof userContent === 'string' ? userContent : (Array.isArray(userContent) ? 'Images uploaded' : '');
+      window.supabase.from('brooks_messages').insert({ user_id: user.id, role: 'user', content: contentText }).then(function() {
+        capBrooksMessages(user.id);
+      });
+    }
+  });
   msgs.appendChild(um);
   msgs.scrollTop=msgs.scrollHeight;
   var typing=document.createElement('div');
@@ -352,6 +410,14 @@ function sendBrooks(){
         var data=JSON.parse(xhr.responseText);
         var reply=(data.content||[]).filter(function(c){return c.type==='text';}).map(function(c){return c.text;}).join('')||'No response.';
         brooksHistory.push({role:'assistant',content:reply});
+        window.supabase.auth.getUser().then(function(res) {
+          var user = res.data.user;
+          if (user) {
+            window.supabase.from('brooks_messages').insert({ user_id: user.id, role: 'assistant', content: reply }).then(function() {
+              capBrooksMessages(user.id);
+            });
+          }
+        });
         sbSaveBrooksConversation();
         typing.innerHTML='<div class="mfrom">BROOKS AI</div>'+reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
       }catch(e){typing.innerHTML='<div class="mfrom">BROOKS AI</div>Parse error. Try again.';}
@@ -532,6 +598,12 @@ function clearBrooks() {
   ];
   var opener = openers[Math.floor(Math.random() * openers.length)];
   function resetUI() {
+    window.supabase.auth.getUser().then(function(res) {
+      var user = res.data.user;
+      if (user) {
+        window.supabase.from('brooks_messages').delete().eq('user_id', user.id);
+      }
+    });
     brooksHistory = [];
     currentBrooksConversationId = null;
     _brooksTitlePrompted = false;
