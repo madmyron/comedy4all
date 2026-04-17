@@ -46,48 +46,33 @@ function clearBrooksImage() {
 }
 
 function loadBrooksHistory() {
-  if (!currentUser) return;
-
-  _sb.from('brooks_messages')
-    .select('role, content')
-    .order('created_at', { ascending: true })
+  if (!currentUser || !_sb) return;
+  sbLoadBrooksConversations();
+  _sb.from('brooks_conversations')
+    .select('id, title, updated_at, messages')
+    .eq('user_id', currentUser.id)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .single()
     .then(function(result) {
-      if (result.error) {
-        console.error('Error loading Brooks history:', result.error);
-        return;
-      }
-      var messages = result.data;
-      if (messages) {
-        brooksHistory = messages.map(function(m) { return { role: m.role, content: m.content }; });
-        var msgs = document.getElementById('chat-msgs');
-        if (msgs) {
-          msgs.innerHTML = '';
-          brooksHistory.forEach(function(m) {
-            var div = document.createElement('div');
-            div.className = 'cmsg ' + (m.role === 'user' ? 'user' : 'ai');
-            if (m.role === 'assistant') {
-              div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + m.content.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
-            } else {
-              div.textContent = m.content;
-            }
-            msgs.appendChild(div);
-          });
-          msgs.scrollTop = msgs.scrollHeight;
-        }
-      }
-    });
-}
-
-function capBrooksMessages(userId) {
-  _sb.from('brooks_messages')
-    .select('id', { count: 'exact' })
-    .eq('user_id', userId)
-    .order('created_at', { ascending: true })
-    .then(function(res) {
-      if (res.error || !res.count || res.count <= 50) return;
-      var toDelete = res.count - 50;
-      var oldest = res.data.slice(0, toDelete).map(function(m) { return m.id; });
-      _sb.from('brooks_messages').delete().in('id', oldest);
+      if (result.error || !result.data) return;
+      var convo = result.data;
+      brooksHistory = convo.messages || [];
+      currentBrooksConversationId = convo.id;
+      var titleInput = document.getElementById('brooks-convo-title');
+      if (titleInput) titleInput.value = convo.title || '';
+      var msgs = document.getElementById('chat-msgs');
+      if (!msgs) return;
+      msgs.innerHTML = '';
+      brooksHistory.forEach(function(m) {
+        if (m.role === 'user' && m.content && m.content.indexOf('Here are all my jokes:') === 0) return;
+        var div = document.createElement('div');
+        div.className = 'cmsg ' + (m.role === 'user' ? 'user' : 'ai');
+        if (m.role === 'assistant') div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + m.content.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+        else div.textContent = m.content;
+        msgs.appendChild(div);
+      });
+      msgs.scrollTop = msgs.scrollHeight;
     });
 }
 
@@ -375,12 +360,6 @@ function sendBrooks(){
     brooksHistory.push({role:'assistant', content:"Got it. I've read all your material. What do you want to work on?"});
   }
   brooksHistory.push({role:'user',content:userContent});
-  if (currentUser) {
-    var contentText = typeof userContent === 'string' ? userContent : (Array.isArray(userContent) ? 'Images uploaded' : '');
-    _sb.from('brooks_messages').insert({ user_id: currentUser.id, role: 'user', content: contentText }).then(function() {
-      capBrooksMessages(currentUser.id);
-    });
-  }
   msgs.appendChild(um);
   msgs.scrollTop=msgs.scrollHeight;
   var typing=document.createElement('div');
@@ -404,11 +383,6 @@ function sendBrooks(){
         var data=JSON.parse(xhr.responseText);
         var reply=(data.content||[]).filter(function(c){return c.type==='text';}).map(function(c){return c.text;}).join('')||'No response.';
         brooksHistory.push({role:'assistant',content:reply});
-        if (currentUser) {
-          _sb.from('brooks_messages').insert({ user_id: currentUser.id, role: 'assistant', content: reply }).then(function() {
-            capBrooksMessages(currentUser.id);
-          });
-        }
         sbSaveBrooksConversation();
         typing.innerHTML='<div class="mfrom">BROOKS AI</div>'+reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
       }catch(e){typing.innerHTML='<div class="mfrom">BROOKS AI</div>Parse error. Try again.';}
@@ -589,9 +563,6 @@ function clearBrooks() {
   ];
   var opener = openers[Math.floor(Math.random() * openers.length)];
   function resetUI() {
-    if (currentUser) {
-      _sb.from('brooks_messages').delete().eq('user_id', currentUser.id);
-    }
     brooksHistory = [];
     currentBrooksConversationId = null;
     _brooksTitlePrompted = false;
