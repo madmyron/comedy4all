@@ -2,29 +2,45 @@
 var BROOKS_SYS='You are Brooks -- a seasoned comedy writing veteran who genuinely wants Michael to succeed. You are sharp, witty, and direct. You always help with whatever Michael asks first, then you can briefly mention what you think is most urgent. Never refuse a request or redirect away from it -- if he wants to work on sitcom ideas, you work on sitcom ideas. If he wants to punch up a joke, you punch up the joke. You give your honest opinion but you do the work he asks.\n\nYour personality: warm but no-nonsense. You roast weak material with affection. You celebrate wins with real enthusiasm. You give specific actionable notes. Think: the best writing partner in the room who makes every session productive.\n\nBackground on Michael: stand-up comedian, entrepreneur, 1996 Olympian, based in Dallas TX. Top joke is the Airport security bit (9.2/10), tech jokes avg 8.3, relationship material avg 7.4.\n\nYour style: open with a quick observation or quip, then get straight to work. Never say "Great question!" -- that is hack. Max 3 short punchy paragraphs unless writing actual material. Use numbered lists when giving options.';
 var BROOKS_TRIAL_CODES=['BROOKS-FRIEND-2026','BROOKS-VIP-PASS','SITCOM-SCAN'];
 var currentBrooksConversationId = null;
-var brooksImageData = null;
-var brooksImageType = null;
+var brooksImages = [];
 
 function handleBrooksImage(input) {
-  if (!input.files || !input.files[0]) return;
-  var file = input.files[0];
-  brooksImageType = file.type;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    brooksImageData = e.target.result.split(',')[1];
-    var preview = document.getElementById('brooks-image-preview');
-    var thumb = document.getElementById('brooks-image-thumb');
-    if (thumb) thumb.src = e.target.result;
-    if (preview) preview.style.display = 'block';
-  };
-  reader.readAsDataURL(file);
+  if (!input.files || !input.files.length) return;
+  var preview = document.getElementById('brooks-image-preview');
+  var files = Array.from(input.files);
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      brooksImages.push({ data: e.target.result.split(',')[1], type: file.type, src: e.target.result });
+      renderBrooksImagePreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+  if (preview) preview.style.display = 'block';
+}
+
+function renderBrooksImagePreviews() {
+  var preview = document.getElementById('brooks-image-preview');
+  if (!preview) return;
+  preview.innerHTML = '';
+  brooksImages.forEach(function(img, i) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:inline-block;margin-right:8px';
+    wrap.innerHTML = '<img src="' + img.src + '" style="max-height:80px;max-width:120px;border-radius:6px;object-fit:cover"><button onclick="removeBrooksImage(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;line-height:1">✕</button>';
+    preview.appendChild(wrap);
+  });
+  preview.style.display = brooksImages.length ? 'block' : 'none';
+}
+
+function removeBrooksImage(i) {
+  brooksImages.splice(i, 1);
+  renderBrooksImagePreviews();
 }
 
 function clearBrooksImage() {
-  brooksImageData = null;
-  brooksImageType = null;
+  brooksImages = [];
   var preview = document.getElementById('brooks-image-preview');
-  if (preview) preview.style.display = 'none';
+  if (preview) { preview.innerHTML = ''; preview.style.display = 'none'; }
   var input = document.getElementById('brooks-image-input');
   if (input) input.value = '';
 }
@@ -225,15 +241,25 @@ function sendBrooks(){
     return;
   }
   var input=document.getElementById('brooks-input'),msgs=document.getElementById('chat-msgs');
-  if(!input||!msgs||(!input.value.trim()&&!brooksImageData)) return;
+  if(!input||!msgs||(!input.value.trim()&&!brooksImages.length)) return;
   var text=input.value.trim();
   input.value='';
+  var um=document.createElement('div');
+  um.className='cmsg user';
+  if (brooksImages && brooksImages.length > 0) {
+    var thumbs = brooksImages.map(function(img) {
+      return '<img src="' + img.src + '" style="max-height:60px;max-width:80px;border-radius:4px;margin-right:4px">';
+    }).join('');
+    um.innerHTML = thumbs + (text ? '<div style="margin-top:6px">' + text + '</div>' : '');
+  } else {
+    um.textContent = text;
+  }
   var userContent;
-  if (brooksImageData) {
-    userContent = [
-      { type: 'image', source: { type: 'base64', media_type: brooksImageType, data: brooksImageData } },
-      { type: 'text', text: text || 'What do you see in this image? Continue our conversation based on this.' }
-    ];
+  if (brooksImages && brooksImages.length > 0) {
+    userContent = brooksImages.map(function(img) {
+      return { type: 'image', source: { type: 'base64', media_type: img.type, data: img.data } };
+    });
+    userContent.push({ type: 'text', text: text || 'Please read these screenshots and continue our conversation based on what you see.' });
     clearBrooksImage();
   } else {
     userContent = text;
@@ -246,9 +272,6 @@ function sendBrooks(){
     brooksHistory.push({role:'assistant', content:"Got it. I've read all your material. What do you want to work on?"});
   }
   brooksHistory.push({role:'user',content:userContent});
-  var um=document.createElement('div');
-  um.className='cmsg user';
-  um.textContent=text || '📎 Image';
   msgs.appendChild(um);
   msgs.scrollTop=msgs.scrollHeight;
   var typing=document.createElement('div');
