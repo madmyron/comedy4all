@@ -550,5 +550,6 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   #studio-scripts-toggle{display:inline-flex!important}
   .hide-mobile{display:none!important}
   .show-mobile{display:inline-flex!important}
+  #screen-brooks .topbar .hide-mobile{display:none!important}
   .topbar-title{font-size:14px}
 }
