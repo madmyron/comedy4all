@@ -634,3 +634,9 @@ setInterval(function() {
     sbSaveBrooksConversation();
   }
 }, 600000);
+
+window.addEventListener('beforeunload', function() {
+  if (brooksHistory && brooksHistory.length > 2) {
+    sbSaveBrooksConversation();
+  }
+});

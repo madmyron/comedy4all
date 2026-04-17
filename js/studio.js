@@ -444,3 +444,9 @@ function sbLoadScripts() {
       renderStudio();
     });
 }
+
+window.addEventListener('beforeunload', function() {
+  if (typeof activeScriptId !== 'undefined' && activeScriptId && typeof saveActiveScript === 'function') {
+    saveActiveScript();
+  }
+});
