@@ -2,6 +2,32 @@
 var BROOKS_SYS='You are Brooks -- a seasoned comedy writing veteran who genuinely wants Michael to succeed. You are sharp, witty, and direct. You always help with whatever Michael asks first, then you can briefly mention what you think is most urgent. Never refuse a request or redirect away from it -- if he wants to work on sitcom ideas, you work on sitcom ideas. If he wants to punch up a joke, you punch up the joke. You give your honest opinion but you do the work he asks.\n\nYour personality: warm but no-nonsense. You roast weak material with affection. You celebrate wins with real enthusiasm. You give specific actionable notes. Think: the best writing partner in the room who makes every session productive.\n\nBackground on Michael: stand-up comedian, entrepreneur, 1996 Olympian, based in Dallas TX. Top joke is the Airport security bit (9.2/10), tech jokes avg 8.3, relationship material avg 7.4.\n\nYour style: open with a quick observation or quip, then get straight to work. Never say "Great question!" -- that is hack. Max 3 short punchy paragraphs unless writing actual material. Use numbered lists when giving options.';
 var BROOKS_TRIAL_CODES=['BROOKS-FRIEND-2026','BROOKS-VIP-PASS','SITCOM-SCAN'];
 var currentBrooksConversationId = null;
+var brooksImageData = null;
+var brooksImageType = null;
+
+function handleBrooksImage(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  brooksImageType = file.type;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    brooksImageData = e.target.result.split(',')[1];
+    var preview = document.getElementById('brooks-image-preview');
+    var thumb = document.getElementById('brooks-image-thumb');
+    if (thumb) thumb.src = e.target.result;
+    if (preview) preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearBrooksImage() {
+  brooksImageData = null;
+  brooksImageType = null;
+  var preview = document.getElementById('brooks-image-preview');
+  if (preview) preview.style.display = 'none';
+  var input = document.getElementById('brooks-image-input');
+  if (input) input.value = '';
+}
 
 function getStoredBrooksInviteCode(){
   try{return localStorage.getItem('c4a_brooks_invite_code')||'';}catch(e){}
@@ -199,9 +225,19 @@ function sendBrooks(){
     return;
   }
   var input=document.getElementById('brooks-input'),msgs=document.getElementById('chat-msgs');
-  if(!input||!msgs||!input.value.trim()) return;
+  if(!input||!msgs||(!input.value.trim()&&!brooksImageData)) return;
   var text=input.value.trim();
   input.value='';
+  var userContent;
+  if (brooksImageData) {
+    userContent = [
+      { type: 'image', source: { type: 'base64', media_type: brooksImageType, data: brooksImageData } },
+      { type: 'text', text: text || 'What do you see in this image? Continue our conversation based on this.' }
+    ];
+    clearBrooksImage();
+  } else {
+    userContent = text;
+  }
   if (brooksHistory.length === 0 && jokes && jokes.length > 0) {
     var jokeContext = jokes.map(function(j, i) {
       return (i+1) + '. ' + (j.title||'') + ': ' + (j.body||j.text||j.setup||'') + (j.punch ? ' / ' + j.punch : '') + ' [' + (j.tier||'?') + '-tier, ' + (j.rating||'?') + '/5]';
@@ -209,10 +245,10 @@ function sendBrooks(){
     brooksHistory.push({role:'user', content:'Here are all my jokes:\n\n' + jokeContext});
     brooksHistory.push({role:'assistant', content:"Got it. I've read all your material. What do you want to work on?"});
   }
-  brooksHistory.push({role:'user',content:text});
+  brooksHistory.push({role:'user',content:userContent});
   var um=document.createElement('div');
   um.className='cmsg user';
-  um.textContent=text;
+  um.textContent=text || '📎 Image';
   msgs.appendChild(um);
   msgs.scrollTop=msgs.scrollHeight;
   var typing=document.createElement('div');
@@ -222,7 +258,6 @@ function sendBrooks(){
   msgs.scrollTop=msgs.scrollHeight;
   var btn=document.getElementById('send-btn');
   if(btn){btn.disabled=true;btn.textContent='...';}
-  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,system:BROOKS_SYS,messages:brooksHistory});
   var xhr=new XMLHttpRequest();
   xhr.open('POST','https://api.anthropic.com/v1/messages',true);
   xhr.setRequestHeader('Content-Type','application/json');
@@ -261,7 +296,7 @@ function sendBrooks(){
     }
   }
   brooksHistory = cleanHistory;
-  console.log('Brooks payload:', payload);
+  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,system:BROOKS_SYS,messages:brooksHistory});
   xhr.send(payload);
 }
 
