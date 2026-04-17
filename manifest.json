@@ -1,0 +1,24 @@
+{
+  "name": "Comedy 4 All",
+  "short_name": "Comedy4All",
+  "description": "Your professional comedy workspace",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#c4692a",
+  "background_color": "#faf7f4",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
