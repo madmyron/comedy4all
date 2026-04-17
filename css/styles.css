@@ -556,5 +556,6 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   #screen-brooks{height:100dvh;max-height:100dvh;padding-bottom:0!important}
   .screen.active{height:100dvh;max-height:100dvh}
   .input-bar{padding-bottom:20px!important;position:relative;z-index:10}
-  .app{padding-bottom:60px}
+  .app{height:100dvh!important;max-height:100dvh!important;overflow:hidden!important}
+  .main{height:calc(100dvh - 48px)!important;overflow:hidden!important}
 }
