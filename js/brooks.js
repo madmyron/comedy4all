@@ -430,3 +430,42 @@ function clearBrooks() {
     resetUI();
   }
 }
+
+function sendToWritingStudio() {
+  if (!brooksHistory || brooksHistory.length < 2) {
+    toast('Nothing to send yet — have a conversation with Brooks first!');
+    return;
+  }
+  var transcript = '';
+  brooksHistory.forEach(function(m) {
+    if (m.role === 'user' && (m.content.indexOf('Here are all my jokes') !== -1 || m.content.length > 200)) return;
+    var label = m.role === 'user' ? 'MICHAEL' : 'BROOKS';
+    transcript += label + ':\n' + m.content + '\n\n';
+  });
+  if (!transcript.trim()) {
+    toast('No conversation content to send.');
+    return;
+  }
+  var title = 'From Brooks: ';
+  for (var i = 0; i < brooksHistory.length; i++) {
+    var m = brooksHistory[i];
+    if (m.role === 'user' && m.content.length < 200 && m.content.indexOf('Here are all my jokes') === -1) {
+      title += m.content.substring(0, 50);
+      break;
+    }
+  }
+  if (typeof go === 'function') go('studio');
+  setTimeout(function() {
+    if (typeof newScript === 'function') {
+      newScript();
+    }
+    setTimeout(function() {
+      var titleInput = document.getElementById('studio-script-title-input');
+      var bodyInput = document.getElementById('studio-script-body');
+      if (titleInput) titleInput.value = title;
+      if (bodyInput) bodyInput.value = transcript;
+      if (typeof saveActiveScript === 'function') saveActiveScript();
+      toast('Conversation sent to Writing Studio!');
+    }, 400);
+  }, 400);
+}
