@@ -195,6 +195,11 @@ function sbSaveBrooksConversation(callback) {
   }
 }
 
+function toggleBrooksMenu() {
+  var menu = document.getElementById('brooks-mobile-menu');
+  if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+}
+
 function togglePastConvos() {
   var panel = document.getElementById('mobile-past-convos');
   var btn = document.getElementById('past-convos-toggle');

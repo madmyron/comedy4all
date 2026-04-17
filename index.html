@@ -515,25 +515,19 @@
     </div>
 
     <!-- BROOKS AI -->
-    <div id="screen-brooks" class="screen">
-      <div class="topbar" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:nowrap;overflow:hidden">
+    <div id="screen-brooks" class="screen" style="position:relative">
+      <div class="topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Brooks AI <span style="color:var(--gold);font-size:11px;font-weight:400">&#10022; Comedy Writing Assistant</span></div>
-        <div style="flex:1;min-width:0">
-          <input id="brooks-convo-title" type="text" placeholder="Untitled conversation..." style="width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;padding:4px 8px;min-width:0" onchange="saveBrooksTitle(this.value)" onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='var(--border)'">
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+          <button class="btn btn-sm hide-mobile" onclick="sendToWritingStudio()">&#9997;&#65039; To Studio</button>
+          <button class="btn btn-sm" onclick="clearBrooks()" title="New Session">+ <span class="hide-mobile">New Session</span></button>
+          <button class="btn btn-sm show-mobile" onclick="toggleBrooksMenu()" style="padding:0 10px;font-size:16px">&#8943;</button>
         </div>
-        <button class="btn btn-sm" id="quick-prompts-toggle" onclick="toggleQuickPrompts()" style="display:none">⚡ Prompts</button>
-        <button class="btn btn-sm" id="past-convos-toggle" onclick="togglePastConvos()" style="display:none">🕐 History</button>
-        <div id="brooks-topbar-actions" style="display:flex;gap:4px;flex-shrink:0">
-          <button class="btn btn-sm" onclick="sendToWritingStudio()" title="Send to Writing Studio">
-            <span class="hide-mobile">✍️ To Studio</span>
-            <span class="show-mobile">✍️</span>
-          </button>
-          <button class="btn btn-sm" onclick="clearBrooks()" title="New Session">
-            <span class="hide-mobile">+ New Session</span>
-            <span class="show-mobile">+</span>
-          </button>
-        </div>
+      </div>
+      <div id="brooks-mobile-menu" style="display:none;position:absolute;top:52px;right:10px;z-index:200;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:160px">
+        <div onclick="sendToWritingStudio();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">&#9997;&#65039; Send to Studio</div>
+        <div onclick="clearBrooks();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">+ New Session</div>
       </div>
       <div id="mobile-past-convos" style="display:none;flex-direction:column;padding:10px 12px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;max-height:250px;overflow-y:auto">
         <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:8px">PAST CONVERSATIONS</div>
