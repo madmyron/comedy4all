@@ -213,7 +213,7 @@ function togglePastConvos() {
 function sbLoadBrooksConversations() {
   var list = document.getElementById('brooks-history-list');
   var mlist = document.getElementById('mobile-brooks-history-list');
-  if (!window._sb || !currentUser) {
+  if (!_sb || !currentUser) {
     if (list) list.innerHTML = '<div style="font-size:11px;color:var(--text3)">Not connected.</div>';
     if (mlist) mlist.innerHTML = '<div style="font-size:11px;color:var(--text3)">Not connected.</div>';
     return;
