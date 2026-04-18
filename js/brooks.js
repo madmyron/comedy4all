@@ -174,6 +174,7 @@ function syncBrooksApiKeyInputs(value){
 function sbSaveBrooksConversation(callback) {
   if (!currentUser || !_sb) { if (typeof callback === 'function') callback(); return; }
   if (!currentBrooksConversationId && brooksHistory.length === 0) { if (typeof callback === 'function') callback(); return; }
+  console.log('Brooks save:', currentBrooksConversationId ? 'UPDATE ' + currentBrooksConversationId : 'INSERT NEW');
   var title = '';
   for (var i = 0; i < brooksHistory.length; i++) {
     var m = brooksHistory[i];
@@ -207,42 +208,22 @@ function sbSaveBrooksConversation(callback) {
         if (typeof callback === 'function') callback();
       });
   } else {
-    var convId = currentBrooksConversationId;
-    var localLen = brooksHistory.length;
     _sb.from('brooks_conversations')
-      .select('messages')
-      .eq('id', convId)
-      .single()
-      .then(function(fetchRes) {
-        if (fetchRes.error) {
-          console.error('Brooks fetch-before-save error:', fetchRes.error);
-          if (typeof callback === 'function') callback();
-          return;
+      .update({ messages: brooksHistory, updated_at: now })
+      .eq('id', currentBrooksConversationId)
+      .then(function(res) {
+        if (res.error) console.error('Brooks update error:', res.error);
+        if (!res.error) {
+          var titleInput = document.getElementById('brooks-convo-title');
+          if (titleInput) {
+            var now = new Date();
+            var stamp = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            titleInput.title = 'Last saved at ' + stamp;
+            titleInput.style.borderBottomColor = 'var(--green)';
+            setTimeout(function(){ titleInput.style.borderBottomColor = 'var(--border)'; }, 2000);
+          }
         }
-        var serverLen = (fetchRes.data && fetchRes.data.messages) ? fetchRes.data.messages.length : 0;
-        if (serverLen > localLen) {
-          console.warn('Skipping save: server has more messages than local. Reload to sync.');
-          if (typeof callback === 'function') callback();
-          return;
-        }
-        var now = new Date().toISOString();
-        _sb.from('brooks_conversations')
-          .update({ messages: brooksHistory, updated_at: now })
-          .eq('id', convId)
-          .then(function(res) {
-            if (res.error) console.error('Brooks update error:', res.error);
-            if (!res.error) {
-              var titleInput = document.getElementById('brooks-convo-title');
-              if (titleInput) {
-                var now = new Date();
-                var stamp = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                titleInput.title = 'Last saved at ' + stamp;
-                titleInput.style.borderBottomColor = 'var(--green)';
-                setTimeout(function(){ titleInput.style.borderBottomColor = 'var(--border)'; }, 2000);
-              }
-            }
-            if (typeof callback === 'function') callback();
-          });
+        if (typeof callback === 'function') callback();
       });
   }
 }
