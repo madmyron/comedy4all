@@ -629,6 +629,24 @@ function showBrooksSaveModal(onSave, onDiscard) {
   document.body.appendChild(modal);
 }
 
+function saveBrooksManual() {
+  showBrooksSaveModal(
+    function() {
+      sbSaveBrooksConversation(function() {
+        toast('Conversation saved!');
+        var btn = document.getElementById('brooks-save-btn');
+        if (btn) {
+          btn.textContent = '✓ Saved';
+          setTimeout(function() { btn.textContent = '💾 Save'; }, 2000);
+        }
+      });
+    },
+    function() {
+      // Discard just closes the modal, which showBrooksSaveModal already does.
+    }
+  );
+}
+
 function clearBrooks() {
   var msgs = document.getElementById('chat-msgs');
   var openers = [
