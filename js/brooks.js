@@ -2,6 +2,7 @@
 var BROOKS_SYS='You are Brooks -- a seasoned comedy writing veteran who genuinely wants Michael to succeed. You are sharp, witty, and direct. You always help with whatever Michael asks first, then you can briefly mention what you think is most urgent. Never refuse a request or redirect away from it -- if he wants to work on sitcom ideas, you work on sitcom ideas. If he wants to punch up a joke, you punch up the joke. You give your honest opinion but you do the work he asks.\n\nYour personality: warm but no-nonsense. You roast weak material with affection. You celebrate wins with real enthusiasm. You give specific actionable notes. Think: the best writing partner in the room who makes every session productive.\n\nBackground on Michael: stand-up comedian, entrepreneur, 1996 Olympian, based in Dallas TX. Top joke is the Airport security bit (9.2/10), tech jokes avg 8.3, relationship material avg 7.4.\n\nYour style: open with a quick observation or quip, then get straight to work. Never say "Great question!" -- that is hack. Max 3 short punchy paragraphs unless writing actual material. Use numbered lists when giving options.';
 var BROOKS_TRIAL_CODES=['BROOKS-FRIEND-2026','BROOKS-VIP-PASS','SITCOM-SCAN'];
 var currentBrooksConversationId = null;
+var _brooksConversationSaved = false;
 var brooksImages = [];
 
 function handleBrooksImage(input) {
@@ -219,6 +220,7 @@ function sbSaveBrooksConversation(callback) {
           titleInput.style.borderBottomColor = 'var(--green)';
           setTimeout(function(){ titleInput.style.borderBottomColor = 'var(--border)'; }, 2000);
         }
+        _brooksConversationSaved = true;
         if (typeof callback === 'function') callback();
       });
   } else {
@@ -236,6 +238,7 @@ function sbSaveBrooksConversation(callback) {
             titleInput.style.borderBottomColor = 'var(--green)';
             setTimeout(function(){ titleInput.style.borderBottomColor = 'var(--border)'; }, 2000);
           }
+          _brooksConversationSaved = true;
         }
         if (typeof callback === 'function') callback();
       });
@@ -571,6 +574,61 @@ function renderBrooksGreeting(){
   el.innerHTML='<div class="mfrom">BROOKS AI</div>'+greetings[Math.floor(Math.random()*greetings.length)];
 }
 renderBrooksGreeting();
+function showBrooksSaveModal(onSave, onDiscard) {
+  var autoTitle = '';
+  for (var i = 0; i < brooksHistory.length; i++) {
+    var m = brooksHistory[i];
+    var contentText = typeof m.content === 'string' ? m.content : (Array.isArray(m.content) ? ((m.content.find(function(c){ return c.type === 'text'; }) || {}).text || '[image]') : '[image]');
+    if (m.role === 'user' && contentText.length < 200
+      && contentText.indexOf('Here are all my jokes') === -1
+      && contentText.indexOf('You are a TV development') === -1
+      && contentText.indexOf('Read ALL of my jokes') === -1) {
+      autoTitle = contentText.substring(0, 60);
+      break;
+    }
+  }
+  if (!autoTitle) autoTitle = 'Brooks Session ' + new Date().toLocaleDateString();
+
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:sans-serif';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg);padding:20px;border-radius:12px;border:1px solid var(--border);width:300px;text-align:center';
+  box.innerHTML = '<div style="margin-bottom:15px;font-weight:600;color:var(--text)">Save this conversation?</div>';
+  
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.value = autoTitle;
+  input.style.cssText = 'width:100%;padding:8px;margin-bottom:20px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
+  box.appendChild(input);
+
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;justify-content:space-between;gap:10px';
+  
+  var discardBtn = document.createElement('button');
+  discardBtn.textContent = 'Discard';
+  discardBtn.style.cssText = 'flex:1;padding:8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer';
+  discardBtn.onclick = function() { document.body.removeChild(modal); onDiscard(); };
+  
+  var saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Save';
+  saveBtn.style.cssText = 'flex:1;padding:8px;border-radius:4px;border:none;background:var(--green);color:#fff;cursor:pointer';
+  saveBtn.onclick = function() {
+    var finalTitle = input.value.trim();
+    if (finalTitle) {
+      var titleInput = document.getElementById('brooks-convo-title');
+      if (titleInput) titleInput.value = finalTitle;
+    }
+    document.body.removeChild(modal);
+    onSave();
+  };
+  
+  btnRow.appendChild(discardBtn);
+  btnRow.appendChild(saveBtn);
+  box.appendChild(btnRow);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+}
+
 function clearBrooks() {
   var msgs = document.getElementById('chat-msgs');
   var openers = [
@@ -588,6 +646,7 @@ function clearBrooks() {
     brooksHistory = [];
     currentBrooksConversationId = null;
     _brooksTitlePrompted = false;
+    _brooksConversationSaved = false;
     var titleInput = document.getElementById('brooks-convo-title');
     if (titleInput) titleInput.value = '';
     if (msgs) msgs.innerHTML = '';
@@ -598,8 +657,9 @@ function clearBrooks() {
     if (typeof sbLoadBrooksConversations === 'function') sbLoadBrooksConversations();
     toast('Session saved and started fresh!');
   }
-  if (brooksHistory && brooksHistory.length > 2) {
-    sbSaveBrooksConversation(resetUI);
+
+  if (brooksHistory && brooksHistory.length > 2 && !_brooksConversationSaved) {
+    showBrooksSaveModal(function() { sbSaveBrooksConversation(resetUI); }, resetUI);
   } else {
     resetUI();
   }

@@ -36,6 +36,22 @@ function closeSidebar() {
 
 // - NAVIGATION -
 function go(name) {
+  var brooksScreen = document.getElementById('screen-brooks');
+  if (brooksScreen && brooksScreen.classList.contains('active') && name !== 'brooks') {
+    if (typeof brooksHistory !== 'undefined' && brooksHistory.length > 2 && typeof _brooksConversationSaved !== 'undefined' && !_brooksConversationSaved) {
+      if (typeof showBrooksSaveModal === 'function') {
+        showBrooksSaveModal(
+          function() { sbSaveBrooksConversation(function() { performGo(name); }); },
+          function() { performGo(name); }
+        );
+        return;
+      }
+    }
+  }
+  performGo(name);
+}
+
+function performGo(name) {
   var screens = document.querySelectorAll('.screen');
   for (var i=0;i<screens.length;i++) screens[i].classList.remove('active');
   var navItems = document.querySelectorAll('.nav-item');
