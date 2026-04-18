@@ -412,16 +412,15 @@ function sendBrooks(){
     typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error. Make sure you\'re online and your API key is correct.</span>';
     msgs.scrollTop=msgs.scrollHeight;
   };
-  // Force alternating messages - API requires user/assistant/user/assistant
-  var cleanHistory = [brooksHistory[brooksHistory.length - 1]];
+  // Build a trimmed alternating window for the API only — brooksHistory stays intact
+  var apiHistory = [brooksHistory[brooksHistory.length - 1]];
   for (var i = brooksHistory.length - 2; i >= 0; i--) {
-    if (brooksHistory[i].role !== cleanHistory[0].role) {
-      cleanHistory.unshift(brooksHistory[i]);
-      if (cleanHistory.length >= 10) break;
+    if (brooksHistory[i].role !== apiHistory[0].role) {
+      apiHistory.unshift(brooksHistory[i]);
+      if (apiHistory.length >= 10) break;
     }
   }
-  brooksHistory = cleanHistory;
-  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:hadImages?2000:1000,system:BROOKS_SYS,messages:brooksHistory});
+  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:hadImages?2000:1000,system:BROOKS_SYS,messages:apiHistory});
   xhr.send(payload);
 }
 
