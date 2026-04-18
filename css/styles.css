@@ -209,7 +209,7 @@ body::before{
 .rdot.done{background:var(--green);border-color:var(--green)}
 .rdot.cur{background:var(--gold);border-color:var(--gold)}
 /* CHAT */
-.cmsg{max-width:82%;padding:11px 14px;border-radius:var(--r2);font-size:12.5px;line-height:1.65;flex-shrink:0}
+.cmsg { max-width: 82%; padding: 11px 14px; border-radius: var(--r2); font-size: 12.5px; line-height: 1.65; flex-shrink: 0; overflow-wrap: break-word; word-break: break-word }
 .cmsg.user{background:var(--gold);color:#fff;align-self:flex-end;border-radius:18px 18px 4px 18px}
 .cmsg.ai{background:var(--bg2);color:var(--text);align-self:flex-start;border-radius:18px 18px 18px 4px}
 .mfrom{font-size:9px;color:var(--gold);font-weight:700;margin-bottom:4px;letter-spacing:.07em}
