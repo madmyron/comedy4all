@@ -174,9 +174,6 @@ function syncBrooksApiKeyInputs(value){
 function sbSaveBrooksConversation(callback) {
   if (!currentUser || !_sb) { if (typeof callback === 'function') callback(); return; }
   if (!currentBrooksConversationId && brooksHistory.length === 0) { if (typeof callback === 'function') callback(); return; }
-  var now = Date.now();
-  if (now - _lastBrooksSave < 300000 && currentBrooksConversationId) return;
-  _lastBrooksSave = now;
   var title = '';
   for (var i = 0; i < brooksHistory.length; i++) {
     var m = brooksHistory[i];
@@ -641,7 +638,6 @@ function sendToWritingStudio() {
 }
 
 var _brooksTitlePrompted = false;
-var _lastBrooksSave = 0;
 
 setInterval(function() {
   if (!brooksHistory || brooksHistory.length < 3) return;
