@@ -186,23 +186,25 @@ function syncBrooksApiKeyInputs(value){
   if (saki) saki.value = key;
 }
 
-function sbSaveBrooksConversation(callback) {
+function sbSaveBrooksConversation(callback, customTitle) {
   if (!currentUser || !_sb) { if (typeof callback === 'function') callback(); return; }
   if (!currentBrooksConversationId && brooksHistory.length === 0) { if (typeof callback === 'function') callback(); return; }
   console.log('Brooks save:', currentBrooksConversationId ? 'UPDATE ' + currentBrooksConversationId : 'INSERT NEW');
-  var title = '';
-  for (var i = 0; i < brooksHistory.length; i++) {
-    var m = brooksHistory[i];
-    var contentText = typeof m.content === 'string' ? m.content : (Array.isArray(m.content) ? ((m.content.find(function(c){ return c.type === 'text'; }) || {}).text || '[image]') : '[image]');
-    if (m.role === 'user' && contentText.length < 200
-      && contentText.indexOf('Here are all my jokes') === -1
-      && contentText.indexOf('You are a TV development') === -1
-      && contentText.indexOf('Read ALL of my jokes') === -1) {
-      title = contentText.substring(0, 60);
-      break;
+  var title = customTitle || '';
+  if (!title) {
+    for (var i = 0; i < brooksHistory.length; i++) {
+      var m = brooksHistory[i];
+      var contentText = typeof m.content === 'string' ? m.content : (Array.isArray(m.content) ? ((m.content.find(function(c){ return c.type === 'text'; }) || {}).text || '[image]') : '[image]');
+      if (m.role === 'user' && contentText.length < 200
+        && contentText.indexOf('Here are all my jokes') === -1
+        && contentText.indexOf('You are a TV development') === -1
+        && contentText.indexOf('Read ALL of my jokes') === -1) {
+        title = contentText.substring(0, 60);
+        break;
+      }
     }
+    if (!title) title = 'Brooks Session ' + new Date().toLocaleDateString();
   }
-  if (!title) title = 'Brooks Session ' + new Date().toLocaleDateString();
   var now = new Date().toISOString();
   if (!currentBrooksConversationId) {
     _sb.from('brooks_conversations')
@@ -295,7 +297,28 @@ function sbLoadBrooksConversations() {
           item.onmouseover = function(){ this.style.background='var(--bg3)'; };
           item.onmouseout = function(){ this.style.background=''; };
           var date = new Date(convo.updated_at).toLocaleDateString();
-          item.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
+          item.style.display = 'flex';
+          item.style.justifyContent = 'space-between';
+          item.style.alignItems = 'center';
+          
+          var infoDiv = document.createElement('div');
+          infoDiv.style.overflow = 'hidden';
+          infoDiv.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
+          item.appendChild(infoDiv);
+
+          var delBtn = document.createElement('div');
+          delBtn.innerHTML = '&times;';
+          delBtn.style.cssText = 'color:var(--red);cursor:pointer;font-size:16px;padding:0 4px;margin-left:8px;line-height:1';
+          delBtn.onclick = function(e) {
+            e.stopPropagation();
+            if (confirm('Delete this conversation?')) {
+              _sb.from('brooks_conversations').delete().eq('id', convo.id).then(function() {
+                sbLoadBrooksConversations();
+              });
+            }
+          };
+          item.appendChild(delBtn);
+
           item.onclick = function() {
             var msgs = document.getElementById('chat-msgs');
             if (!msgs) return;
@@ -619,7 +642,7 @@ function showBrooksSaveModal(onSave, onDiscard) {
       if (titleInput) titleInput.value = finalTitle;
     }
     document.body.removeChild(modal);
-    onSave();
+    onSave(finalTitle);
   };
   
   btnRow.appendChild(discardBtn);
@@ -631,7 +654,7 @@ function showBrooksSaveModal(onSave, onDiscard) {
 
 function saveBrooksManual() {
   showBrooksSaveModal(
-    function() {
+    function(title) {
       sbSaveBrooksConversation(function() {
         toast('Conversation saved!');
         var btn = document.getElementById('brooks-save-btn');
@@ -639,7 +662,7 @@ function saveBrooksManual() {
           btn.textContent = '✓ Saved';
           setTimeout(function() { btn.textContent = '💾 Save'; }, 2000);
         }
-      });
+      }, title);
     },
     function() {
       // Discard just closes the modal, which showBrooksSaveModal already does.
@@ -677,7 +700,7 @@ function clearBrooks() {
   }
 
   if (brooksHistory && brooksHistory.length > 2 && !_brooksConversationSaved) {
-    showBrooksSaveModal(function() { sbSaveBrooksConversation(resetUI); }, resetUI);
+    showBrooksSaveModal(function(title) { sbSaveBrooksConversation(resetUI, title); }, resetUI);
   } else {
     resetUI();
   }
