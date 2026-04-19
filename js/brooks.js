@@ -213,6 +213,7 @@ function sbSaveBrooksConversation(callback, customTitle) {
       .then(function(res) {
         if (res.error) { console.error('Brooks save error:', res.error); if (typeof callback === 'function') callback(); return; }
         currentBrooksConversationId = res.data.id;
+        try { localStorage.setItem('c4a_active_brooks_convo', currentBrooksConversationId); } catch(e){}
         var titleInput = document.getElementById('brooks-convo-title');
         if (titleInput && !titleInput.value) titleInput.value = title;
         if (titleInput) {
@@ -262,6 +263,45 @@ function togglePastConvos() {
   panel.style.display = isOpen ? 'none' : 'flex';
   if (btn) btn.textContent = isOpen ? '🕐 History' : '✕ Close';
   if (!isOpen) sbLoadBrooksConversations();
+}
+
+function restoreActiveBrooksSession() {
+  var activeId = localStorage.getItem('c4a_active_brooks_convo');
+  if (!activeId || !currentUser || !_sb) return;
+
+  _sb.from('brooks_conversations')
+    .select('id, title, messages')
+    .eq('id', activeId)
+    .single()
+    .then(function(res) {
+      if (res.error || !res.data) {
+        console.error('Error restoring active Brooks session:', res.error);
+        return;
+      }
+      var convo = res.data;
+      currentBrooksConversationId = convo.id;
+      brooksHistory = convo.messages || [];
+      
+      var msgs = document.getElementById('chat-msgs');
+      if (msgs) {
+        msgs.innerHTML = '';
+        brooksHistory.forEach(function(m) {
+          if (m.role === 'user' && m.content && m.content.indexOf('Here are all my jokes:') === 0) return;
+          var div = document.createElement('div');
+          div.className = 'cmsg ' + (m.role === 'user' ? 'user' : 'ai');
+          if (m.role === 'assistant') {
+            div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + m.content.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+          } else {
+            div.textContent = m.content;
+          }
+          msgs.appendChild(div);
+        });
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+      
+      var titleInput = document.getElementById('brooks-convo-title');
+      if (titleInput) titleInput.value = convo.title || '';
+    });
 }
 
 function sbLoadBrooksConversations() {
@@ -430,6 +470,9 @@ function sendBrooks(){
           _sb.from('brooks_messages').insert({ user_id: currentUser.id, role: 'assistant', content: reply }).then(function() {
             capBrooksMessages(currentUser.id);
           });
+        }
+        if (currentBrooksConversationId) {
+          sbSaveBrooksConversation();
         }
         typing.innerHTML='<div class="mfrom">BROOKS AI</div>'+reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
       }catch(e){typing.innerHTML='<div class="mfrom">BROOKS AI</div>Parse error. Try again.';}
@@ -658,21 +701,17 @@ function showBrooksSaveModal(onSave, onDiscard) {
 }
 
 function saveBrooksManual() {
-  showBrooksSaveModal(
-    function(title) {
-      sbSaveBrooksConversation(function() {
-        toast('Conversation saved!');
-        var btn = document.getElementById('brooks-save-btn');
-        if (btn) {
-          btn.textContent = '✓ Saved';
-          setTimeout(function() { btn.textContent = '💾 Save'; }, 2000);
-        }
-      }, title);
-    },
-    function() {
-      // Discard just closes the modal, which showBrooksSaveModal already does.
+  var titleInput = document.getElementById('brooks-convo-title');
+  var title = titleInput ? titleInput.value.trim() : '';
+  
+  sbSaveBrooksConversation(function() {
+    toast('Conversation saved!');
+    var btn = document.getElementById('brooks-save-btn');
+    if (btn) {
+      btn.textContent = '✓ Saved';
+      setTimeout(function() { btn.textContent = '💾 Save'; }, 2000);
     }
-  );
+  }, title);
 }
 
 function clearBrooks() {
@@ -691,6 +730,7 @@ function clearBrooks() {
     }
     brooksHistory = [];
     currentBrooksConversationId = null;
+    try { localStorage.removeItem('c4a_active_brooks_convo'); } catch(e){}
     _brooksTitlePrompted = false;
     _brooksConversationSaved = false;
     var titleInput = document.getElementById('brooks-convo-title');
