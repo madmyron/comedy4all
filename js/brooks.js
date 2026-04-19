@@ -431,7 +431,6 @@ function sendBrooks(){
             capBrooksMessages(currentUser.id);
           });
         }
-        sbSaveBrooksConversation();
         typing.innerHTML='<div class="mfrom">BROOKS AI</div>'+reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
       }catch(e){typing.innerHTML='<div class="mfrom">BROOKS AI</div>Parse error. Try again.';}
     } else if(xhr.status===401){
@@ -505,13 +504,12 @@ function runStoryMining(type) {
   xhr.onload = function() {
     var t = document.getElementById('brooks-typing');
     if (!t) return;
-    if (xhr.status === 200) {
-      try {
-        var d = JSON.parse(xhr.responseText);
-        var reply = d.content && d.content[0] && d.content[0].text ? d.content[0].text : 'No response.';
-        brooksHistory.push({role:'assistant', content: reply});
-        sbSaveBrooksConversation();
-        t.innerHTML = '<div class="mfrom">BROOKS AI</div>' + reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+        if (xhr.status === 200) {
+          try {
+            var d = JSON.parse(xhr.responseText);
+            var reply = d.content && d.content[0] && d.content[0].text ? d.content[0].text : 'No response.';
+            brooksHistory.push({role:'assistant', content: reply});
+            t.innerHTML = '<div class="mfrom">BROOKS AI</div>' + reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
 
         var followPrompt = 'You just gave story mining results. Now generate exactly 4 short follow-up questions (under 10 words each) that would help develop the single most promising idea you found. Return ONLY a JSON array of 4 strings, nothing else. Example: ["Who is the main character?","What\'s the recurring conflict?","Single or multi-camera?","Write the pilot cold open"]';
         var followFallback = [
@@ -770,27 +768,4 @@ function sendToWritingStudio() {
 
 var _brooksTitlePrompted = false;
 
-setInterval(function() {
-  if (!brooksHistory || brooksHistory.length < 3) return;
-  var titleInput = document.getElementById('brooks-convo-title');
-  var hasTitle = titleInput && titleInput.value.trim().length > 0;
-  if (hasTitle) {
-    sbSaveBrooksConversation();
-  } else if (!_brooksTitlePrompted) {
-    _brooksTitlePrompted = true;
-    var userTitle = prompt('Give this conversation a title to save it (or cancel to save without a title):');
-    if (userTitle && userTitle.trim()) {
-      if (titleInput) titleInput.value = userTitle.trim();
-      saveBrooksTitle(userTitle.trim());
-    }
-    sbSaveBrooksConversation();
-  } else {
-    sbSaveBrooksConversation();
-  }
-}, 600000);
-
-window.addEventListener('beforeunload', function() {
-  if (brooksHistory && brooksHistory.length > 2) {
-    sbSaveBrooksConversation();
-  }
-});
+// Auto-save disabled per user request.
