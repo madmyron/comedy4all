@@ -41,7 +41,7 @@ function go(name) {
     if (typeof brooksHistory !== 'undefined' && brooksHistory.length > 2 && typeof _brooksConversationSaved !== 'undefined' && !_brooksConversationSaved) {
       if (typeof showBrooksSaveModal === 'function') {
         showBrooksSaveModal(
-          function() { sbSaveBrooksConversation(function() { performGo(name); }); },
+          function(title) { sbSaveBrooksConversation(function() { performGo(name); }, title); },
           function() { performGo(name); }
         );
         return;
