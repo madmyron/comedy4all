@@ -11,15 +11,14 @@ async function loadProjects() {
 
   listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">Loading projects...</div>';
 
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  if (!currentUser || !_sb) return;
 
+  try {
     // Fetch projects
-    const { data: projects, error } = await supabase
+    const { data: projects, error } = await _sb
       .from('projects')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', currentUser.id)
       .order('updated_at', { ascending: false });
 
     if (error) throw error;
@@ -31,9 +30,9 @@ async function loadProjects() {
 
     // To avoid N+1 queries, we fetch all related items for the user and count them in JS
     const [scriptsRes, convosRes, filesRes] = await Promise.all([
-      supabase.from('scripts').select('project_id').eq('user_id', user.id),
-      supabase.from('brooks_conversations').select('project_id').eq('user_id', user.id),
-      supabase.from('project_files').select('project_id').eq('user_id', user.id)
+      _sb.from('scripts').select('project_id').eq('user_id', currentUser.id),
+      _sb.from('brooks_conversations').select('project_id').eq('user_id', currentUser.id),
+      _sb.from('project_files').select('project_id').eq('user_id', currentUser.id)
     ]);
 
     const scripts = scriptsRes.data || [];
@@ -92,20 +91,20 @@ async function saveProject() {
     return;
   }
 
+  if (!currentUser || !_sb) return;
+
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
     if (editingProjectId) {
-      const { error } = await supabase
+      const { error } = await _sb
         .from('projects')
         .update({ name, description: desc, updated_at: new Date().toISOString() })
         .eq('id', editingProjectId);
       if (error) throw error;
       toast('Project updated');
     } else {
-      const { error } = await supabase
+      const { error } = await _sb
         .from('projects')
-        .insert([{ user_id: user.id, name, description: desc }]);
+        .insert([{ user_id: currentUser.id, name, description: desc }]);
       if (error) throw error;
       toast('Project created');
     }
@@ -120,7 +119,7 @@ async function saveProject() {
 
 async function editProject(id) {
   try {
-    const { data: proj, error } = await supabase
+    const { data: proj, error } = await _sb
       .from('projects')
       .select('*')
       .eq('id', id)
@@ -142,7 +141,7 @@ async function deleteProject(id) {
   if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) return;
 
   try {
-    const { error } = await supabase
+    const { error } = await _sb
       .from('projects')
       .delete()
       .eq('id', id);
