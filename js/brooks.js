@@ -718,12 +718,12 @@ function saveBrooksManual() {
   
   sbSaveBrooksConversation(function() {
     toast('Conversation saved!');
-    sbLoadBrooksConversations();
     var btn = document.getElementById('brooks-save-btn');
     if (btn) {
       btn.textContent = '✓ Saved';
       setTimeout(function() { btn.textContent = '💾 Save'; }, 2000);
     }
+    sbLoadBrooksConversations();
   }, title);
 }
 
