@@ -88,6 +88,7 @@ function performGo(name) {
   if (name==='settings') showTab('profile', document.querySelector('.snav-item'));
   if (name==='brooks') {
     updateBrooksContext();
+    if (typeof initBrooksTags === 'function') initBrooksTags();
     if (apiKey && apiKey.length > 10) {
       document.querySelectorAll('.cmsg.ai').forEach(function(el) {
         if (el.textContent.indexOf('SETUP') !== -1) el.style.display = 'none';
