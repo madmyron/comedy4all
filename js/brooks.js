@@ -186,6 +186,58 @@ function syncBrooksApiKeyInputs(value){
   if (saki) saki.value = key;
 }
 
+function getSelectedTags() {
+  var btns = document.querySelectorAll('.brooks-tag-btn');
+  var active = [];
+  btns.forEach(function(b) { if (b.classList.contains('tag-active')) active.push(b.dataset.tag); });
+  return active.join(',');
+}
+
+function setSelectedTags(tagString) {
+  if (!tagString) return;
+  var tags = tagString.split(',');
+  var btns = document.querySelectorAll('.brooks-tag-btn');
+  btns.forEach(function(b) {
+    if (tags.indexOf(b.dataset.tag) !== -1) {
+      b.classList.add('tag-active');
+      b.style.background = 'var(--gold)';
+      b.style.color = '#fff';
+      b.style.borderColor = 'var(--gold)';
+    } else {
+      b.classList.remove('tag-active');
+      b.style.background = 'transparent';
+      b.style.color = 'var(--text2)';
+      b.style.borderColor = 'var(--border)';
+    }
+  });
+}
+
+function getSelectedTags() {
+  var btns = document.querySelectorAll('.brooks-tag-btn');
+  var active = [];
+  btns.forEach(function(b) { if (b.classList.contains('tag-active')) active.push(b.dataset.tag); });
+  return active.join(',');
+}
+
+function setSelectedTags(tagString) {
+  if (!tagString) return;
+  var tags = tagString.split(',');
+  var btns = document.querySelectorAll('.brooks-tag-btn');
+  btns.forEach(function(b) {
+    if (tags.indexOf(b.dataset.tag) !== -1) {
+      b.classList.add('tag-active');
+      b.style.background = 'var(--gold)';
+      b.style.color = '#fff';
+      b.style.borderColor = 'var(--gold)';
+    } else {
+      b.classList.remove('tag-active');
+      b.style.background = 'transparent';
+      b.style.color = 'var(--text2)';
+      b.style.borderColor = 'var(--border)';
+    }
+  });
+}
+
 function sbSaveBrooksConversation(callback, customTitle, customTag) {
   if (!currentUser || !_sb) { if (typeof callback === 'function') callback(); return; }
   if (!currentBrooksConversationId && brooksHistory.length === 0) { if (typeof callback === 'function') callback(); return; }
@@ -229,7 +281,7 @@ function sbSaveBrooksConversation(callback, customTitle, customTag) {
   } else {
     var updateData = { messages: brooksHistory, updated_at: now };
     if (customTitle) updateData.title = customTitle;
-    if (customTag) updateData.tag = customTag;
+    if (customTag !== undefined) updateData.tag = customTag;
     _sb.from('brooks_conversations')
       .update(updateData)
       .eq('id', currentBrooksConversationId)
@@ -271,7 +323,7 @@ function restoreActiveBrooksSession() {
   if (!activeId || !currentUser || !_sb) return;
 
   _sb.from('brooks_conversations')
-    .select('id, title, messages')
+    .select('id, title, messages, tag')
     .eq('id', activeId)
     .single()
     .then(function(res) {
@@ -302,6 +354,7 @@ function restoreActiveBrooksSession() {
       
       var titleInput = document.getElementById('brooks-convo-title');
       if (titleInput) titleInput.value = convo.title || '';
+      setSelectedTags(convo.tag);
       _brooksConversationSaved = true;
     });
 }
@@ -364,10 +417,17 @@ function sbLoadBrooksConversations() {
             'Drama': 'var(--teal)',
             'Other': 'var(--text3)'
           };
-          var tagColor = tagColors[convo.tag] || 'var(--text3)';
-          var tagBadge = convo.tag ? '<span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:4px;margin-left:6px;background:' + tagColor + '22;color:' + tagColor + ';border:1px solid ' + tagColor + '44">' + convo.tag + '</span>' : '';
+          
+          var tagBadges = '';
+          if (convo.tag) {
+            var tags = convo.tag.split(',');
+            tags.forEach(function(t) {
+              var color = tagColors[t] || 'var(--text3)';
+              tagBadges += '<span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:4px;margin-left:4px;background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + t + '</span>';
+            });
+          }
 
-          infoDiv.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + tagBadge + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
+          infoDiv.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + tagBadges + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
           item.appendChild(infoDiv);
 
           var delBtn = document.createElement('div');
@@ -705,16 +765,31 @@ function showBrooksSaveModal(onSave, onDiscard) {
   input.style.cssText = 'width:100%;padding:8px;margin-bottom:12px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
   box.appendChild(input);
 
-  var tagSelect = document.createElement('select');
-  tagSelect.style.cssText = 'width:100%;padding:8px;margin-bottom:20px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
-  var options = ['(no tag)', 'Feature', 'Sitcom', 'Joke', 'Set', 'Comedy', 'Action', 'Drama', 'Other'];
+  var tagContainer = document.createElement('div');
+  tagContainer.id = 'modal-brooks-tags';
+  tagContainer.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px;justify-content:center';
+  var options = ['Feature', 'Sitcom', 'Joke', 'Set', 'Comedy', 'Action', 'Drama', 'Other'];
   options.forEach(function(opt) {
-    var o = document.createElement('option');
-    o.value = opt === '(no tag)' ? '' : opt;
-    o.textContent = opt;
-    tagSelect.appendChild(o);
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-sm brooks-tag-btn';
+    btn.dataset.tag = opt;
+    btn.textContent = opt;
+    btn.style.cssText = 'padding:2px 6px;font-size:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:sans-serif';
+    btn.onclick = function() {
+      this.classList.toggle('tag-active');
+      if (this.classList.contains('tag-active')) {
+        this.style.background = 'var(--gold)';
+        this.style.color = '#fff';
+        this.style.borderColor = 'var(--gold)';
+      } else {
+        this.style.background = 'transparent';
+        this.style.color = 'var(--text2)';
+        this.style.borderColor = 'var(--border)';
+      }
+    };
+    tagContainer.appendChild(btn);
   });
-  box.appendChild(tagSelect);
+  box.appendChild(tagContainer);
 
   var btnRow = document.createElement('div');
   btnRow.style.cssText = 'display:flex;justify-content:space-between;gap:10px';
@@ -729,7 +804,11 @@ function showBrooksSaveModal(onSave, onDiscard) {
   saveBtn.style.cssText = 'flex:1;padding:8px;border-radius:4px;border:none;background:var(--green);color:#fff;cursor:pointer';
   saveBtn.onclick = function() {
     var finalTitle = input.value.trim();
-    var finalTag = tagSelect.value;
+    var activeTags = [];
+    tagContainer.querySelectorAll('.tag-active').forEach(function(btn) {
+      activeTags.push(btn.dataset.tag);
+    });
+    var finalTag = activeTags.join(',');
     if (finalTitle) {
       var titleInput = document.getElementById('brooks-convo-title');
       if (titleInput) titleInput.value = finalTitle;
@@ -747,9 +826,8 @@ function showBrooksSaveModal(onSave, onDiscard) {
 
 function saveBrooksManual() {
   var titleInput = document.getElementById('brooks-convo-title');
-  var tagInput = document.getElementById('brooks-convo-tag');
   var title = titleInput ? titleInput.value.trim() : '';
-  var tag = tagInput ? tagInput.value : '';
+  var tag = getSelectedTags();
   
   sbSaveBrooksConversation(function() {
     toast('Conversation saved!');
