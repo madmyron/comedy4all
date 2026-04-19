@@ -186,7 +186,7 @@ function syncBrooksApiKeyInputs(value){
   if (saki) saki.value = key;
 }
 
-function sbSaveBrooksConversation(callback, customTitle) {
+function sbSaveBrooksConversation(callback, customTitle, customTag) {
   if (!currentUser || !_sb) { if (typeof callback === 'function') callback(); return; }
   if (!currentBrooksConversationId && brooksHistory.length === 0) { if (typeof callback === 'function') callback(); return; }
   console.log('Brooks save:', currentBrooksConversationId ? 'UPDATE ' + currentBrooksConversationId : 'INSERT NEW');
@@ -206,10 +206,10 @@ function sbSaveBrooksConversation(callback, customTitle) {
     if (!title) title = 'Brooks Session ' + new Date().toLocaleDateString();
   }
   var now = new Date().toISOString();
-  if (!currentBrooksConversationId) {
-    _sb.from('brooks_conversations')
-      .insert({ user_id: currentUser.id, title: title, messages: brooksHistory, created_at: now, updated_at: now })
-      .select('id').single()
+    if (!currentBrooksConversationId) {
+      _sb.from('brooks_conversations')
+        .insert({ user_id: currentUser.id, title: title, tag: customTag || null, messages: brooksHistory, created_at: now, updated_at: now })
+        .select('id').single()
       .then(function(res) {
         if (res.error) { console.error('Brooks save error:', res.error); if (typeof callback === 'function') callback(); return; }
         currentBrooksConversationId = res.data.id;
@@ -229,6 +229,7 @@ function sbSaveBrooksConversation(callback, customTitle) {
   } else {
     var updateData = { messages: brooksHistory, updated_at: now };
     if (customTitle) updateData.title = customTitle;
+    if (customTag) updateData.tag = customTag;
     _sb.from('brooks_conversations')
       .update(updateData)
       .eq('id', currentBrooksConversationId)
@@ -317,12 +318,18 @@ function sbLoadBrooksConversations() {
   var emptyMsg = '<div style="font-size:11px;color:var(--text3)">No past conversations yet.</div>';
   if (list) list.innerHTML = '<div style="font-size:11px;color:var(--text3)">Loading...</div>';
   if (mobileList) mobileList.innerHTML = '<div style="font-size:11px;color:var(--text3)">Loading...</div>';
-  _sb.from('brooks_conversations')
-    .select('id, title, updated_at, messages')
-    .eq('user_id', currentUser.id)
-    .order('updated_at', { ascending: false })
-    .limit(50)
-    .then(function(result) {
+
+  var sortVal = document.getElementById('brooks-history-sort') ? document.getElementById('brooks-history-sort').value : 'newest';
+  var query = _sb.from('brooks_conversations').select('id, title, updated_at, messages, tag').eq('user_id', currentUser.id);
+
+  if (sortVal === 'newest') query = query.order('updated_at', { ascending: false });
+  else if (sortVal === 'oldest') query = query.order('updated_at', { ascending: true });
+  else if (sortVal === 'az') query = query.order('title', { ascending: true });
+  else if (sortVal === 'za') query = query.order('title', { ascending: false });
+  else if (sortVal === 'tag') query = query.order('tag', { ascending: true });
+  else query = query.order('updated_at', { ascending: false });
+
+  query.limit(50).then(function(result) {
       if (list) list.innerHTML = '';
       if (mobileList) mobileList.innerHTML = '';
       if (result.error || !result.data || result.data.length === 0) {
@@ -346,7 +353,21 @@ function sbLoadBrooksConversations() {
           
           var infoDiv = document.createElement('div');
           infoDiv.style.overflow = 'hidden';
-          infoDiv.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
+          
+          var tagColors = {
+            'Feature': 'var(--gold)',
+            'Sitcom': 'var(--purple)',
+            'Joke': 'var(--blue)',
+            'Set': 'var(--green)',
+            'Comedy': 'var(--yellow)',
+            'Action': 'var(--red)',
+            'Drama': 'var(--teal)',
+            'Other': 'var(--text3)'
+          };
+          var tagColor = tagColors[convo.tag] || 'var(--text3)';
+          var tagBadge = convo.tag ? '<span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:4px;margin-left:6px;background:' + tagColor + '22;color:' + tagColor + ';border:1px solid ' + tagColor + '44">' + convo.tag + '</span>' : '';
+
+          infoDiv.innerHTML = '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (convo.title||'Untitled') + tagBadge + '</div><div style="font-size:10px;color:var(--text3)">' + date + '</div>';
           item.appendChild(infoDiv);
 
           var delBtn = document.createElement('div');
@@ -681,8 +702,19 @@ function showBrooksSaveModal(onSave, onDiscard) {
   var input = document.createElement('input');
   input.type = 'text';
   input.value = autoTitle;
-  input.style.cssText = 'width:100%;padding:8px;margin-bottom:20px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
+  input.style.cssText = 'width:100%;padding:8px;margin-bottom:12px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
   box.appendChild(input);
+
+  var tagSelect = document.createElement('select');
+  tagSelect.style.cssText = 'width:100%;padding:8px;margin-bottom:20px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
+  var options = ['(no tag)', 'Feature', 'Sitcom', 'Joke', 'Set', 'Comedy', 'Action', 'Drama', 'Other'];
+  options.forEach(function(opt) {
+    var o = document.createElement('option');
+    o.value = opt === '(no tag)' ? '' : opt;
+    o.textContent = opt;
+    tagSelect.appendChild(o);
+  });
+  box.appendChild(tagSelect);
 
   var btnRow = document.createElement('div');
   btnRow.style.cssText = 'display:flex;justify-content:space-between;gap:10px';
@@ -697,12 +729,13 @@ function showBrooksSaveModal(onSave, onDiscard) {
   saveBtn.style.cssText = 'flex:1;padding:8px;border-radius:4px;border:none;background:var(--green);color:#fff;cursor:pointer';
   saveBtn.onclick = function() {
     var finalTitle = input.value.trim();
+    var finalTag = tagSelect.value;
     if (finalTitle) {
       var titleInput = document.getElementById('brooks-convo-title');
       if (titleInput) titleInput.value = finalTitle;
     }
     document.body.removeChild(modal);
-    onSave(finalTitle);
+    onSave(finalTitle, finalTag);
   };
   
   btnRow.appendChild(discardBtn);
@@ -714,7 +747,9 @@ function showBrooksSaveModal(onSave, onDiscard) {
 
 function saveBrooksManual() {
   var titleInput = document.getElementById('brooks-convo-title');
+  var tagInput = document.getElementById('brooks-convo-tag');
   var title = titleInput ? titleInput.value.trim() : '';
+  var tag = tagInput ? tagInput.value : '';
   
   sbSaveBrooksConversation(function() {
     toast('Conversation saved!');
@@ -724,7 +759,7 @@ function saveBrooksManual() {
       setTimeout(function() { btn.textContent = '💾 Save'; }, 2000);
     }
     sbLoadBrooksConversations();
-  }, title);
+  }, title, tag);
 }
 
 function clearBrooks() {
@@ -758,7 +793,7 @@ function clearBrooks() {
   }
 
   if (brooksHistory && brooksHistory.length > 2 && !_brooksConversationSaved) {
-    showBrooksSaveModal(function(title) { sbSaveBrooksConversation(resetUI, title); }, resetUI);
+    showBrooksSaveModal(function(title, tag) { sbSaveBrooksConversation(resetUI, title, tag); }, resetUI);
   } else {
     resetUI();
   }
