@@ -93,10 +93,11 @@
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="2" rx="1" fill="currentColor"/><rect x="2" y="7" width="9" height="2" rx="1" fill="currentColor" opacity=".7"/><rect x="2" y="12" width="6" height="2" rx="1" fill="currentColor" opacity=".5"/></svg>
         <span class="nav-label">Joke Manager</span><span class="nav-badge" id="nb-jokes">9</span>
       </div>
-      <div class="nav-item" data-screen="sets" data-label="Set Builder">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <span class="nav-label">Set Builder</span>
-      </div>
+       <div class="nav-item" data-screen="sets" data-label="Set Builder">
+         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+         <span class="nav-label">Set Builder</span>
+       </div>
+       <div class="nav-item" onclick="go('projects')">Projects</div>
       <div class="nav-sect">Create</div>
       <div class="nav-item" data-screen="recording" data-label="Recording">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M4 9c0 2.2 1.8 4 4 4s4-1.8 4-4M8 13v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -700,8 +701,8 @@
       </div>
     </div>
 
-    <!-- SHOW HISTORY -->
-    <div id="screen-shows" class="screen">
+     <!-- SHOW HISTORY -->
+     <div id="screen-shows" class="screen">
       <div class="topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Show History</div>
@@ -729,6 +730,16 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div id="screen-projects" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Projects</div>
+        <button class="btn btn-sm btn-primary" onclick="createProject()">+ New Project</button>
+      </div>
+      <div class="content scroll" id="projects-list"></div>
     </div>
 
     <!-- SETTINGS -->
@@ -905,6 +916,19 @@
   </div>
 </div>
 
+<!-- PROJECT MODAL -->
+<div class="overlay" id="project-modal" style="display:none" onclick="if(event.target===this)closeProjectModal()">
+  <div class="mbox">
+    <div style="font-size:16px;font-weight:600;margin-bottom:17px">📁 Project Details</div>
+    <div style="margin-bottom:12px"><label class="mlbl">Project Name</label><input class="minput" id="proj-name" placeholder="e.g. Netflix Special 2026"></div>
+    <div style="margin-bottom:14px"><label class="mlbl">Description</label><textarea class="minput" id="proj-desc" placeholder="What is this project about?" style="height:80px"></textarea></div>
+    <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px">
+      <button class="btn" onclick="closeProjectModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProject()">Save Project</button>
+    </div>
+  </div>
+</div>
+
 <!-- NEW SCRIPT MODAL -->
 <div class="overlay" id="new-script-modal" style="display:none" onclick="if(event.target===this)closeNewScript()">
   <div class="mbox" style="max-width:480px">
@@ -975,6 +999,7 @@
 <script src="js/brooks.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/shows.js"></script>
+<script src="js/projects.js"></script>
 <script src="js/studio.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/plugins/Swap/Sortable.Swap.js"></script>

@@ -64,6 +64,7 @@ function performGo(name) {
   var ni = document.querySelectorAll('.nav-item[data-screen="'+name+'"]');
   for (var i=0;i<ni.length;i++) ni[i].classList.add('active');
   if (name==='home') {}
+  if (name==='projects') loadProjects();
   if (name==='jokes') renderJokes(displayJokes);
   if (name==='sets') renderSet();
   if (name==='analytics') renderAnalytics();
