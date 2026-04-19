@@ -301,6 +301,7 @@ function restoreActiveBrooksSession() {
       
       var titleInput = document.getElementById('brooks-convo-title');
       if (titleInput) titleInput.value = convo.title || '';
+      _brooksConversationSaved = true;
     });
 }
 
@@ -355,6 +356,17 @@ function sbLoadBrooksConversations() {
             e.stopPropagation();
             if (confirm('Delete this conversation?')) {
               _sb.from('brooks_conversations').delete().eq('id', convo.id).then(function() {
+                if (convo.id === currentBrooksConversationId) {
+                  brooksHistory = [];
+                  currentBrooksConversationId = null;
+                  _brooksConversationSaved = false;
+                  try { localStorage.removeItem('c4a_active_brooks_convo'); } catch(err){}
+                  var titleInput = document.getElementById('brooks-convo-title');
+                  if (titleInput) titleInput.value = '';
+                  var msgs = document.getElementById('chat-msgs');
+                  if (msgs) msgs.innerHTML = '';
+                  renderBrooksGreeting();
+                }
                 sbLoadBrooksConversations();
               });
             }
@@ -706,6 +718,7 @@ function saveBrooksManual() {
   
   sbSaveBrooksConversation(function() {
     toast('Conversation saved!');
+    sbLoadBrooksConversations();
     var btn = document.getElementById('brooks-save-btn');
     if (btn) {
       btn.textContent = '✓ Saved';
