@@ -752,7 +752,27 @@ function renderBrooksGreeting(){
   ];
   el.innerHTML='<div class="mfrom">BROOKS AI</div>'+greetings[Math.floor(Math.random()*greetings.length)];
 }
+
+function initBrooksTags() {
+  document.querySelectorAll('.brooks-tag-btn').forEach(function(btn) {
+    btn.onclick = function() {
+      var color = this.dataset.color || 'var(--border)';
+      this.classList.toggle('tag-active');
+      if (this.classList.contains('tag-active')) {
+        this.style.background = color;
+        this.style.color = '#fff';
+        this.style.borderColor = color;
+      } else {
+        this.style.background = 'transparent';
+        this.style.color = 'var(--text2)';
+        this.style.borderColor = color;
+      }
+    };
+  });
+}
+
 renderBrooksGreeting();
+initBrooksTags();
 function showBrooksSaveModal(onSave, onDiscard) {
   var autoTitle = '';
   var titleInput = document.getElementById('brooks-convo-title');
