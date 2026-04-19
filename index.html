@@ -533,7 +533,7 @@
       </div>
 <div id="brooks-title-bar" style="position:relative;z-index:10;padding:4px 14px 6px 14px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center">
   <input id="brooks-convo-title" type="text" placeholder="Tap to name this conversation..." style="flex:1;background:transparent;border:none;border-bottom:2px solid #2196F3;color:#2196F3;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;outline:none;padding:2px 4px;box-sizing:border-box" onchange="saveBrooksTitle(this.value)" onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='#2196F3'">
-  <select id="brooks-convo-tag" class="btn btn-sm" style="padding:2px 6px;font-size:11px;width:auto">
+  <select id="brooks-convo-tag" class="btn btn-sm" style="padding:4px 8px;font-size:12px;width:auto;min-width:90px;border:1px solid var(--border);border-radius:var(--r2);background:var(--bg2);color:var(--text);font-family:'Inter',sans-serif">
     <option value="">(no tag)</option>
     <option value="Feature">Feature</option>
     <option value="Sitcom">Sitcom</option>
@@ -590,7 +590,7 @@
         <div style="padding:14px;overflow-y:auto;background:var(--bg2);border-left:1px solid var(--border)" class="scroll">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
   <div class="sect-title" style="margin:0">Past Conversations</div>
-  <select id="brooks-history-sort" class="btn btn-sm" style="padding:2px 6px;font-size:10px;width:auto" onchange="sbLoadBrooksConversations()">
+  <select id="brooks-history-sort" class="btn btn-sm" style="padding:3px 6px;font-size:11px;width:auto;min-width:100px;border:1px solid var(--border);border-radius:var(--r2);background:var(--bg2);color:var(--text);font-family:'Inter',sans-serif" onchange="sbLoadBrooksConversations()">
     <option value="newest">Newest First</option>
     <option value="oldest">Oldest First</option>
     <option value="az">A-Z</option>
