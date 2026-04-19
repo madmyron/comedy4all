@@ -194,20 +194,30 @@ function getSelectedTags() {
 }
 
 function setSelectedTags(tagString) {
-  if (!tagString) return;
+  if (!tagString) {
+    var btns = document.querySelectorAll('.brooks-tag-btn');
+    btns.forEach(function(b) {
+      b.classList.remove('tag-active');
+      b.style.background = 'transparent';
+      b.style.color = 'var(--text2)';
+      b.style.borderColor = b.dataset.color || 'var(--border)';
+    });
+    return;
+  }
   var tags = tagString.split(',');
   var btns = document.querySelectorAll('.brooks-tag-btn');
   btns.forEach(function(b) {
+    var color = b.dataset.color || 'var(--border)';
     if (tags.indexOf(b.dataset.tag) !== -1) {
       b.classList.add('tag-active');
-      b.style.background = 'var(--gold)';
+      b.style.background = color;
       b.style.color = '#fff';
-      b.style.borderColor = 'var(--gold)';
+      b.style.borderColor = color;
     } else {
       b.classList.remove('tag-active');
       b.style.background = 'transparent';
       b.style.color = 'var(--text2)';
-      b.style.borderColor = 'var(--border)';
+      b.style.borderColor = color;
     }
   });
 }
@@ -220,20 +230,29 @@ function getSelectedTags() {
 }
 
 function setSelectedTags(tagString) {
-  if (!tagString) return;
-  var tags = tagString.split(',');
   var btns = document.querySelectorAll('.brooks-tag-btn');
+  if (!tagString) {
+    btns.forEach(function(b) {
+      b.classList.remove('tag-active');
+      b.style.background = 'transparent';
+      b.style.color = 'var(--text2)';
+      b.style.borderColor = b.dataset.color || 'var(--border)';
+    });
+    return;
+  }
+  var tags = tagString.split(',');
   btns.forEach(function(b) {
+    var color = b.dataset.color || 'var(--border)';
     if (tags.indexOf(b.dataset.tag) !== -1) {
       b.classList.add('tag-active');
-      b.style.background = 'var(--gold)';
+      b.style.background = color;
       b.style.color = '#fff';
-      b.style.borderColor = 'var(--gold)';
+      b.style.borderColor = color;
     } else {
       b.classList.remove('tag-active');
       b.style.background = 'transparent';
       b.style.color = 'var(--text2)';
-      b.style.borderColor = 'var(--border)';
+      b.style.borderColor = color;
     }
   });
 }
@@ -408,21 +427,21 @@ function sbLoadBrooksConversations() {
           infoDiv.style.overflow = 'hidden';
           
           var tagColors = {
-            'Feature': 'var(--gold)',
-            'Sitcom': 'var(--purple)',
-            'Joke': 'var(--blue)',
-            'Set': 'var(--green)',
-            'Comedy': 'var(--yellow)',
-            'Action': 'var(--red)',
-            'Drama': 'var(--teal)',
-            'Other': 'var(--text3)'
+            'Feature': '#2196F3',
+            'Sitcom': '#9C27B0',
+            'Joke': '#FF9800',
+            'Set': '#4CAF50',
+            'Comedy': '#F44336',
+            'Action': '#FF5722',
+            'Drama': '#607D8B',
+            'Other': '#795548'
           };
           
           var tagBadges = '';
           if (convo.tag) {
             var tags = convo.tag.split(',');
             tags.forEach(function(t) {
-              var color = tagColors[t] || 'var(--text3)';
+              var color = tagColors[t] || '#795548';
               tagBadges += '<span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:4px;margin-left:4px;background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + t + '</span>';
             });
           }
@@ -462,6 +481,7 @@ function sbLoadBrooksConversations() {
             currentBrooksConversationId = convo.id;
             var titleInput = document.getElementById('brooks-convo-title');
             if (titleInput) titleInput.value = convo.title || '';
+            setSelectedTags(convo.tag);
             brooksHistory.forEach(function(m) {
               if (m.role === 'user' && m.content && m.content.indexOf('Here are all my jokes:') === 0) return;
               var div = document.createElement('div');
@@ -768,23 +788,34 @@ function showBrooksSaveModal(onSave, onDiscard) {
   var tagContainer = document.createElement('div');
   tagContainer.id = 'modal-brooks-tags';
   tagContainer.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px;justify-content:center';
-  var options = ['Feature', 'Sitcom', 'Joke', 'Set', 'Comedy', 'Action', 'Drama', 'Other'];
-  options.forEach(function(opt) {
+  var options = {
+    'Feature': '#2196F3',
+    'Sitcom': '#9C27B0',
+    'Joke': '#FF9800',
+    'Set': '#4CAF50',
+    'Comedy': '#F44336',
+    'Action': '#FF5722',
+    'Drama': '#607D8B',
+    'Other': '#795548'
+  };
+  Object.keys(options).forEach(function(opt) {
+    var color = options[opt];
     var btn = document.createElement('button');
     btn.className = 'btn btn-sm brooks-tag-btn';
     btn.dataset.tag = opt;
+    btn.dataset.color = color;
     btn.textContent = opt;
-    btn.style.cssText = 'padding:2px 6px;font-size:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:sans-serif';
+    btn.style.cssText = 'padding:2px 6px;font-size:10px;border-radius:10px;border:1px solid ' + color + ';background:transparent;color:var(--text2);cursor:pointer;font-family:sans-serif';
     btn.onclick = function() {
       this.classList.toggle('tag-active');
       if (this.classList.contains('tag-active')) {
-        this.style.background = 'var(--gold)';
+        this.style.background = color;
         this.style.color = '#fff';
-        this.style.borderColor = 'var(--gold)';
+        this.style.borderColor = color;
       } else {
         this.style.background = 'transparent';
         this.style.color = 'var(--text2)';
-        this.style.borderColor = 'var(--border)';
+        this.style.borderColor = color;
       }
     };
     tagContainer.appendChild(btn);
