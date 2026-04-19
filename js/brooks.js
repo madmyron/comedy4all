@@ -226,8 +226,10 @@ function sbSaveBrooksConversation(callback, customTitle) {
         if (typeof callback === 'function') callback();
       });
   } else {
+    var updateData = { messages: brooksHistory, updated_at: now };
+    if (customTitle) updateData.title = customTitle;
     _sb.from('brooks_conversations')
-      .update({ messages: brooksHistory, updated_at: now })
+      .update(updateData)
       .eq('id', currentBrooksConversationId)
       .then(function(res) {
         if (res.error) console.error('Brooks update error:', res.error);
