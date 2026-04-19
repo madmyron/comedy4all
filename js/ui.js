@@ -59,9 +59,8 @@ function performGo(name) {
   var el = document.getElementById('screen-'+name);
   if (el) el.classList.add('active');
   if (name==='brooks' && typeof updateBrooksContext === 'function') updateBrooksContext();
-  if (name==='brooks' && typeof restoreActiveBrooksSession === 'function') restoreActiveBrooksSession();
+  if (name==='brooks' && typeof startFreshBrooksSession === 'function') startFreshBrooksSession();
   if (name==='brooks' && typeof sbLoadBrooksConversations === 'function') sbLoadBrooksConversations();
-  if (name==='brooks' && typeof loadBrooksHistory === 'function') loadBrooksHistory();
   var ni = document.querySelectorAll('.nav-item[data-screen="'+name+'"]');
   for (var i=0;i<ni.length;i++) ni[i].classList.add('active');
   if (name==='home') {}

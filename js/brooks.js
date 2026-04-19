@@ -378,6 +378,21 @@ function restoreActiveBrooksSession() {
     });
 }
 
+function startFreshBrooksSession() {
+  brooksHistory = [];
+  currentBrooksConversationId = null;
+  try { localStorage.removeItem('c4a_active_brooks_convo'); } catch(e){}
+  _brooksConversationSaved = false;
+  var titleInput = document.getElementById('brooks-convo-title');
+  if (titleInput) titleInput.value = '';
+  setSelectedTags('');
+  var msgs = document.getElementById('chat-msgs');
+  if (msgs) {
+    msgs.innerHTML = '<div id="brooks-welcome" class="cmsg ai"></div>';
+    renderBrooksGreeting();
+  }
+}
+
 function sbLoadBrooksConversations() {
   var list = document.getElementById('brooks-history-list');
   var mlist = document.getElementById('mobile-brooks-history-list');
