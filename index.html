@@ -582,7 +582,7 @@
           <div class="input-bar" style="padding:12px 14px 32px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;background:var(--bg2);flex-shrink:0">
             <textarea id="brooks-input" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:none;height:60px;line-height:1.5;transition:all .15s" placeholder="Ask Brooks anything about your material..." onkeydown="handleBrooksKey(event)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
             <label for="brooks-image-input" class="btn btn-sm" style="height:40px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:4px" title="Attach image">📎</label>
-            <input id="brooks-image-input" type="file" accept="image/*" multiple style="display:none" onchange="handleBrooksImage(this)">
+<input id="brooks-image-input" type="file" accept="image/*,.txt,.pdf,.doc,.docx" multiple style="display:none" onchange="handleBrooksFile(this)">
             <button class="btn btn-primary btn-sm" onclick="sendBrooks()" id="send-btn" style="height:40px;padding:0 16px">Send</button>
           </div>
         </div>

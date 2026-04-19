@@ -5,19 +5,40 @@ var currentBrooksConversationId = null;
 var _brooksConversationSaved = false;
 var brooksImages = [];
 
-function handleBrooksImage(input) {
+function handleBrooksFile(input) {
   if (!input.files || !input.files.length) return;
-  var preview = document.getElementById('brooks-image-preview');
   var files = Array.from(input.files);
   files.forEach(function(file) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      brooksImages.push({ data: e.target.result.split(',')[1], type: file.type, src: e.target.result });
-      renderBrooksImagePreviews();
-    };
-    reader.readAsDataURL(file);
+    if (file.type.startsWith('image/')) {
+      processBrooksImage(file);
+    } else if (file.name.toLowerCase().endsWith('.txt')) {
+      processBrooksText(file);
+    } else {
+      toast('Unsupported file type: ' + file.name);
+    }
   });
-  if (preview) preview.style.display = 'block';
+}
+
+function processBrooksImage(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    brooksImages.push({ data: e.target.result.split(',')[1], type: file.type, src: e.target.result });
+    renderBrooksImagePreviews();
+  };
+  reader.readAsDataURL(file);
+}
+
+function processBrooksText(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    var input = document.getElementById('brooks-input');
+    if (input) {
+      input.value += (input.value ? '\n\n' : '') + '--- File: ' + file.name + ' ---\n' + text;
+    }
+    toast('File ' + file.name + ' added to chat.');
+  };
+  reader.readAsText(file);
 }
 
 function renderBrooksImagePreviews() {
