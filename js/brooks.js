@@ -599,15 +599,20 @@ function renderBrooksGreeting(){
 renderBrooksGreeting();
 function showBrooksSaveModal(onSave, onDiscard) {
   var autoTitle = '';
-  for (var i = 0; i < brooksHistory.length; i++) {
-    var m = brooksHistory[i];
-    var contentText = typeof m.content === 'string' ? m.content : (Array.isArray(m.content) ? ((m.content.find(function(c){ return c.type === 'text'; }) || {}).text || '[image]') : '[image]');
-    if (m.role === 'user' && contentText.length < 200
-      && contentText.indexOf('Here are all my jokes') === -1
-      && contentText.indexOf('You are a TV development') === -1
-      && contentText.indexOf('Read ALL of my jokes') === -1) {
-      autoTitle = contentText.substring(0, 60);
-      break;
+  var titleInput = document.getElementById('brooks-convo-title');
+  if (titleInput && titleInput.value.trim()) {
+    autoTitle = titleInput.value.trim();
+  } else {
+    for (var i = 0; i < brooksHistory.length; i++) {
+      var m = brooksHistory[i];
+      var contentText = typeof m.content === 'string' ? m.content : (Array.isArray(m.content) ? ((m.content.find(function(c){ return c.type === 'text'; }) || {}).text || '[image]') : '[image]');
+      if (m.role === 'user' && contentText.length < 200
+        && contentText.indexOf('Here are all my jokes') === -1
+        && contentText.indexOf('You are a TV development') === -1
+        && contentText.indexOf('Read ALL of my jokes') === -1) {
+        autoTitle = contentText.substring(0, 60);
+        break;
+      }
     }
   }
   if (!autoTitle) autoTitle = 'Brooks Session ' + new Date().toLocaleDateString();
