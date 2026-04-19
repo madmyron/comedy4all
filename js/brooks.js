@@ -9,10 +9,14 @@ function handleBrooksFile(input) {
   if (!input.files || !input.files.length) return;
   var files = Array.from(input.files);
   files.forEach(function(file) {
-    if (file.type.startsWith('image/')) {
-      processBrooksImage(file);
-    } else if (file.name.toLowerCase().endsWith('.txt')) {
+    var fileName = file.name.toLowerCase();
+    var fileType = file.type || '';
+
+    // Prioritize text files to avoid any accidental routing to image processing
+    if (fileName.endsWith('.txt') || fileType === 'text/plain') {
       processBrooksText(file);
+    } else if (fileType.startsWith('image/')) {
+      processBrooksImage(file);
     } else {
       toast('Unsupported file type: ' + file.name);
     }
