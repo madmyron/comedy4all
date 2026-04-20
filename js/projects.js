@@ -168,7 +168,7 @@ async function openProject(id) {
     if (projErr) throw projErr;
 
     const [filesRes, convosRes, scriptsRes] = await Promise.all([
-      _sb.from('project_files').select('*').eq('project_id', id),
+      _sb.from('project_files').select('id, name, file_type, content, project_id').eq('project_id', id),
       _sb.from('brooks_conversations').select('*').eq('project_id', id),
       _sb.from('studio_scripts').select('*').eq('project_id', id)
     ]);
@@ -202,7 +202,7 @@ function renderProjectDetails(proj, files, convos, scripts) {
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px">
         <!-- Section A: Project Files -->
-        <div class="card">
+        <div class="card" style="position:relative">
           <div class="ctitle">Project Files 
             <div style="display:flex;gap:5px">
               <button class="btn btn-sm" onclick="showFileAddDropdown()">+ Add File</button>
@@ -210,7 +210,7 @@ function renderProjectDetails(proj, files, convos, scripts) {
               <input type="file" id="proj-file-upload" style="display:none" accept=".txt" onchange="handleProjectFileUpload(event)">
             </div>
           </div>
-          <div id="file-add-dropdown" style="display:none;position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:10;box-shadow:var(--surface-pop);padding:5px">
+          <div id="file-add-dropdown" style="display:none;position:absolute;top:35px;right:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:100;box-shadow:var(--surface-pop);padding:5px">
             ${['Character', 'Theme', 'Tone', 'Notes', 'Other'].map(t => `
               <div style="padding:5px 10px;cursor:pointer;font-size:12px;color:var(--text2)" onclick="createProjectFile('${t}')">${t}</div>
             `).join('')}
