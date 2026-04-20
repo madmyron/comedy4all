@@ -202,18 +202,13 @@ function renderProjectDetails(proj, files, convos, scripts) {
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px">
         <!-- Section A: Project Files -->
-        <div class="card" style="position:relative;overflow:visible">
+        <div class="card">
           <div class="ctitle">Project Files 
             <div style="display:flex;gap:5px">
-              <button class="btn btn-sm" onclick="showFileAddDropdown()">+ Add File</button>
+              <button class="btn btn-sm" onclick="showFileAddModal()">+ Add File</button>
               <button class="btn btn-sm" onclick="document.getElementById('proj-file-upload').click()">Upload .txt</button>
               <input type="file" id="proj-file-upload" style="display:none" accept=".txt" onchange="handleProjectFileUpload(event)">
             </div>
-          </div>
-          <div id="file-add-dropdown" style="display:none;position:absolute;top:35px;right:10px;min-width:150px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:999;box-shadow:var(--surface-pop);padding:5px">
-            ${['Character', 'Theme', 'Tone', 'Notes', 'Other'].map(t => `
-              <div style="padding:5px 10px;cursor:pointer;font-size:12px;color:var(--text2)" onclick="createProjectFile('${t}')">${t}</div>
-            `).join('')}
           </div>
           <div id="proj-files-list" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
             ${files.length === 0 ? '<div style="font-size:11px;color:var(--text3);text-align:center">No files yet.</div>' : ''}
@@ -233,11 +228,10 @@ function renderProjectDetails(proj, files, convos, scripts) {
         </div>
 
         <!-- Section B: Linked Conversations -->
-        <div class="card" style="position:relative;overflow:visible">
+        <div class="card">
           <div class="ctitle">Linked Conversations 
-            <button class="btn btn-sm" onclick="showLinkConvoDropdown()">+ Link Conversation</button>
+            <button class="btn btn-sm" onclick="showLinkConvoModal()">+ Link Conversation</button>
           </div>
-          <div id="convo-link-dropdown" style="display:none;position:absolute;top:35px;right:10px;min-width:150px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:999;box-shadow:var(--surface-pop);padding:5px;max-height:200px;overflow-y:auto"></div>
           <div id="proj-convos-list" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
             ${convos.length === 0 ? '<div style="font-size:11px;color:var(--text3);text-align:center">No linked conversations.</div>' : ''}
             ${convos.map(c => `
@@ -250,11 +244,10 @@ function renderProjectDetails(proj, files, convos, scripts) {
         </div>
 
         <!-- Section C: Linked Scripts -->
-        <div class="card" style="position:relative;overflow:visible">
+        <div class="card">
           <div class="ctitle">Linked Scripts 
-            <button class="btn btn-sm" onclick="showLinkScriptDropdown()">+ Link Script</button>
+            <button class="btn btn-sm" onclick="showLinkScriptModal()">+ Link Script</button>
           </div>
-          <div id="script-link-dropdown" style="display:none;position:absolute;top:35px;right:10px;min-width:150px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:999;box-shadow:var(--surface-pop);padding:5px;max-height:200px;overflow-y:auto"></div>
           <div id="proj-scripts-list" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
             ${scripts.length === 0 ? '<div style="font-size:11px;color:var(--text3);text-align:center">No linked scripts.</div>' : ''}
             ${scripts.map(s => `
@@ -281,9 +274,45 @@ async function updateProjectBasicInfo(id, name, desc) {
   }
 }
 
-function showFileAddDropdown() {
-  const el = document.getElementById('file-add-dropdown');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+function showFileAddModal() {
+  const modal = document.createElement('div');
+  modal.className = 'overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000';
+  
+  const box = document.createElement('div');
+  box.className = 'mbox';
+  box.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:350px;max-width:90vw;text-align:center';
+  
+  const title = document.createElement('div');
+  title.style.cssText = 'font-weight:600;font-size:16px;margin-bottom:20px;color:var(--text)';
+  title.textContent = 'Add Project File';
+  
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px';
+  
+  ['Character', 'Theme', 'Tone', 'Notes', 'Other'].forEach(type => {
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.style.justifyContent = 'center';
+    btn.textContent = type;
+    btn.onclick = async () => {
+      document.body.removeChild(modal);
+      await createProjectFile(type);
+    };
+    grid.appendChild(btn);
+  });
+  
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn';
+  cancelBtn.style.cssText = 'width:100%;margin-top:20px;justify-content:center';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = () => document.body.removeChild(modal);
+  
+  box.appendChild(title);
+  box.appendChild(grid);
+  box.appendChild(cancelBtn);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
 }
 
 async function createProjectFile(type) {
@@ -394,23 +423,50 @@ async function deleteProjectFile(id) {
   }
 }
 
-async function showLinkConvoDropdown() {
-  const dropdown = document.getElementById('convo-link-dropdown');
-  dropdown.style.display = 'block';
-  dropdown.innerHTML = 'Loading...';
+async function showLinkConvoModal() {
+  const modal = document.createElement('div');
+  modal.className = 'overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000';
+  
+  const box = document.createElement('div');
+  box.className = 'mbox';
+  box.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:400px;max-width:90vw;display:flex;flex-direction:column;gap:15px';
+  
+  const title = document.createElement('div');
+  title.style.cssText = 'font-weight:600;font-size:16px;color:var(--text)';
+  title.textContent = 'Link Conversation';
+  
+  const list = document.createElement('div');
+  list.style.cssText = 'max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px';
+  list.innerHTML = 'Loading...';
+  
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn';
+  cancelBtn.style.cssText = 'align-self:flex-end';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = () => document.body.removeChild(modal);
+  
+  box.appendChild(title);
+  box.appendChild(list);
+  box.appendChild(cancelBtn);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+  
   try {
     const { data: allConvos, error } = await _sb.from('brooks_conversations').select('*').eq('user_id', currentUser.id).is('project_id', null);
     if (error) throw error;
-    if (allConvos.length === 0) {
-      dropdown.innerHTML = '<div style="padding:5px;font-size:11px;color:var(--text3)">No unlinked conversations.</div>';
+    if (!allConvos || allConvos.length === 0) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center">No unlinked conversations found.</div>';
     } else {
-      dropdown.innerHTML = allConvos.map(c => `
-        <div style="padding:5px 10px;cursor:pointer;font-size:12px;color:var(--text2)" onclick="linkConversation('${c.id}')">${c.title || 'Untitled'}</div>
+      list.innerHTML = allConvos.map(c => `
+        <div class="btn" style="justify-content:flex-start;text-align:left;font-size:13px" onclick="linkConversation('${c.id}'); document.body.removeChild(modal)">
+          ${c.title || 'Untitled'}
+        </div>
       `).join('');
     }
   } catch (err) {
     console.error('Error loading convos:', err);
-    dropdown.innerHTML = 'Error loading.';
+    list.innerHTML = 'Error loading conversations.';
   }
 }
 
@@ -418,7 +474,6 @@ async function linkConversation(id) {
   try {
     const { error } = await _sb.from('brooks_conversations').update({ project_id: selectedProjectId }).eq('id', id);
     if (error) throw error;
-    document.getElementById('convo-link-dropdown').style.display = 'none';
     openProject(selectedProjectId);
   } catch (err) {
     console.error('Error linking convo:', err);
@@ -437,23 +492,50 @@ async function unlinkConversation(id) {
   }
 }
 
-async function showLinkScriptDropdown() {
-  const dropdown = document.getElementById('script-link-dropdown');
-  dropdown.style.display = 'block';
-  dropdown.innerHTML = 'Loading...';
+async function showLinkScriptModal() {
+  const modal = document.createElement('div');
+  modal.className = 'overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000';
+  
+  const box = document.createElement('div');
+  box.className = 'mbox';
+  box.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:400px;max-width:90vw;display:flex;flex-direction:column;gap:15px';
+  
+  const title = document.createElement('div');
+  title.style.cssText = 'font-weight:600;font-size:16px;color:var(--text)';
+  title.textContent = 'Link Script';
+  
+  const list = document.createElement('div');
+  list.style.cssText = 'max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px';
+  list.innerHTML = 'Loading...';
+  
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn';
+  cancelBtn.style.cssText = 'align-self:flex-end';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = () => document.body.removeChild(modal);
+  
+  box.appendChild(title);
+  box.appendChild(list);
+  box.appendChild(cancelBtn);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+  
   try {
     const { data: allScripts, error } = await _sb.from('studio_scripts').select('*').eq('user_id', currentUser.id).is('project_id', null);
     if (error) throw error;
-    if (allScripts.length === 0) {
-      dropdown.innerHTML = '<div style="padding:5px;font-size:11px;color:var(--text3)">No unlinked scripts.</div>';
+    if (!allScripts || allScripts.length === 0) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center">No unlinked scripts found.</div>';
     } else {
-      dropdown.innerHTML = allScripts.map(s => `
-        <div style="padding:5px 10px;cursor:pointer;font-size:12px;color:var(--text2)" onclick="linkScript('${s.id}')">${s.title || 'Untitled'}</div>
+      list.innerHTML = allScripts.map(s => `
+        <div class="btn" style="justify-content:flex-start;text-align:left;font-size:13px" onclick="linkScript('${s.id}'); document.body.removeChild(modal)">
+          ${s.title || 'Untitled'}
+        </div>
       `).join('');
     }
   } catch (err) {
     console.error('Error loading scripts:', err);
-    dropdown.innerHTML = 'Error loading.';
+    list.innerHTML = 'Error loading scripts.';
   }
 }
 
@@ -461,7 +543,6 @@ async function linkScript(id) {
   try {
     const { error } = await _sb.from('studio_scripts').update({ project_id: selectedProjectId }).eq('id', id);
     if (error) throw error;
-    document.getElementById('script-link-dropdown').style.display = 'none';
     openProject(selectedProjectId);
   } catch (err) {
     console.error('Error linking script:', err);
