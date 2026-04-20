@@ -89,6 +89,7 @@ function performGo(name) {
   if (name==='brooks') {
     updateBrooksContext();
     if (typeof initBrooksTags === 'function') initBrooksTags();
+    if (typeof loadBrooksProjectSelector === 'function') loadBrooksProjectSelector();
     if (apiKey && apiKey.length > 10) {
       document.querySelectorAll('.cmsg.ai').forEach(function(el) {
         if (el.textContent.indexOf('SETUP') !== -1) el.style.display = 'none';

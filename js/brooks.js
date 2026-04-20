@@ -4,6 +4,8 @@ var BROOKS_TRIAL_CODES=['BROOKS-FRIEND-2026','BROOKS-VIP-PASS','SITCOM-SCAN'];
 var currentBrooksConversationId = null;
 var _brooksConversationSaved = false;
 var brooksImages = [];
+var currentBrooksProjectId = null;
+var currentProjectFiles = [];
 
 function handleBrooksFile(input) {
   if (!input.files || !input.files.length) return;
@@ -649,7 +651,26 @@ function sendBrooks(){
       if (apiHistory.length >= 10) break;
     }
   }
-  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:hadImages?2000:1000,system:BROOKS_SYS,messages:apiHistory});
+
+  var systemPrompt = BROOKS_SYS;
+  if (currentBrooksProjectId && currentProjectFiles.length > 0) {
+    var project = currentProjectFiles[0].project_id; // Use any file to get project ID
+    // We need project name, which isn't in project_files. We can fetch it or just use the ID.
+    // To be accurate, let's assume the user wants the name. Since we don't have it in state, 
+    // we can add a small fetch or just use "Project " + ID.
+    // Better: let's use the selector's text.
+    var projSelect = document.getElementById('brooks-project-select');
+    var projName = projSelect ? projSelect.options[projSelect.selectedIndex].text : 'Selected Project';
+    
+    var projectContext = '\n\n[PROJECT CONTEXT]\nProject: ' + projName + '\n\n';
+    currentProjectFiles.forEach(function(f) {
+      projectContext += f.file_type.toUpperCase() + ' FILE - ' + f.name + ':\n' + (f.content || 'Empty') + '\n\n';
+    });
+    projectContext += '[END PROJECT CONTEXT]';
+    systemPrompt += projectContext;
+  }
+
+  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:hadImages?2000:1000,system:systemPrompt,messages:apiHistory});
   xhr.send(payload);
 }
 
@@ -1060,3 +1081,202 @@ function sendToWritingStudio() {
 var _brooksTitlePrompted = false;
 
 // Auto-save disabled per user request.
+
+function loadBrooksProjectSelector() {
+  if (!currentUser || !_sb) return;
+  var select = document.getElementById('brooks-project-select');
+  if (!select) return;
+
+  _sb.from('projects')
+    .select('id, name')
+    .eq('user_id', currentUser.id)
+    .order('name', { ascending: true })
+    .then(function(res) {
+      if (res.error) {
+        console.error('Error loading project selector:', res.error);
+        return;
+      }
+      var projects = res.data;
+      select.innerHTML = '<option value="">(No Project)</option>';
+      projects.forEach(function(p) {
+        var opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        if (p.id === currentBrooksProjectId) opt.selected = true;
+        select.appendChild(opt);
+      });
+    });
+}
+
+function handleBrooksProjectChange(projectId) {
+  currentBrooksProjectId = projectId || null;
+  currentProjectFiles = [];
+
+  if (!currentBrooksProjectId) {
+    toast('No project selected');
+    return;
+  }
+
+  _sb.from('project_files')
+    .select('*')
+    .eq('project_id', currentBrooksProjectId)
+    .then(function(res) {
+      if (res.error) {
+        console.error('Error loading project files:', res.error);
+        return;
+      }
+      currentProjectFiles = res.data || [];
+      toast('Project files loaded');
+    });
+}
+
+function showBrooksCreateFileModal() {
+  if (!currentBrooksProjectId) {
+    toast('Please select a project first.');
+    return;
+  }
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:sans-serif';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg);padding:20px;border-radius:12px;border:1px solid var(--border);width:300px;text-align:center';
+  box.innerHTML = '<div style="margin-bottom:15px;font-weight:600;color:var(--text)">Create Project File</div>';
+  
+  var typeSelect = document.createElement('select');
+  typeSelect.style.cssText = 'width:100%;padding:8px;margin-bottom:12px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
+  ['Character', 'Theme', 'Tone', 'Notes', 'Other'].forEach(function(t) {
+    var opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    typeSelect.appendChild(opt);
+  });
+  box.appendChild(typeSelect);
+
+  var nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = 'File name...';
+  nameInput.style.cssText = 'width:100%;padding:8px;margin-bottom:20px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
+  box.appendChild(nameInput);
+
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;justify-content:space-between;gap:10px';
+  
+  var cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.style.cssText = 'flex:1;padding:8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer';
+  cancelBtn.onclick = function() { document.body.removeChild(modal); };
+  
+  var createBtn = document.createElement('button');
+  createBtn.textContent = 'Create';
+  createBtn.style.cssText = 'flex:1;padding:8px;border-radius:4px;border:none;background:var(--green);color:#fff;cursor:pointer';
+  createBtn.onclick = function() {
+    var type = typeSelect.value;
+    var name = nameInput.value.trim();
+    if (!name) { toast('Please enter a file name'); return; }
+    document.body.removeChild(modal);
+    createProjectFileFromChat(type, name);
+  };
+  
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(createBtn);
+  box.appendChild(btnRow);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+}
+
+function createProjectFileFromChat(fileType, fileName) {
+  if (!currentBrooksProjectId) return;
+  toast('Brooks is generating ' + fileType + ' profile...');
+  
+  var prompt = 'Based on the following conversation, generate a professional ' + fileType + ' profile for the project. Provide ONLY the clean content of the file, no conversational filler, no "Here is the profile", and no markdown headers unless they are part of the profile content. Use a structured, professional format.\n\nCONVERSATION:\n';
+  
+  var transcript = '';
+  brooksHistory.forEach(function(m) {
+    transcript += (m.role === 'user' ? 'MICHAEL: ' : 'BROOKS: ') + m.content + '\n\n';
+  });
+  prompt += transcript;
+
+  callBrooksAPI(prompt, function(content) {
+    if (!content) { toast('Failed to generate content'); return; }
+    _sb.from('project_files').insert([{ 
+      project_id: currentBrooksProjectId, 
+      name: fileName, 
+      file_type: fileType, 
+      content: content 
+    }]).then(function(res) {
+      if (res.error) {
+        console.error('Error saving project file:', res.error);
+        toast('Error saving file');
+      } else {
+        toast('Project file created!');
+        handleBrooksProjectChange(currentBrooksProjectId);
+      }
+    });
+  });
+}
+
+function updateProjectFileFromChat(fileId) {
+  if (!currentBrooksProjectId) return;
+  
+  _sb.from('project_files').select('content, file_type').eq('id', fileId).single().then(function(res) {
+    if (res.error || !res.data) { toast('Error loading file'); return; }
+    var file = res.data;
+    toast('Brooks is updating ' + file.file_type + ' file...');
+
+    var prompt = 'Existing ' + file.file_type + ' file content:\n' + (file.content || 'Empty') + '\n\nBased on the following new conversation, update this profile to reflect new decisions, additions, or refinements. Provide ONLY the final updated content of the file, no conversational filler.\n\nCONVERSATION:\n';
+    
+    var transcript = '';
+    brooksHistory.forEach(function(m) {
+      transcript += (m.role === 'user' ? 'MICHAEL: ' : 'BROOKS: ') + m.content + '\n\n';
+    });
+    prompt += transcript;
+
+    callBrooksAPI(prompt, function(content) {
+      if (!content) { toast('Failed to update content'); return; }
+      _sb.from('project_files').update({ content: content }).eq('id', fileId).then(function(res) {
+        if (res.error) {
+          console.error('Error updating project file:', res.error);
+          toast('Error updating file');
+        } else {
+          toast('Project file updated!');
+          handleBrooksProjectChange(currentBrooksProjectId);
+        }
+      });
+    });
+  });
+}
+
+function callBrooksAPI(prompt, callback) {
+  var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
+  if (!key) { toast('API key missing'); return; }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.anthropic.com/v1/messages', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('x-api-key', key);
+  xhr.setRequestHeader('anthropic-version', '2023-06-01');
+  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var reply = (data.content || []).filter(function(c){ return c.type === 'text'; }).map(function(c){ return c.text; }).join('');
+        callback(reply);
+      } catch(e) {
+        console.error('Parse error', e);
+        callback(null);
+      }
+    } else {
+      console.error('API error ' + xhr.status);
+      callback(null);
+    }
+  };
+  xhr.onerror = function() { callback(null); };
+  
+  var payload = JSON.stringify({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 2000,
+    system: BROOKS_SYS,
+    messages: [{ role: 'user', content: prompt }]
+  });
+  xhr.send(payload);
+}
