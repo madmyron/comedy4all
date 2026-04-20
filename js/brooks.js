@@ -1207,7 +1207,213 @@ function handleBrooksProjectChange(projectId) {
     });
 }
 
+function brooksNormalizeFileType(type) {
+  var t = (type || '').toString().trim().toLowerCase();
+  if (t === 'character') return 'Character';
+  if (t === 'theme') return 'Theme';
+  if (t === 'tone') return 'Tone';
+  if (t === 'plot') return 'Plot';
+  if (t === 'story') return 'Story';
+  if (t === 'notes') return 'Notes';
+  return 'Other';
+}
+
+function brooksNormalizeExtractedFiles(result) {
+  var list = [];
+  if (!result) return list;
+  if (Array.isArray(result)) list = result;
+  else if (Array.isArray(result.files)) list = result.files;
+  else if (Array.isArray(result.items)) list = result.items;
+  else if (result.type || result.name || result.content) list = [result];
+
+  return list.map(function(item) {
+    return {
+      type: brooksNormalizeFileType(item.type),
+      name: (item.name || 'Untitled File').toString().trim(),
+      content: (item.content || '').toString().trim()
+    };
+  }).filter(function(item) {
+    return item.name || item.content;
+  });
+}
+
+function brooksBuildConversationMessages() {
+  var messages = [];
+  brooksHistory.forEach(function(m) {
+    var text = brooksMessageContentToText(m.content).trim();
+    if (!text) return;
+    messages.push({ role: m.role, content: text });
+  });
+  return messages;
+}
+
+function brooksParseJsonResponse(text) {
+  var raw = (text || '').toString().trim();
+  if (!raw) throw new Error('Empty response');
+  raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  return JSON.parse(raw);
+}
+
+function brooksShowExtractConfirmationModal(files) {
+  if (!files || !files.length) {
+    toast('Brooks could not identify any files. Use manual add instead.');
+    showBrooksManualFileModal();
+    return;
+  }
+
+  var existing = document.getElementById('brooks-file-extract-modal');
+  if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+  var modal = document.createElement('div');
+  modal.id = 'brooks-file-extract-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:sans-serif;padding:16px';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg);padding:20px;border-radius:12px;border:1px solid var(--border);width:min(720px,100%);max-height:88vh;display:flex;flex-direction:column;gap:14px';
+  box.innerHTML = '<div style="font-weight:600;color:var(--text);font-size:16px">Brooks found ' + files.length + ' file' + (files.length === 1 ? '' : 's') + '</div><div style="font-size:12px;color:var(--text2)">Uncheck anything you do not want to save.</div>';
+
+  var list = document.createElement('div');
+  list.style.cssText = 'display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:50vh;padding-right:4px';
+
+  files.forEach(function(file, idx) {
+    var row = document.createElement('label');
+    row.style.cssText = 'display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);cursor:pointer';
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = true;
+    checkbox.dataset.index = String(idx);
+    checkbox.style.marginTop = '4px';
+
+    var meta = document.createElement('div');
+    meta.style.cssText = 'flex:1;min-width:0';
+    var title = document.createElement('div');
+    title.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px';
+    title.innerHTML = '<span style="font-weight:600;color:var(--text)">' + file.name + '</span><span style="font-size:10px;padding:2px 6px;border-radius:999px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-br)">' + file.type + '</span>';
+
+    var preview = document.createElement('div');
+    preview.style.cssText = 'font-size:12px;color:var(--text2);line-height:1.5;white-space:pre-wrap';
+    preview.textContent = file.content.length > 280 ? file.content.substring(0, 280) + '...' : file.content;
+
+    meta.appendChild(title);
+    meta.appendChild(preview);
+    row.appendChild(checkbox);
+    row.appendChild(meta);
+    list.appendChild(row);
+  });
+
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;justify-content:space-between;gap:10px;margin-top:4px';
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.className = 'btn btn-sm';
+  cancelBtn.style.cssText = 'flex:1;justify-content:center';
+  cancelBtn.onclick = function() {
+    if (modal.parentNode) modal.parentNode.removeChild(modal);
+  };
+
+  var saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Create Selected';
+  saveBtn.className = 'btn btn-sm btn-primary';
+  saveBtn.style.cssText = 'flex:1;justify-content:center';
+  saveBtn.onclick = function() {
+    var selected = [];
+    modal.querySelectorAll('input[type="checkbox"]').forEach(function(cb) {
+      if (!cb.checked) return;
+      var idx = parseInt(cb.dataset.index, 10);
+      if (!isNaN(idx) && files[idx]) selected.push(files[idx]);
+    });
+    if (modal.parentNode) modal.parentNode.removeChild(modal);
+    if (!selected.length) {
+      toast('No files selected.');
+      return;
+    }
+    brooksInsertProjectFiles(selected);
+  };
+
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(saveBtn);
+  box.appendChild(list);
+  box.appendChild(btnRow);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+}
+
+function brooksInsertProjectFiles(files) {
+  if (!currentBrooksProjectId || !_sb) {
+    toast('Select a project first.');
+    return;
+  }
+  var payload = files.map(function(file) {
+    return {
+      project_id: currentBrooksProjectId,
+      name: file.name,
+      file_type: brooksNormalizeFileType(file.type),
+      content: file.content || ''
+    };
+  });
+
+  _sb.from('project_files').insert(payload).then(function(res) {
+    if (res.error) {
+      console.error('Error saving project files:', res.error);
+      toast('Error saving project files');
+      return;
+    }
+    toast(payload.length + ' file' + (payload.length === 1 ? '' : 's') + ' created');
+    handleBrooksProjectChange(currentBrooksProjectId);
+  });
+}
+
 function createFileFromChat() {
+  if (!currentBrooksProjectId) {
+    toast('Select a project first.');
+    return;
+  }
+
+  if (!brooksHistory || !brooksHistory.length) {
+    toast('No conversation to analyze yet.');
+    return;
+  }
+
+  toast('Brooks is analyzing the conversation...');
+
+  var systemPrompt = 'You are a script development assistant. Analyze this conversation and identify all distinct elements that should be saved as separate project files. For each element, provide a JSON array with objects containing: type (one of: Character, Theme, Tone, Plot, Notes, Other), name (a short descriptive name), and content (a clean, structured summary of that element based on the conversation). Return ONLY valid JSON, no markdown, no backticks, no preamble.';
+  var userMessages = brooksBuildConversationMessages();
+  var followup = { role: 'user', content: 'Analyze the conversation and return the JSON array now.' };
+
+  callBrooksAPI('', function(content) {
+    if (!content) {
+      toast('Brooks could not auto-extract files. Use manual add instead.');
+      showBrooksManualFileModal();
+      return;
+    }
+
+    var parsed;
+    try {
+      parsed = brooksParseJsonResponse(content);
+    } catch (e) {
+      console.error('Brooks auto-extract parse error:', e, content);
+      toast('Brooks could not parse the file list. Use manual add instead.');
+      showBrooksManualFileModal();
+      return;
+    }
+
+    var files = brooksNormalizeExtractedFiles(parsed);
+    if (!files.length) {
+      toast('Brooks did not find any files to create. Use manual add instead.');
+      showBrooksManualFileModal();
+      return;
+    }
+
+    brooksShowExtractConfirmationModal(files);
+  }, {
+    system: systemPrompt,
+    messages: userMessages.concat([followup]),
+    max_tokens: 2000
+  });
+}
+
+function showBrooksManualFileModal() {
   if (!currentBrooksProjectId) {
     toast('Select a project first.');
     return;
@@ -1216,11 +1422,11 @@ function createFileFromChat() {
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:sans-serif';
   var box = document.createElement('div');
   box.style.cssText = 'background:var(--bg);padding:20px;border-radius:12px;border:1px solid var(--border);width:320px;text-align:center';
-  box.innerHTML = '<div style="margin-bottom:15px;font-weight:600;color:var(--text)">Save to Project</div>';
+  box.innerHTML = '<div style="margin-bottom:15px;font-weight:600;color:var(--text)">Manual Add File</div>';
 
   var typeSelect = document.createElement('select');
   typeSelect.style.cssText = 'width:100%;padding:8px;margin-bottom:12px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
-  ['Character', 'Theme', 'Tone', 'Notes', 'Other'].forEach(function(t) {
+  ['Character', 'Theme', 'Tone', 'Plot', 'Story', 'Notes', 'Other'].forEach(function(t) {
     var opt = document.createElement('option');
     opt.value = t;
     opt.textContent = t;
@@ -1261,7 +1467,7 @@ function createFileFromChat() {
 }
 
 function showBrooksCreateFileModal() {
-  createFileFromChat();
+  showBrooksManualFileModal();
 }
 
 function createProjectFileFromChat(fileType, fileName) {

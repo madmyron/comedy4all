@@ -529,7 +529,8 @@
         <div style="flex:1;font-weight:700;font-size:16px;color:var(--text)">Brooks AI</div>
         <button class="btn btn-sm hide-mobile" onclick="sendToWritingStudio()">&#9997;&#65039; To Studio</button>
         <button class="btn btn-sm" onclick="saveBrooksManual()" id="brooks-save-btn" style="background:var(--green);color:#fff">💾 Save</button>
-        <button class="btn btn-sm" onclick="createFileFromChat()" title="Save current conversation to a project file">📁 Save to Project</button>
+        <button class="btn btn-sm" onclick="createFileFromChat()" title="Auto-extract project files from the current conversation">📁 Auto-Extract Files</button>
+        <button class="btn btn-sm" onclick="showBrooksManualFileModal()" title="Manually add a single project file">+ Manual Add</button>
         <button class="btn btn-sm" onclick="showBrooksUpdateFileModal()" title="Update Project File">📄 Update File</button>
         <button class="btn btn-sm" onclick="discardBrooksSession()" title="Discard this session" style="color:var(--red);border-color:var(--red)">🗑️</button>
         <button class="btn btn-sm hide-mobile" onclick="clearBrooks()">+ New Session</button>
@@ -552,6 +553,8 @@
   </div>
 </div>
       <div id="brooks-mobile-menu" style="display:none;position:absolute;top:100px;right:10px;z-index:200;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:160px">
+        <div onclick="createFileFromChat();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">📁 Auto-Extract Files</div>
+        <div onclick="showBrooksManualFileModal();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">+ Manual Add</div>
         <div onclick="sendToWritingStudio();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">&#9997;&#65039; Send to Studio</div>
         <div onclick="clearBrooks();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">+ New Session</div>
         <div onclick="toggleQuickPrompts();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">&#9889; Quick Prompts</div>
