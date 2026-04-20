@@ -218,11 +218,11 @@ function renderProjectDetails(proj, files, convos, scripts) {
           <div id="proj-files-list" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
             ${files.length === 0 ? '<div style="font-size:11px;color:var(--text3);text-align:center">No files yet.</div>' : ''}
             ${files.map(f => `
-              <div class="card" style="padding:10px;cursor:pointer;background:var(--bg)" onclick="editProjectFile('${f.id}', \`${f.content.replace(/`/g, '\\`').replace(/\n/g, ' ')}\`)">
+              <div class="card" style="padding:10px;cursor:pointer;background:var(--bg)" onclick="editProjectFile('${f.id}')">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
                   <div style="font-weight:600;font-size:13px">${f.name}</div>
                   <div style="display:flex;gap:5px">
-                    <span class="tag-gray" style="font-size:9px">${f.type}</span>
+                    <span class="tag-gray" style="font-size:9px">${f.file_type}</span>
                     <button class="btn btn-sm btn-danger" style="padding:2px 5px" onclick="event.stopPropagation(); deleteProjectFile('${f.id}')">✕</button>
                   </div>
                 </div>
@@ -290,7 +290,7 @@ async function createProjectFile(type) {
   const name = prompt('Enter file name:');
   if (!name) return;
   try {
-    const { error } = await _sb.from('project_files').insert([{ project_id: selectedProjectId, name, type, content: '', user_id: currentUser.id }]);
+    const { error } = await _sb.from('project_files').insert([{ project_id: selectedProjectId, name, file_type: type, content: '' }]);
     if (error) throw error;
     document.getElementById('file-add-dropdown').style.display = 'none';
     openProject(selectedProjectId);
@@ -310,9 +310,8 @@ async function handleProjectFileUpload(event) {
       const { error } = await _sb.from('project_files').insert([{ 
         project_id: selectedProjectId, 
         name: file.name, 
-        type: 'Other', 
-        content: content, 
-        user_id: currentUser.id 
+        file_type: 'Other', 
+        content: content 
       }]);
       if (error) throw error;
       toast('File uploaded');
@@ -325,54 +324,62 @@ async function handleProjectFileUpload(event) {
   reader.readAsText(file);
 }
 
-async function editProjectFile(id, currentContent) {
-  const modal = document.createElement('div');
-  modal.className = 'overlay';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000';
-  
-  const box = document.createElement('div');
-  box.className = 'mbox';
-  box.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;width:600px;max-width:90vw;display:flex;flex-direction:column;gap:15px';
-  
-  const title = document.createElement('div');
-  title.style.cssText = 'font-weight:600;font-size:16px;color:var(--text)';
-  title.textContent = 'Edit File Content';
-  
-  const textarea = document.createElement('textarea');
-  textarea.style.cssText = 'width:100%;height:300px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:10px;color:var(--text);font-family:monospace;font-size:13px;outline:none;resize:vertical';
-  textarea.value = currentContent;
-  
-  const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex;justify-content:flex-end;gap:10px';
-  
-  const cancelBtn = document.createElement('button');
-  cancelBtn.className = 'btn btn-sm';
-  cancelBtn.textContent = 'Cancel';
-  cancelBtn.onclick = () => document.body.removeChild(modal);
-  
-  const saveBtn = document.createElement('button');
-  saveBtn.className = 'btn btn-sm btn-primary';
-  saveBtn.textContent = 'Save';
-  saveBtn.onclick = async () => {
-    try {
-      const { error } = await _sb.from('project_files').update({ content: textarea.value }).eq('id', id);
-      if (error) throw error;
-      toast('File saved');
-      document.body.removeChild(modal);
-      openProject(selectedProjectId);
-    } catch (err) {
-      console.error('Error saving file:', err);
-      toast('Error saving file');
-    }
-  };
-  
-  btnRow.appendChild(cancelBtn);
-  btnRow.appendChild(saveBtn);
-  box.appendChild(title);
-  box.appendChild(textarea);
-  box.appendChild(btnRow);
-  modal.appendChild(box);
-  document.body.appendChild(modal);
+async function editProjectFile(id) {
+  try {
+    const { data: file, error } = await _sb.from('project_files').select('content').eq('id', id).single();
+    if (error) throw error;
+
+    const modal = document.createElement('div');
+    modal.className = 'overlay';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000';
+    
+    const box = document.createElement('div');
+    box.className = 'mbox';
+    box.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;width:600px;max-width:90vw;display:flex;flex-direction:column;gap:15px';
+    
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:600;font-size:16px;color:var(--text)';
+    title.textContent = 'Edit File Content';
+    
+    const textarea = document.createElement('textarea');
+    textarea.style.cssText = 'width:100%;height:300px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:10px;color:var(--text);font-family:monospace;font-size:13px;outline:none;resize:vertical';
+    textarea.value = file.content || '';
+    
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;justify-content:flex-end;gap:10px';
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-sm';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => document.body.removeChild(modal);
+    
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-sm btn-primary';
+    saveBtn.textContent = 'Save';
+    saveBtn.onclick = async () => {
+      try {
+        const { error } = await _sb.from('project_files').update({ content: textarea.value }).eq('id', id);
+        if (error) throw error;
+        toast('File saved');
+        document.body.removeChild(modal);
+        openProject(selectedProjectId);
+      } catch (err) {
+        console.error('Error saving file:', err);
+        toast('Error saving file');
+      }
+    };
+    
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(saveBtn);
+    box.appendChild(title);
+    box.appendChild(textarea);
+    box.appendChild(btnRow);
+    modal.appendChild(box);
+    document.body.appendChild(modal);
+  } catch (err) {
+    console.error('Error fetching file for edit:', err);
+    toast('Error loading file content');
+  }
 }
 
 async function deleteProjectFile(id) {
