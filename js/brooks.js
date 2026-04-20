@@ -554,6 +554,42 @@ function saveApiKey(v){
   updateBrooksContext();
 }
 
+function brooksMessageContentToText(content) {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content.map(function(part) {
+      if (!part) return '';
+      if (part.type === 'text') return part.text || '';
+      if (part.type === 'image') return '[image]';
+      return '';
+    }).join('\n');
+  }
+  return '';
+}
+
+function buildBrooksProjectContextBlock() {
+  if (!currentBrooksProjectId || !currentProjectFiles || currentProjectFiles.length === 0) return '';
+  var block = '[PROJECT CONTEXT]\n';
+  currentProjectFiles.forEach(function(file) {
+    var fileType = (file.file_type || 'Other').toString().toUpperCase();
+    var fileName = file.name || 'untitled';
+    block += '[' + fileType + '] - ' + fileName + ':\n' + (file.content || '') + '\n\n';
+  });
+  block += '[END PROJECT CONTEXT]';
+  return block;
+}
+
+function prependBrooksProjectContextToContent(content) {
+  var projectContext = buildBrooksProjectContextBlock();
+  if (!projectContext) return content;
+  if (Array.isArray(content)) {
+    var cloned = content.slice();
+    cloned.unshift({ type: 'text', text: projectContext + '\n\n' });
+    return cloned;
+  }
+  return projectContext + '\n\n' + content;
+}
+
 function sendBrooks(){
   if (!hasBrooksAccess()) {
     document.getElementById('brooks-upgrade-overlay').style.display = 'flex';
@@ -652,25 +688,16 @@ function sendBrooks(){
     }
   }
 
-  var systemPrompt = BROOKS_SYS;
-  if (currentBrooksProjectId && currentProjectFiles.length > 0) {
-    var project = currentProjectFiles[0].project_id; // Use any file to get project ID
-    // We need project name, which isn't in project_files. We can fetch it or just use the ID.
-    // To be accurate, let's assume the user wants the name. Since we don't have it in state, 
-    // we can add a small fetch or just use "Project " + ID.
-    // Better: let's use the selector's text.
-    var projSelect = document.getElementById('brooks-project-select');
-    var projName = projSelect ? projSelect.options[projSelect.selectedIndex].text : 'Selected Project';
-    
-    var projectContext = '\n\n[PROJECT CONTEXT]\nProject: ' + projName + '\n\n';
-    currentProjectFiles.forEach(function(f) {
-      projectContext += f.file_type.toUpperCase() + ' FILE - ' + f.name + ':\n' + (f.content || 'Empty') + '\n\n';
-    });
-    projectContext += '[END PROJECT CONTEXT]';
-    systemPrompt += projectContext;
+  var apiMessages = apiHistory.slice();
+  var lastIndex = apiMessages.length - 1;
+  if (lastIndex >= 0) {
+    apiMessages[lastIndex] = {
+      role: apiMessages[lastIndex].role,
+      content: prependBrooksProjectContextToContent(apiMessages[lastIndex].content)
+    };
   }
 
-  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:hadImages?2000:1000,system:systemPrompt,messages:apiHistory});
+  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:hadImages?2000:1000,system:BROOKS_SYS,messages:apiMessages});
   xhr.send(payload);
 }
 
@@ -1164,7 +1191,6 @@ function handleBrooksProjectChange(projectId) {
   currentProjectFiles = [];
 
   if (!currentBrooksProjectId) {
-    toast('No project selected');
     return;
   }
 
@@ -1181,17 +1207,17 @@ function handleBrooksProjectChange(projectId) {
     });
 }
 
-function showBrooksCreateFileModal() {
+function createFileFromChat() {
   if (!currentBrooksProjectId) {
-    toast('Please select a project first.');
+    toast('Select a project first.');
     return;
   }
   var modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:sans-serif';
   var box = document.createElement('div');
-  box.style.cssText = 'background:var(--bg);padding:20px;border-radius:12px;border:1px solid var(--border);width:300px;text-align:center';
-  box.innerHTML = '<div style="margin-bottom:15px;font-weight:600;color:var(--text)">Create Project File</div>';
-  
+  box.style.cssText = 'background:var(--bg);padding:20px;border-radius:12px;border:1px solid var(--border);width:320px;text-align:center';
+  box.innerHTML = '<div style="margin-bottom:15px;font-weight:600;color:var(--text)">Save to Project</div>';
+
   var typeSelect = document.createElement('select');
   typeSelect.style.cssText = 'width:100%;padding:8px;margin-bottom:12px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--text)';
   ['Character', 'Theme', 'Tone', 'Notes', 'Other'].forEach(function(t) {
@@ -1210,12 +1236,12 @@ function showBrooksCreateFileModal() {
 
   var btnRow = document.createElement('div');
   btnRow.style.cssText = 'display:flex;justify-content:space-between;gap:10px';
-  
+
   var cancelBtn = document.createElement('button');
   cancelBtn.textContent = 'Cancel';
   cancelBtn.style.cssText = 'flex:1;padding:8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer';
   cancelBtn.onclick = function() { document.body.removeChild(modal); };
-  
+
   var createBtn = document.createElement('button');
   createBtn.textContent = 'Create';
   createBtn.style.cssText = 'flex:1;padding:8px;border-radius:4px;border:none;background:var(--green);color:#fff;cursor:pointer';
@@ -1226,7 +1252,7 @@ function showBrooksCreateFileModal() {
     document.body.removeChild(modal);
     createProjectFileFromChat(type, name);
   };
-  
+
   btnRow.appendChild(cancelBtn);
   btnRow.appendChild(createBtn);
   box.appendChild(btnRow);
@@ -1234,19 +1260,21 @@ function showBrooksCreateFileModal() {
   document.body.appendChild(modal);
 }
 
+function showBrooksCreateFileModal() {
+  createFileFromChat();
+}
+
 function createProjectFileFromChat(fileType, fileName) {
   if (!currentBrooksProjectId) return;
   toast('Brooks is generating ' + fileType + ' profile...');
-  
-  var prompt = 'Based on the following conversation, generate a professional ' + fileType + ' profile for the project. Provide ONLY the clean content of the file, no conversational filler, no "Here is the profile", and no markdown headers unless they are part of the profile content. Use a structured, professional format.\n\nCONVERSATION:\n';
-  
-  var transcript = '';
-  brooksHistory.forEach(function(m) {
-    transcript += (m.role === 'user' ? 'MICHAEL: ' : 'BROOKS: ') + m.content + '\n\n';
-  });
-  prompt += transcript;
 
-  callBrooksAPI(prompt, function(content) {
+  var systemPrompt = 'You are Brooks. Turn the conversation into a clean, structured ' + fileType + ' document for a project file.\n' +
+    'Keep it concise, organized, and useful as a reference.\n' +
+    'Do not add any conversational filler or mention that you were asked to generate it.\n' +
+    'Use plain text with light structure only if it improves clarity.';
+  var userPrompt = 'Generate a ' + fileType + ' file named "' + fileName + '" from this conversation. Return only the final document.';
+
+  callBrooksAPI(userPrompt, function(content) {
     if (!content) { toast('Failed to generate content'); return; }
     _sb.from('project_files').insert([{ 
       project_id: currentBrooksProjectId, 
@@ -1262,6 +1290,10 @@ function createProjectFileFromChat(fileType, fileName) {
         handleBrooksProjectChange(currentBrooksProjectId);
       }
     });
+  }, {
+    system: systemPrompt,
+    messages: brooksHistory.concat([{ role: 'user', content: userPrompt }]),
+    max_tokens: 2000
   });
 }
 
@@ -1277,7 +1309,7 @@ function updateProjectFileFromChat(fileId) {
     
     var transcript = '';
     brooksHistory.forEach(function(m) {
-      transcript += (m.role === 'user' ? 'MICHAEL: ' : 'BROOKS: ') + m.content + '\n\n';
+      transcript += (m.role === 'user' ? 'MICHAEL: ' : 'BROOKS: ') + brooksMessageContentToText(m.content) + '\n\n';
     });
     prompt += transcript;
 
@@ -1296,9 +1328,10 @@ function updateProjectFileFromChat(fileId) {
   });
 }
 
-function callBrooksAPI(prompt, callback) {
+function callBrooksAPI(prompt, callback, options) {
   var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
   if (!key) { toast('API key missing'); return; }
+  options = options || {};
 
   var xhr = new XMLHttpRequest();
   xhr.open('POST', 'https://api.anthropic.com/v1/messages', true);
@@ -1323,11 +1356,12 @@ function callBrooksAPI(prompt, callback) {
   };
   xhr.onerror = function() { callback(null); };
   
+  var messages = options.messages || [{ role: 'user', content: prompt }];
   var payload = JSON.stringify({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2000,
-    system: BROOKS_SYS,
-    messages: [{ role: 'user', content: prompt }]
+    max_tokens: options.max_tokens || 2000,
+    system: options.system || BROOKS_SYS,
+    messages: messages
   });
   xhr.send(payload);
 }
