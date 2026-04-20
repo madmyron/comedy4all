@@ -801,6 +801,57 @@ function runStoryMining(type) {
 }
 function fillBrooks(t){var input=document.getElementById('brooks-input');if(input){input.value=t;input.focus();}}
 function handleBrooksKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendBrooks();}}
+
+function loadBrooksProjectSelector() {
+  if (!currentUser || !_sb) return;
+  var select = document.getElementById('brooks-project-select');
+  if (!select) return;
+
+  var currentVal = select.value;
+
+  _sb.from('projects')
+    .select('id, name')
+    .eq('user_id', currentUser.id)
+    .order('name', { ascending: true })
+    .then(function(res) {
+      if (res.error) {
+        console.error('Error loading projects for Brooks:', res.error);
+        return;
+      }
+      var projects = res.data || [];
+      select.innerHTML = '<option value="">(No Project)</option>';
+      projects.forEach(function(p) {
+        var opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        if (p.id === currentVal) opt.selected = true;
+        select.appendChild(opt);
+      });
+    });
+}
+
+function onBrooksProjectChange(val) {
+  currentBrooksProjectId = val || null;
+  currentProjectFiles = [];
+
+  if (!val) {
+    toast('Project deselected');
+    return;
+  }
+
+  _sb.from('project_files')
+    .select('*')
+    .eq('project_id', val)
+    .then(function(res) {
+      if (res.error) {
+        console.error('Error loading project files:', res.error);
+        toast('Error loading project files');
+        return;
+      }
+      currentProjectFiles = res.data || [];
+      toast(currentProjectFiles.length + ' project files loaded');
+    });
+}
 function renderBrooksGreeting(){
   var el=document.getElementById('brooks-welcome');
   if(!el) return;

@@ -528,9 +528,6 @@
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div style="flex:1;font-weight:700;font-size:16px;color:var(--text)">Brooks AI</div>
         <button class="btn btn-sm hide-mobile" onclick="sendToWritingStudio()">&#9997;&#65039; To Studio</button>
-        <select id="brooks-project-select" class="btn btn-sm" style="padding:2px 6px;font-size:12px;background:var(--bg3);color:var(--text);border:1px solid var(--border);cursor:pointer" onchange="handleBrooksProjectChange(this.value)">
-          <option value="">(No Project)</option>
-        </select>
         <button class="btn btn-sm" onclick="saveBrooksManual()" id="brooks-save-btn" style="background:var(--green);color:#fff">💾 Save</button>
         <button class="btn btn-sm" onclick="showBrooksCreateFileModal()" title="Create Project File">📁 Create File</button>
         <button class="btn btn-sm" onclick="showBrooksUpdateFileModal()" title="Update Project File">📄 Update File</button>
@@ -540,6 +537,9 @@
       </div>
 <div id="brooks-title-bar" style="position:relative;z-index:10;padding:4px 14px 6px 14px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center">
   <input id="brooks-convo-title" type="text" placeholder="Tap to name this conversation..." style="flex:1;background:transparent;border:none;border-bottom:2px solid #2196F3;color:#2196F3;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;outline:none;padding:2px 4px;box-sizing:border-box" onchange="saveBrooksTitle(this.value)" onfocus="this.style.borderBottomColor='var(--gold)'" onblur="this.style.borderBottomColor='#2196F3'">
+  <select id="brooks-project-select" class="btn" style="padding:4px 8px;font-size:12px;background:var(--bg3);color:var(--text);border:1px solid var(--border);cursor:pointer" onchange="onBrooksProjectChange(this.value)">
+    <option value="">(No Project)</option>
+  </select>
   <div id="brooks-tag-buttons" style="display:flex;gap:4px;flex-wrap:wrap;max-width:400px">
     <button class="btn btn-sm brooks-tag-btn" data-tag="Feature" data-color="#2196F3" style="padding:2px 6px;font-size:10px;border-radius:10px;border:1px solid #2196F3;background:transparent;color:var(--text2);cursor:pointer;font-family:'Inter',sans-serif">Feature</button>
     <button class="btn btn-sm brooks-tag-btn" data-tag="Sitcom" data-color="#9C27B0" style="padding:2px 6px;font-size:10px;border-radius:10px;border:1px solid #9C27B0;background:transparent;color:var(--text2);cursor:pointer;font-family:'Inter',sans-serif">Sitcom</button>

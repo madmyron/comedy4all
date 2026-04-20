@@ -90,6 +90,9 @@ function performGo(name) {
     updateBrooksContext();
     if (typeof initBrooksTags === 'function') initBrooksTags();
     if (typeof loadBrooksProjectSelector === 'function') loadBrooksProjectSelector();
+    if (typeof onBrooksProjectChange === 'function' && currentBrooksProjectId) {
+      onBrooksProjectChange(currentBrooksProjectId);
+    }
     if (apiKey && apiKey.length > 10) {
       document.querySelectorAll('.cmsg.ai').forEach(function(el) {
         if (el.textContent.indexOf('SETUP') !== -1) el.style.display = 'none';
