@@ -25,6 +25,7 @@ async function loadProjects() {
 
     if (!projects || projects.length === 0) {
       listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No projects found. Create one to get started!</div>';
+      updateHomeProjectCount(0);
       return;
     }
 
@@ -38,6 +39,7 @@ async function loadProjects() {
     const scripts = scriptsRes.data || [];
     const convos = convosRes.data || [];
     const files = filesRes.data || [];
+    updateHomeProjectCount(projects.length);
 
     listEl.innerHTML = '';
     
@@ -72,7 +74,14 @@ async function loadProjects() {
   } catch (err) {
     console.error('Error loading projects:', err);
     listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">Error loading projects. Please try again.</div>';
+    updateHomeProjectCount(0);
   }
+}
+
+function updateHomeProjectCount(count) {
+  const el = document.getElementById('home-project-count');
+  if (!el) return;
+  el.textContent = count + ' project' + (count === 1 ? '' : 's');
 }
 
 function createProject() {

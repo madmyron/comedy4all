@@ -97,7 +97,7 @@
          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
          <span class="nav-label">Set Builder</span>
        </div>
-       <div class="nav-item" onclick="go('projects')">Projects</div>
+       <div class="nav-item" onclick="go('projects')">📁 Projects</div>
       <div class="nav-sect">Create</div>
       <div class="nav-item" data-screen="recording" data-label="Recording">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M4 9c0 2.2 1.8 4 4 4s4-1.8 4-4M8 13v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -201,6 +201,12 @@
             <div class="home-tile-icon">📊</div>
             <div class="home-tile-title">Dashboard</div>
             <div class="home-tile-desc">Stats &amp; recent activity</div>
+          </div>
+          <div class="home-tile" data-tile="projects" onclick="go('projects')">
+            <div class="home-tile-icon">📁</div>
+            <div class="home-tile-title">Projects</div>
+            <div class="home-tile-desc">Manage your creative projects</div>
+            <div id="home-project-count" style="margin-top:10px;display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:var(--gold-bg);color:var(--gold);font-size:10px;font-weight:700;border:1px solid var(--gold-br)">0 projects</div>
           </div>
         </div>
         <div class="home-next-show">
