@@ -202,7 +202,7 @@ function renderProjectDetails(proj, files, convos, scripts) {
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px">
         <!-- Section A: Project Files -->
-        <div class="card" style="position:relative">
+        <div class="card" style="position:relative;overflow:visible">
           <div class="ctitle">Project Files 
             <div style="display:flex;gap:5px">
               <button class="btn btn-sm" onclick="showFileAddDropdown()">+ Add File</button>
@@ -210,7 +210,7 @@ function renderProjectDetails(proj, files, convos, scripts) {
               <input type="file" id="proj-file-upload" style="display:none" accept=".txt" onchange="handleProjectFileUpload(event)">
             </div>
           </div>
-          <div id="file-add-dropdown" style="display:none;position:absolute;top:35px;right:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:100;box-shadow:var(--surface-pop);padding:5px">
+          <div id="file-add-dropdown" style="display:none;position:absolute;top:35px;right:10px;min-width:150px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:999;box-shadow:var(--surface-pop);padding:5px">
             ${['Character', 'Theme', 'Tone', 'Notes', 'Other'].map(t => `
               <div style="padding:5px 10px;cursor:pointer;font-size:12px;color:var(--text2)" onclick="createProjectFile('${t}')">${t}</div>
             `).join('')}
@@ -233,11 +233,11 @@ function renderProjectDetails(proj, files, convos, scripts) {
         </div>
 
         <!-- Section B: Linked Conversations -->
-        <div class="card">
+        <div class="card" style="position:relative;overflow:visible">
           <div class="ctitle">Linked Conversations 
             <button class="btn btn-sm" onclick="showLinkConvoDropdown()">+ Link Conversation</button>
           </div>
-          <div id="convo-link-dropdown" style="display:none;position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:10;box-shadow:var(--surface-pop);padding:5px;max-height:200px;overflow-y:auto"></div>
+          <div id="convo-link-dropdown" style="display:none;position:absolute;top:35px;right:10px;min-width:150px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:999;box-shadow:var(--surface-pop);padding:5px;max-height:200px;overflow-y:auto"></div>
           <div id="proj-convos-list" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
             ${convos.length === 0 ? '<div style="font-size:11px;color:var(--text3);text-align:center">No linked conversations.</div>' : ''}
             ${convos.map(c => `
@@ -250,11 +250,11 @@ function renderProjectDetails(proj, files, convos, scripts) {
         </div>
 
         <!-- Section C: Linked Scripts -->
-        <div class="card">
+        <div class="card" style="position:relative;overflow:visible">
           <div class="ctitle">Linked Scripts 
             <button class="btn btn-sm" onclick="showLinkScriptDropdown()">+ Link Script</button>
           </div>
-          <div id="script-link-dropdown" style="display:none;position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:10;box-shadow:var(--surface-pop);padding:5px;max-height:200px;overflow-y:auto"></div>
+          <div id="script-link-dropdown" style="display:none;position:absolute;top:35px;right:10px;min-width:150px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:999;box-shadow:var(--surface-pop);padding:5px;max-height:200px;overflow-y:auto"></div>
           <div id="proj-scripts-list" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
             ${scripts.length === 0 ? '<div style="font-size:11px;color:var(--text3);text-align:center">No linked scripts.</div>' : ''}
             ${scripts.map(s => `
