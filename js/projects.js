@@ -30,9 +30,9 @@ async function loadProjects() {
 
     // To avoid N+1 queries, we fetch all related items for the user and count them in JS
     const [scriptsRes, convosRes, filesRes] = await Promise.all([
-      _sb.from('scripts').select('project_id').eq('user_id', currentUser.id),
+      _sb.from('studio_scripts').select('project_id').eq('user_id', currentUser.id),
       _sb.from('brooks_conversations').select('project_id').eq('user_id', currentUser.id),
-      _sb.from('project_files').select('project_id').eq('user_id', currentUser.id)
+      _sb.from('project_files').select('project_id')
     ]);
 
     const scripts = scriptsRes.data || [];
