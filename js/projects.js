@@ -53,7 +53,7 @@ async function loadProjects() {
       
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-          <div style="font-weight:600;font-size:15px;color:var(--text)">${proj.name}</div>
+          <div style="font-weight:600;font-size:15px;color:var(--text);cursor:pointer" onclick="openProject('${proj.id}')">${proj.name}</div>
           <div style="display:flex;gap:6px">
             <button class="btn btn-sm" onclick="event.stopPropagation(); editProject('${proj.id}')">Edit</button>
             <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteProject('${proj.id}')">Delete</button>
