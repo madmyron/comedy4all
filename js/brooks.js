@@ -166,9 +166,8 @@ function brooksScriptKickoff(fmt) {
     if (o) o.style.display = 'flex';
     return;
   }
-  var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
-  if (!key || key.length < 10) {
-    toast('Add your API key in Settings first.');
+  if (!brooksAnthropicCredentialsReady()) {
+    toast('Add your API key in Settings, or set an Anthropic proxy URL.');
     return;
   }
   var msgs = document.getElementById('chat-msgs');
@@ -186,11 +185,13 @@ function brooksScriptKickoff(fmt) {
 
   var kickMsg = { role: 'user', content: brooksExpandBridgeForApi(bridge) };
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://api.anthropic.com/v1/messages', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.setRequestHeader('x-api-key', key);
-  xhr.setRequestHeader('anthropic-version', '2023-06-01');
-  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+  if (!brooksConfigureAnthropicXhr(xhr)) {
+    if (btn) { btn.disabled = false; }
+    var tkFail = document.getElementById('brooks-typing-kickoff');
+    if (tkFail) tkFail.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Missing API key or proxy URL.</span>';
+    toast('Missing Anthropic API key or proxy URL.');
+    return;
+  }
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
     var tk = document.getElementById('brooks-typing-kickoff');
@@ -303,9 +304,8 @@ function showBrooksSaveProjectModal() {
 }
 
 function brooksSuggestThreeTitles(done) {
-  var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
-  if (!key || key.length < 10) {
-    toast('Add your API key for title suggestions.');
+  if (!brooksAnthropicCredentialsReady()) {
+    toast('Add your API key or configure an Anthropic proxy URL in Settings.');
     return;
   }
   var transcript = '';
@@ -315,11 +315,10 @@ function brooksSuggestThreeTitles(done) {
   });
   var prompt = 'Based on this script-development conversation, suggest exactly 3 catchy working titles. Return ONLY valid JSON: {"titles":["...","...","..."]} — no markdown.\n\nCONVERSATION:\n' + transcript;
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://api.anthropic.com/v1/messages', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.setRequestHeader('x-api-key', key);
-  xhr.setRequestHeader('anthropic-version', '2023-06-01');
-  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+  if (!brooksConfigureAnthropicXhr(xhr)) {
+    toast('Missing Anthropic API key or proxy URL.');
+    return;
+  }
   xhr.onload = function() {
     if (xhr.status !== 200) {
       toast('Could not suggest titles (' + xhr.status + ').');
@@ -553,6 +552,7 @@ function hasBrooksAccess(){
   var inviteCode=getStoredBrooksInviteCode();
   var creatorEmails=['michael@comedy4all.com','michael@dasaroland.com'];
   if(creatorEmails.indexOf(userEmail)!==-1) return true;
+  if(brooksAnthropicProxyConfigured()) return true;
   if(apiKey && apiKey.length>10) return true;
   if(BROOKS_TRIAL_CODES.indexOf(inviteCode)!==-1) return true;
   try{ var k=localStorage.getItem('c4a_apikey')||''; if(k.length>10) return true; }catch(e){}
@@ -592,7 +592,7 @@ function updateBrooksContext(){
   var access=hasBrooksAccess();
   var inviteCode=getStoredBrooksInviteCode();
   var userEmail=(window._c4aUserEmail||'').toLowerCase();
-  if(el) el.innerHTML='\u2713 '+jokes.length+' joke'+(jokes.length===1?'':'s')+' in your library<br>\u2713 Top scoring joke: '+(top?top.title:'None yet')+(top?' ('+(top.score||0)+')':'')+'<br>\u2713 Brooks access: '+(access?'<span style="color:var(--green)">Unlocked</span>':'<span style="color:var(--text3)">Premium only</span>');
+  if(el) el.innerHTML='\u2713 '+jokes.length+' joke'+(jokes.length===1?'':'s')+' in your library<br>\u2713 Top scoring joke: '+(top?top.title:'None yet')+(top?' ('+(top.score||0)+')':'')+'<br>\u2713 Brooks access: '+(access?'<span style="color:var(--green)">Unlocked</span>':'<span style="color:var(--text3)">Premium only</span>')+(brooksAnthropicProxyConfigured()?'<br>\u2713 Anthropic: <span style="color:var(--green)">via proxy</span> (key stays on server)':'<br>\u2713 Anthropic: <span style="color:var(--text3)">direct</span> (browser sends key to Anthropic)');
   syncBrooksApiKeyInputs(key);
   if(inviteInput && inviteCode) inviteInput.value=inviteCode;
   if(accessEl){
@@ -937,6 +937,66 @@ function saveApiKey(v){
   updateBrooksContext();
 }
 
+function getBrooksAnthropicProxyBase() {
+  try {
+    return (localStorage.getItem('c4a_anthropic_proxy') || '').trim();
+  } catch (e) {
+    return '';
+  }
+}
+
+function brooksAnthropicProxyConfigured() {
+  var u = getBrooksAnthropicProxyBase();
+  return u.length >= 8 && /^https?:\/\//i.test(u);
+}
+
+function getBrooksAnthropicDirectKey() {
+  return apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
+}
+
+function brooksAnthropicCredentialsReady() {
+  if (brooksAnthropicProxyConfigured()) return true;
+  var k = getBrooksAnthropicDirectKey();
+  return !!(k && k.length > 10);
+}
+
+/** Opens POST to Messages API on xhr and sets headers. Returns false only in direct mode without a key. */
+function brooksConfigureAnthropicXhr(xhr, asyncFlag) {
+  if (asyncFlag === undefined) asyncFlag = true;
+  var proxy = getBrooksAnthropicProxyBase().replace(/\/$/, '');
+  xhr.open('POST', proxy ? proxy + '/v1/messages' : 'https://api.anthropic.com/v1/messages', asyncFlag);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('anthropic-version', '2023-06-01');
+  if (proxy) {
+    var secret = '';
+    try { secret = (localStorage.getItem('c4a_proxy_secret') || '').trim(); } catch (e) {}
+    if (secret) xhr.setRequestHeader('Authorization', 'Bearer ' + secret);
+    return true;
+  }
+  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+  var key = getBrooksAnthropicDirectKey();
+  if (!key || key.length < 10) return false;
+  xhr.setRequestHeader('x-api-key', key);
+  return true;
+}
+
+function saveAnthropicProxyUrl(v) {
+  var trimmed = (v || '').trim();
+  try {
+    if (trimmed) localStorage.setItem('c4a_anthropic_proxy', trimmed);
+    else localStorage.removeItem('c4a_anthropic_proxy');
+  } catch (e) {}
+  updateBrooksContext();
+}
+
+function saveAnthropicProxySecret(v) {
+  var trimmed = (v || '').trim();
+  try {
+    if (trimmed) localStorage.setItem('c4a_proxy_secret', trimmed);
+    else localStorage.removeItem('c4a_proxy_secret');
+  } catch (e) {}
+}
+
 function brooksMessageContentToText(content) {
   if (typeof content === 'string') return content;
   if (Array.isArray(content)) {
@@ -976,6 +1036,10 @@ function prependBrooksProjectContextToContent(content) {
 function sendBrooks(){
   if (!hasBrooksAccess()) {
     document.getElementById('brooks-upgrade-overlay').style.display = 'flex';
+    return;
+  }
+  if (!brooksAnthropicCredentialsReady()) {
+    toast('Add your Anthropic API key in Settings, or set an Anthropic proxy URL.');
     return;
   }
   var input=document.getElementById('brooks-input'),msgs=document.getElementById('chat-msgs');
@@ -1044,11 +1108,15 @@ function sendBrooks(){
   var btn=document.getElementById('send-btn');
   if(btn){btn.disabled=true;btn.textContent='...';}
   var xhr=new XMLHttpRequest();
-  xhr.open('POST','https://api.anthropic.com/v1/messages',true);
-  xhr.setRequestHeader('Content-Type','application/json');
-  xhr.setRequestHeader('x-api-key',apiKey);
-  xhr.setRequestHeader('anthropic-version','2023-06-01');
-  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access','true');
+  if (!brooksConfigureAnthropicXhr(xhr)) {
+    if(btn){btn.disabled=false;btn.textContent='Send';}
+    typing.remove();
+    brooksHistory.pop();
+    msgs.removeChild(um);
+    input.value=text;
+    toast('Missing Anthropic API key or proxy URL.');
+    return;
+  }
   xhr.onreadystatechange=function(){
     if(xhr.readyState!==4) return;
     if(btn){btn.disabled=false;btn.textContent='Send';}
@@ -1120,6 +1188,10 @@ function runStoryMining(type) {
     document.getElementById('brooks-upgrade-overlay').style.display = 'flex';
     return;
   }
+  if (!brooksAnthropicCredentialsReady()) {
+    toast('Add your API key or configure an Anthropic proxy URL in Settings.');
+    return;
+  }
   var jokeList = jokes.map(function(j, i) {
     return (i+1) + '. [' + (j.tier||'?').toUpperCase() + '-tier, ' + (j.rating||'?') + '/5 stars] TITLE: ' + (j.title||'Untitled') + (j.body ? ' | MATERIAL: ' + j.body : '');
   }).join('\n');
@@ -1146,17 +1218,11 @@ function runStoryMining(type) {
   msgs.appendChild(typing);
   msgs.scrollTop = msgs.scrollHeight;
   brooksHistory.push({role:'user', content: prompt});
-  var key = apiKey || (document.getElementById('api-key-input') ? document.getElementById('api-key-input').value.trim() : '') || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
-  if (!key) {
-    typing.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">No API key found. Add your key in the right panel under API Key.</span>';
+  var xhr = new XMLHttpRequest();
+  if (!brooksConfigureAnthropicXhr(xhr)) {
+    typing.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Missing API key or proxy URL.</span>';
     return;
   }
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://api.anthropic.com/v1/messages');
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.setRequestHeader('x-api-key', key);
-  xhr.setRequestHeader('anthropic-version', '2023-06-01');
-  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
   xhr.onload = function() {
     var t = document.getElementById('brooks-typing');
     if (!t) return;
@@ -1193,11 +1259,10 @@ function runStoryMining(type) {
           messages:brooksHistory.concat([{role:'user',content:followPrompt}])
         });
         var followXHR = new XMLHttpRequest();
-        followXHR.open('POST', 'https://api.anthropic.com/v1/messages');
-        followXHR.setRequestHeader('Content-Type', 'application/json');
-        followXHR.setRequestHeader('x-api-key', key);
-        followXHR.setRequestHeader('anthropic-version', '2023-06-01');
-        followXHR.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+        if (!brooksConfigureAnthropicXhr(followXHR)) {
+          renderFollowUps(followFallback, "That one's got legs. Let's develop it — pick a direction:");
+          return;
+        }
         followXHR.onload = function() {
           try {
             if (followXHR.status !== 200) throw new Error('follow-up request failed');
@@ -1515,8 +1580,10 @@ function sendToWritingStudio() {
     toast('Nothing to send yet — have a conversation with Brooks first!');
     return;
   }
-  var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey')||''; } catch(e){ return ''; } })();
-  if (!key) { toast('Add your API key in Settings to use this feature.'); return; }
+  if (!brooksAnthropicCredentialsReady()) {
+    toast('Add your API key in Settings, or set an Anthropic proxy URL.');
+    return;
+  }
   var transcript = '';
   brooksHistory.forEach(function(m) {
     if (brooksSkipChatRender(m)) return;
@@ -1538,11 +1605,10 @@ function sendToWritingStudio() {
   toast('Brooks is writing your script...');
   var prompt = 'Based on this development conversation, write a proper TV pilot script outline. Include: a title page, logline, character descriptions, a cold open scene, Act One outline with 3-4 scenes, Act Two outline with 3-4 scenes, and a tag scene. Use proper screenplay formatting. Base everything specifically on the ideas discussed.\n\nCONVERSATION:\n' + transcript;
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://api.anthropic.com/v1/messages');
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.setRequestHeader('x-api-key', key);
-  xhr.setRequestHeader('anthropic-version', '2023-06-01');
-  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+  if (!brooksConfigureAnthropicXhr(xhr)) {
+    toast('Missing API key or proxy URL.');
+    return;
+  }
   xhr.onload = function() {
     if (xhr.status === 200) {
       try {
@@ -1955,16 +2021,13 @@ function updateProjectFileFromChat(fileId) {
 }
 
 function callBrooksAPI(prompt, callback, options) {
-  var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
-  if (!key) { toast('API key missing'); return; }
+  var xhr = new XMLHttpRequest();
+  if (!brooksConfigureAnthropicXhr(xhr)) {
+    toast('Add your API key in Settings, or set an Anthropic proxy URL.');
+    return;
+  }
   options = options || {};
 
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://api.anthropic.com/v1/messages', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.setRequestHeader('x-api-key', key);
-  xhr.setRequestHeader('anthropic-version', '2023-06-01');
-  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
   xhr.onload = function() {
     if (xhr.status === 200) {
       try {

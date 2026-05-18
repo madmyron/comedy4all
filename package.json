@@ -5,6 +5,7 @@
   "description": "Comedy 4 All local development server",
   "scripts": {
     "dev": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "proxy:dev": "node anthropic-proxy/server.js"
   }
 }
