@@ -1,4 +1,4 @@
-const CACHE = 'comedy4all-v1';
+const CACHE = 'comedy4all-v2';
 
 const SHELL = [
   '/',
@@ -50,7 +50,24 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Static assets: cache-first for fast loads
+  // App JS/CSS: network-first so code/CSS updates are not stuck behind stale cache (especially on phones)
+  const path = url.pathname;
+  if (path.startsWith('/js/') || path.startsWith('/css/')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(function(res) {
+          if (res && res.ok) {
+            var clone = res.clone();
+            caches.open(CACHE).then(function(c) { c.put(e.request, clone); });
+          }
+          return res;
+        })
+        .catch(function() { return caches.match(e.request); })
+    );
+    return;
+  }
+
+  // Other same-origin static assets: cache-first for fast loads
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;

@@ -535,6 +535,7 @@
         <div style="flex:1;font-weight:700;font-size:16px;color:var(--text)">Brooks AI</div>
         <button class="btn btn-sm hide-mobile" onclick="sendToWritingStudio()">&#9997;&#65039; To Studio</button>
         <button class="btn btn-sm" onclick="saveBrooksManual()" id="brooks-save-btn" style="background:var(--green);color:#fff">💾 Save</button>
+        <button class="btn btn-sm hide-mobile" id="brooks-save-project-btn" onclick="showBrooksSaveProjectModal()" style="display:none;background:var(--purple-bg);color:var(--purple);border-color:var(--purple)">📂 Save as project</button>
         <button class="btn btn-sm" onclick="createFileFromChat()" title="Auto-extract project files from the current conversation">📁 Auto-Extract Files</button>
         <button class="btn btn-sm" onclick="showBrooksManualFileModal()" title="Manually add a single project file">+ Manual Add</button>
         <button class="btn btn-sm" onclick="showBrooksUpdateFileModal()" title="Update Project File">📄 Update File</button>
@@ -559,6 +560,7 @@
   </div>
 </div>
       <div id="brooks-mobile-menu" style="display:none;position:absolute;top:100px;right:10px;z-index:200;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:160px">
+        <div onclick="showBrooksSaveProjectModal();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2);display:none" id="brooks-mobile-save-project">📂 Save as project</div>
         <div onclick="createFileFromChat();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">📁 Auto-Extract Files</div>
         <div onclick="showBrooksManualFileModal();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">+ Manual Add</div>
         <div onclick="sendToWritingStudio();toggleBrooksMenu()" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);border-radius:var(--r2)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">&#9997;&#65039; Send to Studio</div>
@@ -581,7 +583,10 @@
       <div style="flex:1;display:grid;grid-template-columns:1fr 262px;overflow:hidden;min-height:0">
         <div style="display:flex;flex-direction:column;min-height:0;">
           <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--bg)" id="chat-msgs" class="scroll">
-            <div id="brooks-welcome" class="cmsg ai"><div class="mfrom">BROOKS AI</div>Alright, Michael. I've read your material. The airport bit? Solid. The relationship stuff? We need to talk. You've got a show Friday and I refuse to let you walk out there with a 7.4 average on your closer. So -- are we punching up the set, writing new material, or do you want me to find you a sitcom deal first?</div>
+            <div id="brooks-welcome" class="cmsg ai"></div>
+          </div>
+          <div id="brooks-script-hint" style="display:none;padding:8px 14px;font-size:11px;color:var(--text3);background:var(--bg2);border-top:1px solid var(--border);line-height:1.55">
+            <strong>Save chat only?</strong> Tap <strong>Save</strong> above — no project needed. Use <strong>Save as project</strong> when you want this thread in Projects / Studio.
           </div>
           <div id="brooks-mobile-mining" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0">
             <button class="btn btn-sm" style="background:var(--purple-bg);border-color:var(--purple);color:var(--purple)" onclick="runStoryMining('sitcom')">🎬 Sitcom Ideas</button>
@@ -1010,7 +1015,7 @@
 <script src="js/jokes.js?v=2"></script>
 <script src="js/rehearsal.js?v=2"></script>
 <script src="js/analytics.js?v=2"></script>
-<script src="js/brooks.js?v=3"></script>
+<script src="js/brooks.js?v=4"></script>
 <script src="js/settings.js?v=2"></script>
 <script src="js/shows.js?v=2"></script>
 <script src="js/projects.js?v=2"></script>

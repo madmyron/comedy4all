@@ -1,6 +1,409 @@
 // - BROOKS AI -
 var BROOKS_SYS='You are Brooks -- a seasoned comedy writing veteran who genuinely wants Michael to succeed. You are sharp, witty, and direct. You always help with whatever Michael asks first, then you can briefly mention what you think is most urgent. Never refuse a request or redirect away from it -- if he wants to work on sitcom ideas, you work on sitcom ideas. If he wants to punch up a joke, you punch up the joke. You give your honest opinion but you do the work he asks.\n\nYour personality: warm but no-nonsense. You roast weak material with affection. You celebrate wins with real enthusiasm. You give specific actionable notes. Think: the best writing partner in the room who makes every session productive.\n\nBackground on Michael: stand-up comedian, entrepreneur, 1996 Olympian, based in Dallas TX. Top joke is the Airport security bit (9.2/10), tech jokes avg 8.3, relationship material avg 7.4.\n\nYour style: open with a quick observation or quip, then get straight to work. Never say "Great question!" -- that is hack. Max 3 short punchy paragraphs unless writing actual material. Use numbered lists when giving options.';
+var BROOKS_SCRIPT_SYS='You are Brooks in SCRIPT DEVELOPMENT mode — a calm, curious writing partner (not a roast comic right now). Your job is to help Michael deepen a movie or TV idea before any drafting.\n\nRules:\n- Ask ONE clear question per reply. Multi-part questions are forbidden unless they are truly a single concept — prefer a single focused question.\n- Invite messy, honest answers. Never demand polish.\n- Rotate through depth on: characters (want vs need), relationships, central conflict, tone/mood, theme, world/rules, why this story now, audience hook.\n- Keep paragraphs short. Warm, patient, zero gimmicky praise.\n- Do not dump outlines or beat sheets unless Michael explicitly asks.\n- Stay inside the format Michael chose (sitcom vs episodic TV vs feature vs skit) when giving examples.';
 var BROOKS_TRIAL_CODES=['BROOKS-FRIEND-2026','BROOKS-VIP-PASS','SITCOM-SCAN'];
+var brooksSessionKind = null;
+var brooksScriptFormat = null;
+var _brooksPendingTag = null;
+
+function brooksResetSessionMode() {
+  brooksSessionKind = null;
+  brooksScriptFormat = null;
+  _brooksPendingTag = null;
+}
+
+function brooksScriptFormatHumanLabel(fmt) {
+  if (fmt === 'sitcom') return 'Sitcom (ensemble / recurring comedy)';
+  if (fmt === 'tv') return 'Episodic TV (non-sitcom series — drama, dramedy, procedural with humor, limited series, etc.)';
+  if (fmt === 'feature') return 'Feature film';
+  if (fmt === 'skit') return 'Skit or short';
+  if (fmt === 'open') return 'Format still open — we\'ll figure it out from your description';
+  return fmt || 'script';
+}
+
+function applyBrooksSessionFromStoredTag(tag) {
+  brooksResetSessionMode();
+  if (!tag || typeof tag !== 'string') return;
+  var parts = tag.split(',');
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i].trim();
+    if (p.indexOf('script-') === 0) {
+      brooksSessionKind = 'script';
+      brooksScriptFormat = p.replace('script-', '');
+      _brooksPendingTag = p;
+      return;
+    }
+  }
+  if (tag.indexOf('jokes-work') !== -1) {
+    brooksSessionKind = 'jokes';
+    _brooksPendingTag = 'jokes-work';
+  }
+}
+
+function getBrooksActiveSystem() {
+  if (brooksSessionKind === 'script' && brooksScriptFormat) {
+    return BROOKS_SCRIPT_SYS + '\n\nActive format for this session: ' + brooksScriptFormatHumanLabel(brooksScriptFormat) + '.';
+  }
+  return BROOKS_SYS;
+}
+
+function brooksMessageContentPlain(content) {
+  return brooksMessageContentToText(content).trim();
+}
+
+function brooksSkipChatRender(m) {
+  if (!m) return true;
+  var text = brooksMessageContentPlain(m.content);
+  if (m.role === 'user' && text.indexOf('Here are all my jokes:') === 0) return true;
+  if (m.role === 'user' && text.indexOf('_C4A_BRIDGE_') === 0) return true;
+  return false;
+}
+
+function brooksExpandBridgeForApi(content) {
+  var text = typeof content === 'string' ? content : brooksMessageContentToText(content);
+  if (text.indexOf('_C4A_BRIDGE_') !== 0) return content;
+  try {
+    var o = JSON.parse(text.slice('_C4A_BRIDGE_'.length));
+    if (o.type === 'script-kickoff') {
+      return 'The writer chose script format: ' + (o.formatLabel || o.format || 'unknown') + '. Begin calmly: one brief welcoming sentence, then ask exactly ONE opening question so they can describe their rough idea in their own words (messy is fine). Do not ask multiple questions in one reply.';
+    }
+  } catch (e) {}
+  return text;
+}
+
+function brooksAwaitingPathPick() {
+  return document.getElementById('brooks-welcome') !== null || document.getElementById('brooks-script-format-picker') !== null;
+}
+
+function brooksChoiceRowHtml(buttons) {
+  var html = '<div class="brooks-choice-row">';
+  buttons.forEach(function(b) {
+    var safeLabel = String(b.label).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    html += '<button type="button" class="btn btn-sm brooks-choice-btn" onclick="' + b.onclick + '">' + safeLabel + '</button>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function updateBrooksScriptActionBar() {
+  var projBtn = document.getElementById('brooks-save-project-btn');
+  var hint = document.getElementById('brooks-script-hint');
+  var mobileProj = document.getElementById('brooks-mobile-save-project');
+  var showProj = brooksSessionKind === 'script' && brooksHistory && brooksHistory.length >= 2;
+  if (projBtn) projBtn.style.display = showProj ? 'inline-flex' : 'none';
+  if (mobileProj) mobileProj.style.display = showProj ? 'block' : 'none';
+  if (hint) hint.style.display = brooksSessionKind === 'script' ? 'block' : 'none';
+}
+
+function getBrooksSaveTagPreferSession() {
+  var manual = getSelectedTags();
+  if (brooksSessionKind === 'script' && brooksScriptFormat) {
+    var st = 'script-' + brooksScriptFormat;
+    return manual ? manual + ',' + st : st;
+  }
+  if (brooksSessionKind === 'jokes') {
+    return manual || _brooksPendingTag || 'jokes-work';
+  }
+  return manual || _brooksPendingTag || '';
+}
+
+function brooksPickPath(kind) {
+  var welcome = document.getElementById('brooks-welcome');
+  if (welcome) welcome.remove();
+  var msgs = document.getElementById('chat-msgs');
+  if (!msgs) return;
+  if (kind === 'script') {
+    brooksSessionKind = null;
+    brooksScriptFormat = null;
+    var wrap = document.createElement('div');
+    wrap.id = 'brooks-script-format-picker';
+    wrap.className = 'cmsg ai';
+    wrap.innerHTML = '<div class="mfrom">BROOKS AI</div><div style="margin-bottom:10px">Cool — let\'s develop a script idea. What shape is it?</div>' +
+      brooksChoiceRowHtml([
+        { label: 'Sitcom', onclick: 'brooksPickScriptFormat(\'sitcom\')' },
+        { label: 'TV show', onclick: 'brooksPickScriptFormat(\'tv\')' },
+        { label: 'Feature film', onclick: 'brooksPickScriptFormat(\'feature\')' },
+        { label: 'Skit / short', onclick: 'brooksPickScriptFormat(\'skit\')' }
+      ]) +
+      '<div style="font-size:11px;color:var(--text3);margin-top:8px">Or describe it in your own words in the box below and hit Send — we\'ll figure out the format together.</div>';
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+    brooksHistory = [];
+    return;
+  }
+  if (kind === 'jokes') {
+    brooksSessionKind = 'jokes';
+    brooksScriptFormat = null;
+    _brooksPendingTag = 'jokes-work';
+    var jokeOpeners = [
+      'Good — jokes mode. Tell me what you want first: punch up a bit, new angles, set order, weaker jokes… Or tap Story Mining below if you want me scanning everything for TV or movie DNA.',
+      'Stand-up mode it is. What are we fixing, sharpening, or inventing today? The mining buttons are there if you want a big sweep through your library.',
+      'Alright, material first. Pick a lane in plain English — or run a sitcom/movie scan when you\'re ready for that sugar rush.'
+    ];
+    var jo = jokeOpeners[Math.floor(Math.random() * jokeOpeners.length)];
+    var div = document.createElement('div');
+    div.className = 'cmsg ai';
+    div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + jo;
+    msgs.appendChild(div);
+    brooksHistory = [];
+    msgs.scrollTop = msgs.scrollHeight;
+    updateBrooksScriptActionBar();
+  }
+}
+
+function brooksPickScriptFormat(fmt) {
+  var picker = document.getElementById('brooks-script-format-picker');
+  if (picker) picker.remove();
+  brooksSessionKind = 'script';
+  brooksScriptFormat = fmt;
+  _brooksPendingTag = 'script-' + fmt;
+  brooksScriptKickoff(fmt);
+}
+
+function brooksScriptKickoff(fmt) {
+  if (!hasBrooksAccess()) {
+    var o = document.getElementById('brooks-upgrade-overlay');
+    if (o) o.style.display = 'flex';
+    return;
+  }
+  var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
+  if (!key || key.length < 10) {
+    toast('Add your API key in Settings first.');
+    return;
+  }
+  var msgs = document.getElementById('chat-msgs');
+  if (!msgs) return;
+  var bridge = '_C4A_BRIDGE_' + JSON.stringify({ type: 'script-kickoff', format: fmt, formatLabel: brooksScriptFormatHumanLabel(fmt) });
+  brooksHistory = [{ role: 'user', content: bridge }];
+  var typing = document.createElement('div');
+  typing.className = 'cmsg ai';
+  typing.id = 'brooks-typing-kickoff';
+  typing.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--text3)">thinking...</span>';
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+  var btn = document.getElementById('send-btn');
+  if (btn) { btn.disabled = true; }
+
+  var kickMsg = { role: 'user', content: brooksExpandBridgeForApi(bridge) };
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.anthropic.com/v1/messages', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('x-api-key', key);
+  xhr.setRequestHeader('anthropic-version', '2023-06-01');
+  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    var tk = document.getElementById('brooks-typing-kickoff');
+    if (btn) { btn.disabled = false; }
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var reply = (data.content || []).filter(function(c){ return c.type === 'text'; }).map(function(c){ return c.text; }).join('') || 'No response.';
+        brooksHistory.push({ role: 'assistant', content: reply });
+        if (tk) tk.innerHTML = '<div class="mfrom">BROOKS AI</div>' + reply.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+        tk.id = '';
+      } catch (e) {
+        if (tk) tk.innerHTML = '<div class="mfrom">BROOKS AI</div>Something glitched. Try Send with a hello.';
+      }
+    } else if (xhr.status === 401) {
+      if (tk) tk.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Invalid API key.</span>';
+    } else {
+      if (tk) tk.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Error ' + xhr.status + '.</span>';
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+    updateBrooksScriptActionBar();
+  };
+  xhr.onerror = function() {
+    if (btn) { btn.disabled = false; }
+    var tk = document.getElementById('brooks-typing-kickoff');
+    if (tk) tk.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error.</span>';
+  };
+  var payload = JSON.stringify({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 600,
+    system: getBrooksActiveSystem(),
+    messages: [kickMsg]
+  });
+  xhr.send(payload);
+}
+
+function showBrooksSaveProjectModal() {
+  if (!currentUser || !_sb) {
+    toast('Sign in to save a project.');
+    return;
+  }
+  if (brooksSessionKind !== 'script') {
+    toast('Save as project is for script-development chats.');
+    return;
+  }
+
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:10001;font-family:Inter,sans-serif;padding:16px';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg);padding:22px;border-radius:14px;border:1px solid var(--border);width:min(400px,100%);max-height:90vh;overflow-y:auto';
+  box.innerHTML = '<div style="font-weight:700;color:var(--text);margin-bottom:14px;font-size:15px">Save as project</div>' +
+    '<label style="font-size:11px;color:var(--text3)">Title (optional for now)</label>' +
+    '<input id="brooks-proj-title" type="text" placeholder="Working title…" style="width:100%;box-sizing:border-box;margin:6px 0 12px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text);font-size:13px">' +
+    '<label style="font-size:11px;color:var(--text3)">Short description (optional)</label>' +
+    '<textarea id="brooks-proj-desc" placeholder="One line about the idea…" style="width:100%;box-sizing:border-box;min-height:64px;margin:6px 0 14px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text);font-size:13px"></textarea>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">' +
+    '<button type="button" id="brooks-proj-suggest-titles" class="btn btn-sm" style="flex:1;min-width:120px">Suggest 3 titles</button>' +
+    '</div>' +
+    '<div id="brooks-proj-title-picks" style="display:none;flex-direction:column;gap:6px;margin-bottom:12px"></div>';
+
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;margin-top:8px';
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-sm';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = function() { document.body.removeChild(modal); };
+
+  var saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-sm btn-primary';
+  saveBtn.textContent = 'Create project';
+  saveBtn.style.background = 'var(--gold)';
+  saveBtn.style.color = '#fff';
+  saveBtn.onclick = function() {
+    var titleEl = document.getElementById('brooks-proj-title');
+    var descEl = document.getElementById('brooks-proj-desc');
+    var name = (titleEl && titleEl.value.trim()) ? titleEl.value.trim() : 'Untitled project';
+    var desc = descEl ? descEl.value.trim() : '';
+    finalizeBrooksProjectSave(modal, name, desc);
+  };
+
+  row.appendChild(cancelBtn);
+  row.appendChild(saveBtn);
+  box.appendChild(row);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+
+  var suggestBtn = document.getElementById('brooks-proj-suggest-titles');
+  if (suggestBtn) {
+    suggestBtn.onclick = function() {
+      brooksSuggestThreeTitles(function(arr) {
+        var picks = document.getElementById('brooks-proj-title-picks');
+        var titleIn = document.getElementById('brooks-proj-title');
+        if (!picks) return;
+        picks.style.display = 'flex';
+        picks.innerHTML = '';
+        arr.forEach(function(t, idx) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'btn btn-sm';
+          b.style.cssText = 'text-align:left;justify-content:flex-start';
+          b.textContent = (idx + 1) + '. ' + t;
+          b.onclick = function() {
+            if (titleIn) titleIn.value = t;
+          };
+          picks.appendChild(b);
+        });
+      });
+    };
+  }
+}
+
+function brooksSuggestThreeTitles(done) {
+  var key = apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
+  if (!key || key.length < 10) {
+    toast('Add your API key for title suggestions.');
+    return;
+  }
+  var transcript = '';
+  brooksHistory.forEach(function(m) {
+    if (brooksSkipChatRender(m)) return;
+    transcript += (m.role === 'user' ? 'WRITER: ' : 'BROOKS: ') + brooksMessageContentPlain(m.content) + '\n';
+  });
+  var prompt = 'Based on this script-development conversation, suggest exactly 3 catchy working titles. Return ONLY valid JSON: {"titles":["...","...","..."]} — no markdown.\n\nCONVERSATION:\n' + transcript;
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.anthropic.com/v1/messages', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('x-api-key', key);
+  xhr.setRequestHeader('anthropic-version', '2023-06-01');
+  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+  xhr.onload = function() {
+    if (xhr.status !== 200) {
+      toast('Could not suggest titles (' + xhr.status + ').');
+      return;
+    }
+    try {
+      var data = JSON.parse(xhr.responseText);
+      var raw = (data.content || []).filter(function(c){ return c.type === 'text'; }).map(function(c){ return c.text; }).join('');
+      var parsed = brooksParseJsonResponse(raw);
+      var titles = parsed.titles || parsed.title_suggestions;
+      if (!titles || !titles.length) throw new Error('no titles');
+      done(titles.slice(0, 3));
+    } catch (e) {
+      toast('Could not parse titles — try again.');
+    }
+  };
+  xhr.onerror = function() { toast('Network error suggesting titles.'); };
+  xhr.send(JSON.stringify({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 400,
+    messages: [{ role: 'user', content: prompt }]
+  }));
+}
+
+function finalizeBrooksProjectSave(modal, projectName, projectDesc) {
+  function closeModal() {
+    if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+  }
+  var tiBar = document.getElementById('brooks-convo-title');
+  var convoTitle = (tiBar && tiBar.value.trim()) ? tiBar.value.trim() : projectName;
+
+  sbSaveBrooksConversation(function() {
+    if (!currentBrooksConversationId) {
+      toast('Save this chat first (nothing to link yet).');
+      closeModal();
+      return;
+    }
+    _sb.from('projects')
+      .insert([{ user_id: currentUser.id, name: projectName, description: projectDesc || '' }])
+      .select('id')
+      .single()
+      .then(function(ins) {
+        if (ins.error || !ins.data || !ins.data.id) {
+          toast('Could not create project.');
+          closeModal();
+          return;
+        }
+        var pid = ins.data.id;
+        _sb.from('brooks_conversations')
+          .update({ project_id: pid })
+          .eq('id', currentBrooksConversationId)
+          .eq('user_id', currentUser.id)
+          .then(function(u1) {
+            if (u1.error) {
+              console.error(u1.error);
+              toast('Project created but linking the chat failed.');
+              closeModal();
+              return;
+            }
+            var summaryBits = '';
+            brooksHistory.forEach(function(m) {
+              if (brooksSkipChatRender(m)) return;
+              summaryBits += (m.role === 'user' ? 'Writer: ' : 'Brooks: ') + brooksMessageContentPlain(m.content).substring(0, 400) + '\n---\n';
+            });
+            var synopsis = summaryBits.length > 3500 ? summaryBits.substring(0, 3500) + '…' : summaryBits;
+            var noteBody = 'Brooks script-development session (' + brooksScriptFormatHumanLabel(brooksScriptFormat || '') + ')\n\nConversation excerpt:\n' + synopsis;
+            _sb.from('project_files').insert([{
+              project_id: pid,
+              name: 'Brooks — session notes',
+              file_type: 'Notes',
+              content: noteBody
+            }]).then(function(pf) {
+              if (pf.error) console.warn(pf.error);
+              toast('Project created and linked!');
+              closeModal();
+              if (tiBar && projectName && projectName !== 'Untitled project') tiBar.value = projectName;
+              if (typeof loadBrooksProjectSelector === 'function') loadBrooksProjectSelector();
+              if (typeof loadProjects === 'function') loadProjects();
+            });
+          });
+      });
+  }, convoTitle, getBrooksSaveTagPreferSession());
+}
+
 var currentBrooksConversationId = null;
 var _brooksConversationSaved = false;
 var brooksImages = [];
@@ -90,6 +493,7 @@ function loadBrooksHistory() {
         if (msgs) {
           msgs.innerHTML = '';
           brooksHistory.forEach(function(m) {
+            if (brooksSkipChatRender(m)) return;
             var div = document.createElement('div');
             div.className = 'cmsg ' + (m.role === 'user' ? 'user' : 'ai');
             if (m.role === 'assistant') {
@@ -221,42 +625,6 @@ function getSelectedTags() {
 }
 
 function setSelectedTags(tagString) {
-  if (!tagString) {
-    var btns = document.querySelectorAll('.brooks-tag-btn');
-    btns.forEach(function(b) {
-      b.classList.remove('tag-active');
-      b.style.background = 'transparent';
-      b.style.color = 'var(--text2)';
-      b.style.borderColor = b.dataset.color || 'var(--border)';
-    });
-    return;
-  }
-  var tags = tagString.split(',');
-  var btns = document.querySelectorAll('.brooks-tag-btn');
-  btns.forEach(function(b) {
-    var color = b.dataset.color || 'var(--border)';
-    if (tags.indexOf(b.dataset.tag) !== -1) {
-      b.classList.add('tag-active');
-      b.style.background = color;
-      b.style.color = '#fff';
-      b.style.borderColor = color;
-    } else {
-      b.classList.remove('tag-active');
-      b.style.background = 'transparent';
-      b.style.color = 'var(--text2)';
-      b.style.borderColor = color;
-    }
-  });
-}
-
-function getSelectedTags() {
-  var btns = document.querySelectorAll('.brooks-tag-btn');
-  var active = [];
-  btns.forEach(function(b) { if (b.classList.contains('tag-active')) active.push(b.dataset.tag); });
-  return active.join(',');
-}
-
-function setSelectedTags(tagString) {
   var btns = document.querySelectorAll('.brooks-tag-btn');
   if (!tagString) {
     btns.forEach(function(b) {
@@ -296,7 +664,8 @@ function sbSaveBrooksConversation(callback, customTitle, customTag) {
       if (m.role === 'user' && contentText.length < 200
         && contentText.indexOf('Here are all my jokes') === -1
         && contentText.indexOf('You are a TV development') === -1
-        && contentText.indexOf('Read ALL of my jokes') === -1) {
+        && contentText.indexOf('Read ALL of my jokes') === -1
+        && contentText.indexOf('_C4A_BRIDGE_') === -1) {
         title = contentText.substring(0, 60);
         break;
       }
@@ -304,9 +673,14 @@ function sbSaveBrooksConversation(callback, customTitle, customTag) {
     if (!title) title = 'Brooks Session ' + new Date().toLocaleDateString();
   }
   var now = new Date().toISOString();
+  var resolvedInsertTag = (customTag !== undefined && customTag !== null && String(customTag).trim() !== '')
+    ? String(customTag).trim()
+    : (getBrooksSaveTagPreferSession() || null);
+  if (resolvedInsertTag === '') resolvedInsertTag = null;
+
     if (!currentBrooksConversationId) {
       _sb.from('brooks_conversations')
-        .insert({ user_id: currentUser.id, title: title, tag: customTag || null, messages: brooksHistory, created_at: now, updated_at: now })
+        .insert({ user_id: currentUser.id, title: title, tag: resolvedInsertTag, messages: brooksHistory, created_at: now, updated_at: now })
         .select('id').single()
       .then(function(res) {
         if (res.error) { console.error('Brooks save error:', res.error); if (typeof callback === 'function') callback(); return; }
@@ -327,7 +701,12 @@ function sbSaveBrooksConversation(callback, customTitle, customTag) {
   } else {
     var updateData = { messages: brooksHistory, updated_at: now };
     if (customTitle) updateData.title = customTitle;
-    if (customTag !== undefined) updateData.tag = customTag;
+    if (customTag !== undefined && customTag !== null && String(customTag).trim() !== '') {
+      updateData.tag = String(customTag).trim();
+    } else {
+      var rt = getBrooksSaveTagPreferSession();
+      if (rt) updateData.tag = rt;
+    }
     _sb.from('brooks_conversations')
       .update(updateData)
       .eq('id', currentBrooksConversationId)
@@ -380,12 +759,13 @@ function restoreActiveBrooksSession() {
       var convo = res.data;
       currentBrooksConversationId = convo.id;
       brooksHistory = convo.messages || [];
+      applyBrooksSessionFromStoredTag(convo.tag);
       
       var msgs = document.getElementById('chat-msgs');
       if (msgs) {
         msgs.innerHTML = '';
         brooksHistory.forEach(function(m) {
-          if (m.role === 'user' && m.content && m.content.indexOf('Here are all my jokes:') === 0) return;
+          if (brooksSkipChatRender(m)) return;
           var div = document.createElement('div');
           div.className = 'cmsg ' + (m.role === 'user' ? 'user' : 'ai');
           if (m.role === 'assistant') {
@@ -402,6 +782,7 @@ function restoreActiveBrooksSession() {
       if (titleInput) titleInput.value = convo.title || '';
       setSelectedTags(convo.tag);
       _brooksConversationSaved = true;
+      updateBrooksScriptActionBar();
     });
 }
 
@@ -483,7 +864,7 @@ function sbLoadBrooksConversations() {
           if (convo.tag) {
             var tags = convo.tag.split(',');
             tags.forEach(function(t) {
-              var color = tagColors[t] || '#795548';
+              var color = tagColors[t] || (t.indexOf('script-') === 0 ? '#7a43b5' : '#795548');
               tagBadges += '<span style="font-size:9px;font-weight:600;padding:1px 4px;border-radius:4px;margin-left:4px;background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + t + '</span>';
             });
           }
@@ -524,8 +905,9 @@ function sbLoadBrooksConversations() {
             var titleInput = document.getElementById('brooks-convo-title');
             if (titleInput) titleInput.value = convo.title || '';
             setSelectedTags(convo.tag);
+            applyBrooksSessionFromStoredTag(convo.tag);
             brooksHistory.forEach(function(m) {
-              if (m.role === 'user' && m.content && m.content.indexOf('Here are all my jokes:') === 0) return;
+              if (brooksSkipChatRender(m)) return;
               var div = document.createElement('div');
               div.className = 'cmsg ' + (m.role === 'user' ? 'user' : 'ai');
               if (m.role === 'assistant') div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + m.content.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
@@ -533,6 +915,7 @@ function sbLoadBrooksConversations() {
               msgs.appendChild(div);
             });
             msgs.scrollTop = msgs.scrollHeight;
+            updateBrooksScriptActionBar();
             var mpanel = document.getElementById('mobile-past-convos');
             var mbtn = document.getElementById('past-convos-toggle');
             if (mpanel) mpanel.style.display = 'none';
@@ -598,6 +981,23 @@ function sendBrooks(){
   var input=document.getElementById('brooks-input'),msgs=document.getElementById('chat-msgs');
   if(!input||!msgs||(!input.value.trim()&&!brooksImages.length)) return;
   var text=input.value.trim();
+
+  if (document.getElementById('brooks-welcome')) {
+    toast('Pick a button first — jokes or script idea.');
+    return;
+  }
+
+  var pickerEl = document.getElementById('brooks-script-format-picker');
+  if (pickerEl) {
+    pickerEl.remove();
+    brooksSessionKind = 'script';
+    if (!brooksScriptFormat) {
+      brooksScriptFormat = 'open';
+      _brooksPendingTag = 'script-open';
+    }
+    updateBrooksScriptActionBar();
+  }
+
   input.value='';
   var um=document.createElement('div');
   um.className='cmsg user';
@@ -620,7 +1020,7 @@ function sendBrooks(){
   } else {
     userContent = text;
   }
-  if (brooksHistory.length === 0 && jokes && jokes.length > 0) {
+  if (brooksSessionKind === 'jokes' && brooksHistory.length === 0 && jokes && jokes.length > 0) {
     var jokeContext = jokes.map(function(j, i) {
       return (i+1) + '. ' + (j.title||'') + ': ' + (j.body||j.text||j.setup||'') + (j.punch ? ' / ' + j.punch : '') + ' [' + (j.tier||'?') + '-tier, ' + (j.rating||'?') + '/5]';
     }).join('\n');
@@ -673,11 +1073,13 @@ function sendBrooks(){
       typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Error '+xhr.status+'. Check your API key and try again.</span>';
     }
     msgs.scrollTop=msgs.scrollHeight;
+    updateBrooksScriptActionBar();
   };
   xhr.onerror=function(){
     if(btn){btn.disabled=false;btn.textContent='Send';}
     typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error. Make sure you\'re online and your API key is correct.</span>';
     msgs.scrollTop=msgs.scrollHeight;
+    updateBrooksScriptActionBar();
   };
   // Build a trimmed alternating window for the API only — brooksHistory stays intact
   var apiHistory = [brooksHistory[brooksHistory.length - 1]];
@@ -691,19 +1093,29 @@ function sendBrooks(){
   var apiMessages = apiHistory.slice();
   var lastIndex = apiMessages.length - 1;
   if (lastIndex >= 0) {
+    var rawC = apiMessages[lastIndex].content;
+    var expanded = brooksExpandBridgeForApi(rawC);
     apiMessages[lastIndex] = {
       role: apiMessages[lastIndex].role,
-      content: prependBrooksProjectContextToContent(apiMessages[lastIndex].content)
+      content: prependBrooksProjectContextToContent(expanded)
     };
   }
 
-  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:hadImages?2000:1000,system:BROOKS_SYS,messages:apiMessages});
+  var payload=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:hadImages?2000:1000,system:getBrooksActiveSystem(),messages:apiMessages});
   xhr.send(payload);
 }
 
 function runStoryMining(type) {
   var msgs = document.getElementById('chat-msgs');
   if (!msgs) return;
+  var welcome = document.getElementById('brooks-welcome');
+  if (welcome) welcome.remove();
+  var picker = document.getElementById('brooks-script-format-picker');
+  if (picker) picker.remove();
+  brooksSessionKind = 'jokes';
+  brooksScriptFormat = null;
+  _brooksPendingTag = 'jokes-work';
+  updateBrooksScriptActionBar();
   if (!hasBrooksAccess()) {
     document.getElementById('brooks-upgrade-overlay').style.display = 'flex';
     return;
@@ -880,16 +1292,25 @@ function onBrooksProjectChange(val) {
     });
 }
 function renderBrooksGreeting(){
-  var el=document.getElementById('brooks-welcome');
-  if(!el) return;
-  var greetings=[
-    "Alright, kid. Let's see if this material's got a pulse or if we're just embalming it in punchlines.",
-    "Pull up a chair. I've been around long enough to know where the laugh is hiding, and where it's pretending to be.",
-    "Okay, rookie. Hand me the jokes and I'll tell you which ones are road-ready and which ones belong in witness protection.",
-    "I've got news: the audience is mean, time is short, and your opener better know how to fight.",
-    "Let's go through this pile and separate the gold from the cafeteria tray."
+  brooksResetSessionMode();
+  var msgs = document.getElementById('chat-msgs');
+  if (msgs) {
+    msgs.innerHTML = '<div id="brooks-welcome" class="cmsg ai"></div>';
+  }
+  var el = document.getElementById('brooks-welcome');
+  if (!el) return;
+  var lines = [
+    'Hey — before we dive in, what kind of session is this?',
+    'Good to see you. Are we working stand-up material, or hashing out a script idea?',
+    'Quick choice first so I don\'t bulldoze the wrong lane.'
   ];
-  el.innerHTML='<div class="mfrom">BROOKS AI</div>'+greetings[Math.floor(Math.random()*greetings.length)];
+  var pick = lines[Math.floor(Math.random() * lines.length)];
+  el.innerHTML = '<div class="mfrom">BROOKS AI</div><div style="margin-bottom:10px;line-height:1.45">' + pick + '</div>' +
+    brooksChoiceRowHtml([
+      { label: 'Stand-up / jokes', onclick: 'brooksPickPath(\'jokes\')' },
+      { label: 'Script idea', onclick: 'brooksPickPath(\'script\')' }
+    ]);
+  updateBrooksScriptActionBar();
 }
 
 function initBrooksTags() {
@@ -924,7 +1345,8 @@ function showBrooksSaveModal(onSave, onDiscard) {
       if (m.role === 'user' && contentText.length < 200
         && contentText.indexOf('Here are all my jokes') === -1
         && contentText.indexOf('You are a TV development') === -1
-        && contentText.indexOf('Read ALL of my jokes') === -1) {
+        && contentText.indexOf('Read ALL of my jokes') === -1
+        && contentText.indexOf('_C4A_BRIDGE_') === -1) {
         autoTitle = contentText.substring(0, 60);
         break;
       }
@@ -1017,8 +1439,8 @@ function showBrooksSaveModal(onSave, onDiscard) {
 function saveBrooksManual() {
   var titleInput = document.getElementById('brooks-convo-title');
   var title = titleInput ? titleInput.value.trim() : '';
-  var tag = getSelectedTags();
-  
+  var tag = getBrooksSaveTagPreferSession();
+
   sbSaveBrooksConversation(function() {
     toast('Conversation saved!');
     var btn = document.getElementById('brooks-save-btn');
@@ -1061,14 +1483,6 @@ function discardBrooksSession() {
 
 function clearBrooks() {
   var msgs = document.getElementById('chat-msgs');
-  var openers = [
-    "Okay, rookie. Hand me the jokes and I'll tell you which ones are road-ready and which ones belong in witness protection.",
-    "Pull up a chair. I've been around long enough to know where the laugh is hiding, and where it's pretending to be.",
-    "Alright, kid. Let's see if this material's got a pulse or if we're just embalming it in punchlines.",
-    "I've got news: the audience is mean, time is short, and your opener better know how to fight.",
-    "New session. Same standards. Let's see what you've got."
-  ];
-  var opener = openers[Math.floor(Math.random() * openers.length)];
   function resetUI() {
     if (currentUser && _sb) {
       _sb.from('brooks_messages').delete().eq('user_id', currentUser.id);
@@ -1080,11 +1494,11 @@ function clearBrooks() {
     _brooksConversationSaved = false;
     var titleInput = document.getElementById('brooks-convo-title');
     if (titleInput) titleInput.value = '';
-    if (msgs) msgs.innerHTML = '';
-    var div = document.createElement('div');
-    div.className = 'cmsg ai';
-    div.innerHTML = '<div class="mfrom">BROOKS AI</div>' + opener;
-    if (msgs) msgs.appendChild(div);
+    setSelectedTags('');
+    if (msgs) {
+      msgs.innerHTML = '<div id="brooks-welcome" class="cmsg ai"></div>';
+      renderBrooksGreeting();
+    }
     if (typeof sbLoadBrooksConversations === 'function') sbLoadBrooksConversations();
     toast('Session saved and started fresh!');
   }
@@ -1105,15 +1519,19 @@ function sendToWritingStudio() {
   if (!key) { toast('Add your API key in Settings to use this feature.'); return; }
   var transcript = '';
   brooksHistory.forEach(function(m) {
-    if (m.role === 'user' && (m.content.indexOf('Here are all my jokes') !== -1 || m.content.length > 200)) return;
+    if (brooksSkipChatRender(m)) return;
+    var ct = brooksMessageContentToText(m.content);
+    if (m.role === 'user' && (ct.indexOf('Here are all my jokes') !== -1 || ct.length > 200)) return;
     var label = m.role === 'user' ? 'MICHAEL' : 'BROOKS';
-    transcript += label + ':\n' + m.content + '\n\n';
+    transcript += label + ':\n' + ct + '\n\n';
   });
   var title = 'New Script';
   for (var i = 0; i < brooksHistory.length; i++) {
     var m = brooksHistory[i];
-    if (m.role === 'user' && m.content.length < 200 && m.content.indexOf('Here are all my jokes') === -1) {
-      title = m.content.substring(0, 50);
+    if (brooksSkipChatRender(m)) continue;
+    var uc = brooksMessageContentToText(m.content);
+    if (m.role === 'user' && uc.length < 200 && uc.indexOf('Here are all my jokes') === -1) {
+      title = uc.substring(0, 50);
       break;
     }
   }
@@ -1240,6 +1658,7 @@ function brooksNormalizeExtractedFiles(result) {
 function brooksBuildConversationMessages() {
   var messages = [];
   brooksHistory.forEach(function(m) {
+    if (brooksSkipChatRender(m)) return;
     var text = brooksMessageContentToText(m.content).trim();
     if (!text) return;
     messages.push({ role: m.role, content: text });
@@ -1515,6 +1934,7 @@ function updateProjectFileFromChat(fileId) {
     
     var transcript = '';
     brooksHistory.forEach(function(m) {
+      if (brooksSkipChatRender(m)) return;
       transcript += (m.role === 'user' ? 'MICHAEL: ' : 'BROOKS: ') + brooksMessageContentToText(m.content) + '\n\n';
     });
     prompt += transcript;
