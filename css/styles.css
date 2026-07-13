@@ -495,7 +495,7 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   #screen-jokes .topbar-title{display:none}
   #sets-topbar .topbar-title{display:none}
   #sets-topbar .btn:not(.btn-primary):not(#set-search){display:none}
-  #screen-sets .topbar select{display:inline-flex!important;max-width:160px}
+  #screen-sets .topbar select{display:inline-flex!important;flex:0 0 auto!important;flex-shrink:0!important;min-width:132px!important;max-width:170px!important;text-overflow:ellipsis}
   #sets-layout{display:flex!important;flex-direction:row!important;flex:1!important;height:0!important;overflow:hidden!important}
   #sets-layout > div:first-child{width:120px!important;min-width:120px!important;flex-shrink:0!important;overflow-y:auto!important;border-right:1px solid var(--border)!important;display:block!important}
   #sets-layout > div:nth-child(2){flex:1!important;overflow-y:auto!important;min-width:0!important;padding:10px 10px 100px!important}
@@ -542,7 +542,7 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   .studio-editor-head{align-items:stretch}
   .studio-action-row{width:100%}
   .studio-export-select{min-width:0;flex:1}
-  #set-search{display:inline-flex!important;width:110px!important;min-width:0!important;font-size:11px!important}
+  #set-search{display:inline-flex!important;width:90px!important;min-width:0!important;flex:1 1 auto!important;font-size:11px!important}
   #topbar-new-joke-btn{display:none}
   #mobile-new-joke-btn{display:inline-flex!important}
 }

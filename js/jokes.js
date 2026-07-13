@@ -585,7 +585,7 @@ function renderSet() {
         +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
         +'</div>'
         +'<div style="width:6px;height:6px;border-radius:50%;margin-top:0;background:'+color+';flex-shrink:0"></div>'
-        +'<div style="flex:1;min-width:0"><div data-title style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">tap + to add &middot; hold to open</div></div>'
+        +'<div style="flex:1;min-width:0"><div data-title style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">tap to open &middot; drag or + to add</div></div>'
         +'<button class="set-lib-add" onclick="event.stopPropagation();addJokeToSet(\''+j.id+'\')" style="flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'
         +'</div>';
     }).join('');
@@ -630,14 +630,17 @@ function renderSet() {
     if (typeof Sortable !== 'undefined') {
       setLibSortable = new Sortable(lib, {
         group: { name: 'setbuilder', pull: 'clone', put: false },
-        sort: true,
+        sort: false,
         animation: 150,
-        handle: '.drag-handle',
+        draggable: '.set-lib-item',
+        filter: '.set-lib-add',
+        preventOnFilter: false,
         forceFallback: true,
-        fallbackTolerance: 5,
-        delay: 150,
+        fallbackOnBody: true,
+        fallbackTolerance: 4,
+        delay: 160,
         delayOnTouchOnly: true,
-        touchStartThreshold: 5
+        touchStartThreshold: 8
       });
     }
   }
@@ -654,10 +657,11 @@ function renderSet() {
         draggable: '.sslot',
         filter: '.segue-wrapper, .set-empty-hint',
         forceFallback: true,
-        fallbackTolerance: 5,
-        delay: 150,
+        fallbackOnBody: true,
+        fallbackTolerance: 4,
+        delay: 160,
         delayOnTouchOnly: true,
-        touchStartThreshold: 5,
+        touchStartThreshold: 8,
         onAdd: function(evt) {
           var hint = canvas.querySelector('.set-empty-hint');
           if (hint) hint.remove();
