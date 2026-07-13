@@ -130,7 +130,7 @@ function openDetail(id) {
     +'<div style="font-size:11.5px;color:var(--text2);background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);padding:10px 12px;line-height:1.65;margin-bottom:6px">Strong '+j.tier.toUpperCase()+'-tier material. '+(j.score>=8?'Consistent crowd pleaser -- protect it in your set.':'Room to tighten the setup. Try cutting 10-15 seconds from the lead-in.')+'</div>'
     +'</div>'
     +'<div class="detail-actions">'
-    +'<button class="btn btn-primary btn-sm" onclick="toast(\'Added to set!\')">+ Add to Set</button>'
+    +'<button class="btn btn-primary btn-sm" onclick="addJokeToSet(\''+j.id+'\')">+ Add to Set</button>'
     +(isArchived
       ? '<button class="btn btn-sm btn-archive" onclick="unarchiveJoke(\''+j.id+'\')"> Restore</button>'
       : '<button class="btn btn-sm" onclick="openEditModal(\''+j.id+'\')"> Edit</button>'
@@ -585,7 +585,8 @@ function renderSet() {
         +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
         +'</div>'
         +'<div style="width:6px;height:6px;border-radius:50%;margin-top:0;background:'+color+';flex-shrink:0"></div>'
-        +'<div><div data-title style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">hold to open</div></div>'
+        +'<div style="flex:1;min-width:0"><div data-title style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">tap + to add &middot; hold to open</div></div>'
+        +'<button class="set-lib-add" onclick="event.stopPropagation();addJokeToSet(\''+j.id+'\')" style="flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'
         +'</div>';
     }).join('');
     
@@ -595,7 +596,7 @@ function renderSet() {
         var pressTimer = null;
 
         item.addEventListener('touchstart', function(e) {
-          if (e.target.closest('.drag-handle')) return;
+          if (e.target.closest('.drag-handle') || e.target.closest('.set-lib-add')) return;
           _libLastTouch = Date.now();
           pressTimer = setTimeout(function() {
             pressTimer = null;
@@ -615,7 +616,7 @@ function renderSet() {
         }, { passive: true });
 
         item.addEventListener('click', function(e) {
-          if (e.target.closest('.drag-handle')) return;
+          if (e.target.closest('.drag-handle') || e.target.closest('.set-lib-add')) return;
           if (e.target.closest('.set-lib-item')) {
             var jid = item.getAttribute('data-jid');
             if (jid) openDetail(jid);
@@ -632,8 +633,11 @@ function renderSet() {
         sort: true,
         animation: 150,
         handle: '.drag-handle',
-        delay: 300,
-        delayOnTouchOnly: true
+        forceFallback: true,
+        fallbackTolerance: 5,
+        delay: 150,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5
       });
     }
   }
@@ -649,6 +653,11 @@ function renderSet() {
         ghostClass: 'sortable-ghost',
         draggable: '.sslot',
         filter: '.segue-wrapper, .set-empty-hint',
+        forceFallback: true,
+        fallbackTolerance: 5,
+        delay: 150,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
         onAdd: function(evt) {
           var hint = canvas.querySelector('.set-empty-hint');
           if (hint) hint.remove();
@@ -673,12 +682,15 @@ function renderSet() {
             +'<div class="sslot-time"></div>';
           recalcSetRuntime();
           syncLibraryToCanvas();
+          persistCurrentSet();
         },
         onEnd: function() {
           recalcSetRuntime();
+          persistCurrentSet();
         },
         onRemove: function() {
           recalcSetRuntime();
+          persistCurrentSet();
         }
       });
       recalcSetRuntime();
@@ -712,6 +724,52 @@ function renderSet() {
   }
 }
 
+function persistCurrentSet() {
+  var canvas = document.getElementById('set-canvas');
+  if (!canvas) return;
+  var ids = [];
+  canvas.querySelectorAll('.sslot[data-jid]').forEach(function(s){ ids.push(String(s.getAttribute('data-jid'))); });
+  try { localStorage.setItem('c4a_active_set', JSON.stringify(ids)); } catch(e) {}
+}
+
+function buildSetSlotHtml(j) {
+  var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
+  return '<div class="sslot-num"></div>'
+    +'<div class="sslot-card" style="border-left:3px solid '+color+'">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+    +'<div style="font-size:12px;font-weight:600;color:var(--text)">'+j.title+'</div>'
+    +'<div style="cursor:pointer;color:var(--text3);font-size:14px;line-height:1;margin-top:-2px;" onclick="removeSetSlot(this)">&times;</div>'
+    +'</div>'
+    +'<div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace" class="slot-runtime" data-rt="'+j.runtime+'">'+j.runtime+'</div></div>'
+    +'<div class="sslot-time"></div>';
+}
+
+function addJokeToSet(id) {
+  var j = null;
+  for (var i=0;i<jokes.length;i++) { if(String(jokes[i].id)===String(id)){ j=jokes[i]; break; } }
+  if (!j) return;
+
+  var set = [];
+  try { set = JSON.parse(localStorage.getItem('c4a_active_set') || '[]'); } catch(e) {}
+  if (set.indexOf(String(j.id)) !== -1) { toast('"'+j.title+'" is already in your set.'); return; }
+  set.push(String(j.id));
+  try { localStorage.setItem('c4a_active_set', JSON.stringify(set)); } catch(e) {}
+
+  var canvas = document.getElementById('set-canvas');
+  if (canvas) {
+    var hint = canvas.querySelector('.set-empty-hint');
+    if (hint) hint.remove();
+    var slot = document.createElement('div');
+    slot.className = 'sslot';
+    slot.setAttribute('data-jid', String(j.id));
+    slot.innerHTML = buildSetSlotHtml(j);
+    canvas.appendChild(slot);
+    recalcSetRuntime();
+    syncLibraryToCanvas();
+  }
+  toast('Added "'+j.title+'" to your set \u2713');
+}
+
 function removeSetSlot(btn) {
   var el = btn;
   while (el && !el.classList.contains('sslot')) { el = el.parentElement; }
@@ -723,6 +781,7 @@ function removeSetSlot(btn) {
     }
     recalcSetRuntime(); 
     syncLibraryToCanvas();
+    persistCurrentSet();
   }
 }
 
