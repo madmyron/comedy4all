@@ -336,6 +336,12 @@
           <div id="set-lib"></div>
         </div>
         <div style="overflow-y:auto;padding:14px;background:var(--bg)" class="scroll">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="startNewSet()">+ New Set</button>
+            <button class="btn btn-sm" onclick="openMySetsModal()">My Sets</button>
+            <div style="flex:1"></div>
+            <button class="btn btn-sm btn-primary" onclick="saveCurrentSet()">Save Set</button>
+          </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;color:var(--text3)">
             <span style="font-weight:600" id="set-time-top">22:30</span>
             <div style="flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden"><div id="set-bar-top" style="height:100%;background:var(--gold);width:73%;border-radius:3px"></div></div>
@@ -1012,7 +1018,7 @@
 <script src="js/data.js?v=2"></script>
 <script src="js/supabase.js?v=3"></script>
 <script src="js/ui.js?v=2"></script>
-<script src="js/jokes.js?v=8"></script>
+<script src="js/jokes.js?v=9"></script>
 <script src="js/rehearsal.js?v=2"></script>
 <script src="js/analytics.js?v=2"></script>
 <script src="js/brooks.js?v=5"></script>

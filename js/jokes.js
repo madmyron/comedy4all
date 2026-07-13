@@ -535,20 +535,22 @@ function loadSavedSet(name) {
   recalcSetRuntime();
   syncLibraryToCanvas();
   persistCurrentSet();
+  var sel = document.getElementById('set-name-select');
+  if (sel) sel.value = name;
   toast('Loaded "'+name+'"');
 }
 
 function saveCurrentSet() {
   var canvas = document.getElementById('set-canvas');
-  if (!canvas) return;
+  if (!canvas) return false;
   var ids = [];
   canvas.querySelectorAll('.sslot[data-jid]').forEach(function(s){ ids.push(String(s.getAttribute('data-jid'))); });
-  if (!ids.length) { toast('Add some jokes to your set first, then Save.'); return; }
+  if (!ids.length) { toast('Add some jokes to your set first, then Save.'); return false; }
 
   var sel = document.getElementById('set-name-select');
   var suggested = (sel && sel.value) ? sel.value : '';
   var name = window.prompt('Name this set:', suggested);
-  if (name === null) return;
+  if (name === null) return false;
   name = name.trim();
   if (!name) name = 'Untitled Set';
 
@@ -566,6 +568,113 @@ function saveCurrentSet() {
   } catch(e) {}
   refreshSetNameSelect(name);
   toast('Saved "'+name+'" with '+ids.length+' joke'+(ids.length===1?'':'s')+' \u2713');
+  return true;
+}
+
+function clearSetCanvas() {
+  var canvas = document.getElementById('set-canvas');
+  if (!canvas) return;
+  canvas.innerHTML = '<div class="set-empty-hint" style="text-align:center;padding:30px;color:var(--text3);font-size:12px;border:2px dashed var(--border2);border-radius:var(--r2)">Tap + or drag a joke here to build your set</div>';
+  var sel = document.getElementById('set-name-select');
+  if (sel) sel.value = '';
+  recalcSetRuntime();
+  syncLibraryToCanvas();
+  persistCurrentSet();
+}
+
+function startNewSet() {
+  var canvas = document.getElementById('set-canvas');
+  var hasJokes = canvas && canvas.querySelectorAll('.sslot').length > 0;
+  if (!hasJokes) {
+    clearSetCanvas();
+    toast('New set started.');
+    return;
+  }
+  showConfirmModal(
+    'Start a new set?',
+    'Do you want to save your current set before starting a new one?',
+    [
+      { label: 'Save, then new', primary: true, onClick: function(){ if (saveCurrentSet()) { clearSetCanvas(); toast('New set started.'); } } },
+      { label: "Don't save", onClick: function(){ clearSetCanvas(); toast('New set started.'); } },
+      { label: 'Cancel', onClick: function(){} }
+    ]
+  );
+}
+
+function deleteSavedSet(name) {
+  var sets = getSavedSets().filter(function(s){ return String(s.name) !== String(name); });
+  try { localStorage.setItem('c4a_saved_sets', JSON.stringify(sets)); } catch(e) {}
+  refreshSetNameSelect();
+}
+
+function openMySetsModal() {
+  var existing = document.getElementById('my-sets-modal');
+  if (existing) existing.remove();
+  var sets = getSavedSets().slice().sort(function(a,b){ return (b.savedAt||0) - (a.savedAt||0); });
+
+  var modal = document.createElement('div');
+  modal.id = 'my-sets-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:10001;font-family:Inter,sans-serif;padding:16px';
+  modal.addEventListener('click', function(e){ if (e.target === modal) modal.remove(); });
+
+  var rows = '';
+  if (!sets.length) {
+    rows = '<div style="text-align:center;color:var(--text3);font-size:13px;padding:24px 8px">No saved sets yet.<br>Build a set and tap <strong>Save Set</strong>.</div>';
+  } else {
+    sets.forEach(function(s){
+      var count = (s.ids || []).length;
+      var nm = (s.name || 'Untitled').replace(/</g,'&lt;').replace(/'/g,"\\'");
+      var nmAttr = (s.name || 'Untitled').replace(/'/g,"\\'");
+      rows += '<div style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border)">'
+        + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+nm+'</div>'
+        + '<div style="font-size:11px;color:var(--text3)">'+count+' joke'+(count===1?'':'s')+'</div></div>'
+        + '<button class="btn btn-sm btn-primary" onclick="loadSavedSet(\''+nmAttr+'\');closeMySetsModal()">Load</button>'
+        + '<button class="btn btn-sm btn-danger" onclick="deleteSavedSet(\''+nmAttr+'\');openMySetsModal()">Delete</button>'
+        + '</div>';
+    });
+  }
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg);padding:20px;border-radius:14px;border:1px solid var(--border);width:min(440px,100%);max-height:80vh;display:flex;flex-direction:column';
+  box.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    + '<div style="font-weight:700;color:var(--text);font-size:15px">My Sets</div>'
+    + '<button class="btn btn-sm" onclick="closeMySetsModal()">Close</button></div>'
+    + '<div style="overflow-y:auto" class="scroll">' + rows + '</div>';
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+}
+
+function closeMySetsModal() {
+  var m = document.getElementById('my-sets-modal');
+  if (m) m.remove();
+}
+
+function showConfirmModal(title, message, buttons) {
+  var existing = document.getElementById('c4a-confirm-modal');
+  if (existing) existing.remove();
+  var modal = document.createElement('div');
+  modal.id = 'c4a-confirm-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:10002;font-family:Inter,sans-serif;padding:16px';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg);padding:20px;border-radius:14px;border:1px solid var(--border);width:min(400px,100%)';
+  var btnHtml = '';
+  buttons.forEach(function(b, i){
+    btnHtml += '<button data-idx="'+i+'" class="btn btn-sm'+(b.primary?' btn-primary':'')+'" style="flex:1;justify-content:center">'+b.label+'</button>';
+  });
+  box.innerHTML = '<div style="font-weight:700;color:var(--text);font-size:15px;margin-bottom:8px">'+title+'</div>'
+    + '<div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:16px">'+message+'</div>'
+    + '<div style="display:flex;gap:8px">'+btnHtml+'</div>';
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+  var btns = box.querySelectorAll('button[data-idx]');
+  for (var i=0;i<btns.length;i++){
+    (function(idx){
+      btns[idx].addEventListener('click', function(){
+        modal.remove();
+        if (buttons[idx] && typeof buttons[idx].onClick === 'function') buttons[idx].onClick();
+      });
+    })(i);
+  }
 }
 
 function syncLibraryToCanvas() {
