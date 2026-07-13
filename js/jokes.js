@@ -491,6 +491,7 @@ function saveEditedJoke() {
 
 var setLibSortable = null;
 var setCanvasSortable = null;
+var _setDragEndAt = 0;
 
 function saveCurrentSet() {
   var canvas = document.getElementById('set-canvas');
@@ -578,15 +579,10 @@ function renderSet() {
   if (lib) {
     lib.innerHTML = jokes.map(function(j){
       var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
-      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
-        +'<div class="drag-handle" style="display:flex;flex-direction:column;gap:2px;padding:4px 4px 4px 0;cursor:grab;flex-shrink:0;touch-action:none" onclick="event.stopPropagation()">'
-        +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
-        +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
-        +'<div style="width:14px;height:2px;background:var(--border2);border-radius:1px"></div>'
-        +'</div>'
-        +'<div style="width:6px;height:6px;border-radius:50%;margin-top:0;background:'+color+';flex-shrink:0"></div>'
+      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:8px;padding:9px 10px 9px 12px;border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+        +'<div style="width:7px;height:7px;border-radius:50%;background:'+color+';flex-shrink:0"></div>'
         +'<div style="flex:1;min-width:0"><div data-title style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">tap to open &middot; drag or + to add</div></div>'
-        +'<button class="set-lib-add" onclick="event.stopPropagation();addJokeToSet(\''+j.id+'\')" style="flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'
+        +'<button class="set-lib-add" onclick="event.stopPropagation();addJokeToSet(\''+j.id+'\')" style="flex-shrink:0;width:34px;height:34px;border-radius:9px;border:1px solid var(--gold-br);background:var(--gold-bg);color:var(--gold);font-size:20px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'
         +'</div>';
     }).join('');
     
@@ -648,7 +644,16 @@ function renderSet() {
   var canvas = document.getElementById('set-canvas');
   if (canvas) {
     if (!setCanvasSortable && typeof Sortable !== 'undefined') {
-      canvas.innerHTML = '<div class="set-empty-hint" style="text-align:center;padding:30px;color:var(--text3);font-size:12px;border:2px dashed var(--border2);border-radius:var(--r2)">&larr; Drag jokes from the left to build your set</div>';
+      canvas.innerHTML = '<div class="set-empty-hint" style="text-align:center;padding:30px;color:var(--text3);font-size:12px;border:2px dashed var(--border2);border-radius:var(--r2)">Tap + or drag a joke here to build your set</div>';
+
+      canvas.addEventListener('click', function(e) {
+        if (Date.now() - _setDragEndAt < 350) return;
+        if (e.target.closest('.sslot-x')) return;
+        var slot = e.target.closest('.sslot');
+        if (!slot) return;
+        var jid = slot.getAttribute('data-jid');
+        if (jid) openDetail(jid);
+      });
       
       setCanvasSortable = new Sortable(canvas, {
         group: { name: 'setbuilder', pull: true, put: true },
@@ -673,22 +678,16 @@ function renderSet() {
             if (String(jokes[k].id) === String(jid)) { j = jokes[k]; break; }
           }
           if (!j) return;
-          var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
           item.className = 'sslot';
           item.removeAttribute('style'); 
-          item.innerHTML = '<div class="sslot-num"></div>'
-            +'<div class="sslot-card" style="border-left:3px solid '+color+'">'
-            +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
-            +'<div style="font-size:12px;font-weight:600;color:var(--text)">'+j.title+'</div>'
-            +'<div style="cursor:pointer;color:var(--text3);font-size:14px;line-height:1;margin-top:-2px;" onclick="removeSetSlot(this)">&times;</div>'
-            +'</div>'
-            +'<div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace" class="slot-runtime" data-rt="'+j.runtime+'">'+j.runtime+'</div></div>'
-            +'<div class="sslot-time"></div>';
+          item.setAttribute('data-jid', String(j.id));
+          item.innerHTML = buildSetSlotHtml(j);
           recalcSetRuntime();
           syncLibraryToCanvas();
           persistCurrentSet();
         },
         onEnd: function() {
+          _setDragEndAt = Date.now();
           recalcSetRuntime();
           persistCurrentSet();
         },
@@ -706,18 +705,10 @@ function renderSet() {
           savedSet.forEach(function(jid) {
             var j = jokes.find(function(x){ return String(x.id) === String(jid); });
             if (!j) return;
-            var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
             var slot = document.createElement('div');
             slot.className = 'sslot';
             slot.setAttribute('data-jid', String(j.id));
-            slot.innerHTML = '<div class="sslot-num"></div>'
-              +'<div class="sslot-card" style="border-left:3px solid '+color+'">'
-              +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
-              +'<div style="font-size:12px;font-weight:600;color:var(--text)">'+j.title+'</div>'
-              +'<div style="cursor:pointer;color:var(--text3);font-size:14px;line-height:1;margin-top:-2px;" onclick="removeSetSlot(this)">&times;</div>'
-              +'</div>'
-              +'<div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace" class="slot-runtime" data-rt="'+j.runtime+'">'+j.runtime+'</div></div>'
-              +'<div class="sslot-time"></div>';
+            slot.innerHTML = buildSetSlotHtml(j);
             canvas.appendChild(slot);
           });
           recalcSetRuntime();
@@ -742,7 +733,7 @@ function buildSetSlotHtml(j) {
     +'<div class="sslot-card" style="border-left:3px solid '+color+'">'
     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
     +'<div style="font-size:12px;font-weight:600;color:var(--text)">'+j.title+'</div>'
-    +'<div style="cursor:pointer;color:var(--text3);font-size:14px;line-height:1;margin-top:-2px;" onclick="removeSetSlot(this)">&times;</div>'
+    +'<div class="sslot-x" style="cursor:pointer;color:var(--text3);font-size:18px;line-height:1;margin-top:-2px;padding:0 4px" onclick="event.stopPropagation();removeSetSlot(this)">&times;</div>'
     +'</div>'
     +'<div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace" class="slot-runtime" data-rt="'+j.runtime+'">'+j.runtime+'</div></div>'
     +'<div class="sslot-time"></div>';
@@ -781,7 +772,7 @@ function removeSetSlot(btn) {
     var canvas = document.getElementById('set-canvas');
     el.remove(); 
     if (canvas && canvas.querySelectorAll('.sslot').length === 0) {
-      canvas.innerHTML = '<div class="set-empty-hint" style="text-align:center;padding:30px;color:var(--text3);font-size:12px;border:2px dashed var(--border2);border-radius:var(--r2)">&larr; Drag jokes from the left to build your set</div>';
+      canvas.innerHTML = '<div class="set-empty-hint" style="text-align:center;padding:30px;color:var(--text3);font-size:12px;border:2px dashed var(--border2);border-radius:var(--r2)">Tap + or drag a joke here to build your set</div>';
     }
     recalcSetRuntime(); 
     syncLibraryToCanvas();
