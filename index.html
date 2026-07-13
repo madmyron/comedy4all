@@ -323,7 +323,7 @@
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Set Builder</div>
         <select id="set-name-select" class="btn topbar-select" style="padding:6px 9px" aria-label="Current set" onchange="loadSavedSet(this.value)"><option value="">Current set</option></select>
-        <input id="set-search" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:160px;transition:border .15s" placeholder="Search library..." oninput="filterSetLibraryBySearch(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <input id="set-search" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:160px;transition:border .15s" placeholder="Search..." oninput="filterSetLibraryBySearch(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
         <select id="set-tag-filter" class="btn" style="padding:6px 9px;max-width:120px" onchange="filterSetLibrary(this.value)">
           <option value="">All Tags</option>
         </select>
@@ -1012,7 +1012,7 @@
 <script src="js/data.js?v=2"></script>
 <script src="js/supabase.js?v=3"></script>
 <script src="js/ui.js?v=2"></script>
-<script src="js/jokes.js?v=7"></script>
+<script src="js/jokes.js?v=8"></script>
 <script src="js/rehearsal.js?v=2"></script>
 <script src="js/analytics.js?v=2"></script>
 <script src="js/brooks.js?v=5"></script>

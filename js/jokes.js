@@ -763,25 +763,34 @@ function renderSet() {
         }
       });
       recalcSetRuntime();
-      try {
-        var savedSet = JSON.parse(localStorage.getItem('c4a_active_set') || '[]');
-        if (savedSet.length && canvas.querySelectorAll('.sslot').length === 0) {
-          var hint = canvas.querySelector('.set-empty-hint');
-          if (hint) hint.remove();
-          savedSet.forEach(function(jid) {
-            var j = jokes.find(function(x){ return String(x.id) === String(jid); });
-            if (!j) return;
-            var slot = document.createElement('div');
-            slot.className = 'sslot';
-            slot.setAttribute('data-jid', String(j.id));
-            slot.innerHTML = buildSetSlotHtml(j);
-            canvas.appendChild(slot);
-          });
-          recalcSetRuntime();
-          syncLibraryToCanvas();
-        }
-      } catch(e) {}
     }
+    restoreActiveSetIfEmpty();
+  }
+}
+
+function restoreActiveSetIfEmpty() {
+  var canvas = document.getElementById('set-canvas');
+  if (!canvas) return;
+  if (canvas.querySelectorAll('.sslot').length > 0) return;
+  var savedSet = [];
+  try { savedSet = JSON.parse(localStorage.getItem('c4a_active_set') || '[]'); } catch(e) { return; }
+  if (!savedSet.length) return;
+  var added = 0;
+  savedSet.forEach(function(jid) {
+    var j = jokes.find(function(x){ return String(x.id) === String(jid); });
+    if (!j) return;
+    var slot = document.createElement('div');
+    slot.className = 'sslot';
+    slot.setAttribute('data-jid', String(j.id));
+    slot.innerHTML = buildSetSlotHtml(j);
+    canvas.appendChild(slot);
+    added++;
+  });
+  if (added > 0) {
+    var hint = canvas.querySelector('.set-empty-hint');
+    if (hint) hint.remove();
+    recalcSetRuntime();
+    syncLibraryToCanvas();
   }
 }
 
@@ -829,24 +838,25 @@ function addJokeToSet(id) {
   for (var i=0;i<jokes.length;i++) { if(String(jokes[i].id)===String(id)){ j=jokes[i]; break; } }
   if (!j) return;
 
-  var set = [];
-  try { set = JSON.parse(localStorage.getItem('c4a_active_set') || '[]'); } catch(e) {}
-  if (set.indexOf(String(j.id)) !== -1) { toast('"'+j.title+'" is already in your set.'); return; }
-  set.push(String(j.id));
-  try { localStorage.setItem('c4a_active_set', JSON.stringify(set)); } catch(e) {}
-
   var canvas = document.getElementById('set-canvas');
-  if (canvas) {
-    var hint = canvas.querySelector('.set-empty-hint');
-    if (hint) hint.remove();
-    var slot = document.createElement('div');
-    slot.className = 'sslot';
-    slot.setAttribute('data-jid', String(j.id));
-    slot.innerHTML = buildSetSlotHtml(j);
-    canvas.appendChild(slot);
-    recalcSetRuntime();
-    syncLibraryToCanvas();
-  }
+  if (!canvas) { toast('Open the Set Builder first, then add jokes.'); return; }
+
+  var already = false;
+  canvas.querySelectorAll('.sslot[data-jid]').forEach(function(s){
+    if (String(s.getAttribute('data-jid')) === String(j.id)) already = true;
+  });
+  if (already) { toast('"'+j.title+'" is already in your set.'); return; }
+
+  var hint = canvas.querySelector('.set-empty-hint');
+  if (hint) hint.remove();
+  var slot = document.createElement('div');
+  slot.className = 'sslot';
+  slot.setAttribute('data-jid', String(j.id));
+  slot.innerHTML = buildSetSlotHtml(j);
+  canvas.appendChild(slot);
+  recalcSetRuntime();
+  syncLibraryToCanvas();
+  persistCurrentSet();
   toast('Added "'+j.title+'" to your set \u2713');
 }
 
