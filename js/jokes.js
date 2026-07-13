@@ -601,6 +601,19 @@ function startNewSet() {
   );
 }
 
+function computeSetRuntime(ids) {
+  var t = 0;
+  (ids || []).forEach(function(jid){
+    var j = jokes.find(function(x){ return String(x.id) === String(jid); });
+    if (!j || !j.runtime) return;
+    var parts = String(j.runtime).split(':');
+    t += (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+  });
+  var m = Math.floor(t / 60);
+  var s = t % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
 function deleteSavedSet(name) {
   var sets = getSavedSets().filter(function(s){ return String(s.name) !== String(name); });
   try { localStorage.setItem('c4a_saved_sets', JSON.stringify(sets)); } catch(e) {}
@@ -623,11 +636,12 @@ function openMySetsModal() {
   } else {
     sets.forEach(function(s){
       var count = (s.ids || []).length;
+      var runtime = computeSetRuntime(s.ids);
       var nm = (s.name || 'Untitled').replace(/</g,'&lt;').replace(/'/g,"\\'");
       var nmAttr = (s.name || 'Untitled').replace(/'/g,"\\'");
       rows += '<div style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border)">'
         + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+nm+'</div>'
-        + '<div style="font-size:11px;color:var(--text3)">'+count+' joke'+(count===1?'':'s')+'</div></div>'
+        + '<div style="font-size:11px;color:var(--text3)">'+count+' joke'+(count===1?'':'s')+' &middot; <span style="color:var(--gold);font-family:\'DM Mono\',monospace">'+runtime+'</span></div></div>'
         + '<button class="btn btn-sm btn-primary" onclick="loadSavedSet(\''+nmAttr+'\');closeMySetsModal()">Load</button>'
         + '<button class="btn btn-sm btn-danger" onclick="deleteSavedSet(\''+nmAttr+'\');openMySetsModal()">Delete</button>'
         + '</div>';
