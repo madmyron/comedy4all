@@ -481,10 +481,12 @@ function saveEditedJoke() {
       break;
     }
   }
+  var eid = editingId;
   displayJokes = jokes.slice();
   closeEditModal();
   renderJokes(displayJokes);
-  openDetail(editingId);
+  refreshSetViews();
+  openDetail(eid);
   updateCounts();
   toast('Joke updated! \u2713');
 }
@@ -493,13 +495,77 @@ var setLibSortable = null;
 var setCanvasSortable = null;
 var _setDragEndAt = 0;
 
+function getSavedSets() {
+  try { return JSON.parse(localStorage.getItem('c4a_saved_sets') || '[]') || []; } catch(e) { return []; }
+}
+
+function refreshSetNameSelect(activeName) {
+  var sel = document.getElementById('set-name-select');
+  if (!sel) return;
+  var sets = getSavedSets();
+  var opts = '<option value="">Current set</option>';
+  sets.forEach(function(s){
+    var nm = (s.name || 'Untitled').replace(/</g,'&lt;');
+    opts += '<option value="'+nm+'">'+nm+'</option>';
+  });
+  sel.innerHTML = opts;
+  if (activeName) sel.value = activeName;
+}
+
+function loadSavedSet(name) {
+  if (!name) return;
+  var sets = getSavedSets();
+  var found = null;
+  for (var i=0;i<sets.length;i++){ if (String(sets[i].name) === String(name)) { found = sets[i]; break; } }
+  if (!found) return;
+  var canvas = document.getElementById('set-canvas');
+  if (!canvas) return;
+  canvas.querySelectorAll('.sslot').forEach(function(s){ s.remove(); });
+  var hint = canvas.querySelector('.set-empty-hint');
+  if (hint) hint.remove();
+  (found.ids || []).forEach(function(jid){
+    var j = jokes.find(function(x){ return String(x.id) === String(jid); });
+    if (!j) return;
+    var slot = document.createElement('div');
+    slot.className = 'sslot';
+    slot.setAttribute('data-jid', String(j.id));
+    slot.innerHTML = buildSetSlotHtml(j);
+    canvas.appendChild(slot);
+  });
+  recalcSetRuntime();
+  syncLibraryToCanvas();
+  persistCurrentSet();
+  toast('Loaded "'+name+'"');
+}
+
 function saveCurrentSet() {
   var canvas = document.getElementById('set-canvas');
   if (!canvas) return;
   var ids = [];
   canvas.querySelectorAll('.sslot[data-jid]').forEach(function(s){ ids.push(String(s.getAttribute('data-jid'))); });
-  try { localStorage.setItem('c4a_active_set', JSON.stringify(ids)); } catch(e) {}
-  toast('Set saved \u2713');
+  if (!ids.length) { toast('Add some jokes to your set first, then Save.'); return; }
+
+  var sel = document.getElementById('set-name-select');
+  var suggested = (sel && sel.value) ? sel.value : '';
+  var name = window.prompt('Name this set:', suggested);
+  if (name === null) return;
+  name = name.trim();
+  if (!name) name = 'Untitled Set';
+
+  var sets = getSavedSets();
+  var replaced = false;
+  for (var i=0;i<sets.length;i++){
+    if (String(sets[i].name).toLowerCase() === name.toLowerCase()) {
+      sets[i].ids = ids; sets[i].savedAt = Date.now(); replaced = true; break;
+    }
+  }
+  if (!replaced) sets.push({ name: name, ids: ids, savedAt: Date.now() });
+  try {
+    localStorage.setItem('c4a_saved_sets', JSON.stringify(sets));
+    localStorage.setItem('c4a_active_set', JSON.stringify(ids));
+  } catch(e) {}
+  refreshSetNameSelect(name);
+  toast('Saved "'+name+'" with '+ids.length+' joke'+(ids.length===1?'':'s')+' \u2713');
 }
 
 function syncLibraryToCanvas() {
@@ -568,6 +634,7 @@ function filterSetLibraryBySearch(q) {
 
 var _libLastTouch = 0;
 function renderSet() {
+  refreshSetNameSelect();
   var setTagFilter = document.getElementById('set-tag-filter');
   if (setTagFilter) {
     var allTags = [];
@@ -715,6 +782,22 @@ function renderSet() {
         }
       } catch(e) {}
     }
+  }
+}
+
+function refreshSetViews() {
+  var setScreen = document.getElementById('screen-sets');
+  if (!setScreen || !setScreen.classList.contains('active')) return;
+  if (typeof renderSet === 'function') renderSet();
+  var canvas = document.getElementById('set-canvas');
+  if (canvas) {
+    canvas.querySelectorAll('.sslot[data-jid]').forEach(function(slot) {
+      var jid = slot.getAttribute('data-jid');
+      var j = jokes.find(function(x){ return String(x.id) === String(jid); });
+      if (j) slot.innerHTML = buildSetSlotHtml(j);
+    });
+    recalcSetRuntime();
+    syncLibraryToCanvas();
   }
 }
 

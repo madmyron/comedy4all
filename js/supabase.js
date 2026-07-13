@@ -339,6 +339,7 @@ function _patchFunctions() {
     displayJokes = jokes.slice();
     var scr = document.getElementById('screen-jokes');
     if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
+    if (typeof refreshSetViews === 'function') refreshSetViews();
     openDetail(eid); updateCounts(); toast('Joke updated! \u2713');
     if (currentUser && _sb) {
       setSyncStatus('syncing');
