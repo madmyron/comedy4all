@@ -211,6 +211,7 @@ function sbLoadJokes() {
       updateCounts();
       setSyncStatus('synced');
       attachGridClicks();
+      if (typeof sbLoadSavedSets === 'function') sbLoadSavedSets();
     });
 }
 

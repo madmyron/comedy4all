@@ -499,6 +499,18 @@ function getSavedSets() {
   try { return JSON.parse(localStorage.getItem('c4a_saved_sets') || '[]') || []; } catch(e) { return []; }
 }
 
+function writeSavedSetsLocal(sets) {
+  try { localStorage.setItem('c4a_saved_sets', JSON.stringify(sets || [])); } catch(e) {}
+}
+
+function findSavedSetIndex(sets, name) {
+  var lower = String(name || '').toLowerCase();
+  for (var i = 0; i < sets.length; i++) {
+    if (String(sets[i].name || '').toLowerCase() === lower) return i;
+  }
+  return -1;
+}
+
 function refreshSetNameSelect(activeName) {
   var sel = document.getElementById('set-name-select');
   if (!sel) return;
@@ -555,19 +567,28 @@ function saveCurrentSet() {
   if (!name) name = 'Untitled Set';
 
   var sets = getSavedSets();
-  var replaced = false;
-  for (var i=0;i<sets.length;i++){
-    if (String(sets[i].name).toLowerCase() === name.toLowerCase()) {
-      sets[i].ids = ids; sets[i].savedAt = Date.now(); replaced = true; break;
-    }
+  var idx = findSavedSetIndex(sets, name);
+  var saved = { name: name, ids: ids, savedAt: Date.now() };
+  if (idx !== -1) {
+    saved.supabase_id = sets[idx].supabase_id;
+    sets[idx] = saved;
+  } else {
+    sets.push(saved);
   }
-  if (!replaced) sets.push({ name: name, ids: ids, savedAt: Date.now() });
-  try {
-    localStorage.setItem('c4a_saved_sets', JSON.stringify(sets));
-    localStorage.setItem('c4a_active_set', JSON.stringify(ids));
-  } catch(e) {}
-  refreshSetNameSelect(name);
-  toast('Saved "'+name+'" with '+ids.length+' joke'+(ids.length===1?'':'s')+' \u2713');
+  writeSavedSetsLocal(sets);
+  try { localStorage.setItem('c4a_active_set', JSON.stringify(ids)); } catch(e) {}
+  refreshSetNameSelect(saved.name);
+  sbUpsertSavedSet(saved, function(supabaseId) {
+    if (!supabaseId) return;
+    var latest = getSavedSets();
+    var i = findSavedSetIndex(latest, saved.name);
+    if (i !== -1) {
+      latest[i].supabase_id = supabaseId;
+      writeSavedSetsLocal(latest);
+    }
+  });
+  sbPersistActiveSet(ids, saved.name);
+  toast('Saved "'+saved.name+'" with '+ids.length+' joke'+(ids.length===1?'':'s')+' \u2713');
   return true;
 }
 
@@ -615,9 +636,164 @@ function computeSetRuntime(ids) {
 }
 
 function deleteSavedSet(name) {
-  var sets = getSavedSets().filter(function(s){ return String(s.name) !== String(name); });
-  try { localStorage.setItem('c4a_saved_sets', JSON.stringify(sets)); } catch(e) {}
+  var sets = getSavedSets();
+  var doomed = null;
+  var kept = [];
+  sets.forEach(function(s){
+    if (String(s.name) === String(name)) doomed = s;
+    else kept.push(s);
+  });
+  writeSavedSetsLocal(kept);
   refreshSetNameSelect();
+  if (doomed) sbDeleteSavedSet(doomed);
+}
+
+function sbUpsertSavedSet(setObj, done) {
+  if (!_sb || !currentUser || !setObj) { if (done) done(null); return; }
+  var row = {
+    user_id: currentUser.id,
+    name: setObj.name,
+    joke_ids: setObj.ids || [],
+    updated_at: new Date().toISOString()
+  };
+  var finish = function(res) {
+    if (res.error) {
+      console.error('Set sync error:', res.error);
+      if (done) done(null);
+      return;
+    }
+    if (done) done(res.data && res.data.id ? res.data.id : setObj.supabase_id || null);
+  };
+  if (setObj.supabase_id) {
+    _sb.from('saved_sets').update(row).eq('id', setObj.supabase_id).eq('user_id', currentUser.id).select('id').single().then(finish);
+  } else {
+    _sb.from('saved_sets').insert(row).select('id').single().then(function(res) {
+      if (res.error && String(res.error.message || '').toLowerCase().indexOf('duplicate') !== -1) {
+        _sb.from('saved_sets').select('id, name').eq('user_id', currentUser.id).then(function(list) {
+          if (list.error || !list.data) { finish(res); return; }
+          var match = null;
+          list.data.forEach(function(r){
+            if (String(r.name).toLowerCase() === String(setObj.name).toLowerCase()) match = r;
+          });
+          if (!match) { finish(res); return; }
+          _sb.from('saved_sets').update(row).eq('id', match.id).select('id').single().then(finish);
+        });
+        return;
+      }
+      finish(res);
+    });
+  }
+}
+
+function sbDeleteSavedSet(setObj) {
+  if (!_sb || !currentUser || !setObj) return;
+  if (setObj.supabase_id) {
+    _sb.from('saved_sets').delete().eq('id', setObj.supabase_id).eq('user_id', currentUser.id)
+      .then(function(res){ if (res.error) console.error('Set delete error:', res.error); });
+    return;
+  }
+  _sb.from('saved_sets').select('id, name').eq('user_id', currentUser.id).then(function(res) {
+    if (res.error || !res.data) return;
+    var match = null;
+    res.data.forEach(function(r){
+      if (String(r.name).toLowerCase() === String(setObj.name).toLowerCase()) match = r;
+    });
+    if (!match) return;
+    _sb.from('saved_sets').delete().eq('id', match.id)
+      .then(function(r){ if (r.error) console.error('Set delete error:', r.error); });
+  });
+}
+
+function sbPersistActiveSet(ids, name) {
+  if (!_sb || !currentUser) return;
+  if (!ids) {
+    ids = [];
+    var canvas = document.getElementById('set-canvas');
+    if (canvas) canvas.querySelectorAll('.sslot[data-jid]').forEach(function(s){ ids.push(String(s.getAttribute('data-jid'))); });
+  }
+  if (name === undefined) {
+    var sel = document.getElementById('set-name-select');
+    name = sel ? (sel.value || null) : null;
+  }
+  _sb.from('set_builder_state').upsert({
+    user_id: currentUser.id,
+    active_joke_ids: ids,
+    active_set_name: name || null,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'user_id' }).then(function(res) {
+    if (res.error) console.error('Active set sync error:', res.error);
+  });
+}
+
+function sbLoadSavedSets() {
+  if (!_sb || !currentUser) return;
+  _sb.from('saved_sets')
+    .select('id, name, joke_ids, updated_at')
+    .eq('user_id', currentUser.id)
+    .order('updated_at', { ascending: false })
+    .then(function(res) {
+      if (res.error) {
+        console.error('Load sets error:', res.error);
+        // Table may not exist yet — keep local sets
+        return;
+      }
+      var remote = res.data || [];
+      var local = getSavedSets();
+
+      if (!remote.length && local.length) {
+        // One-time upload of sets that only lived on this device
+        local.forEach(function(s) {
+          sbUpsertSavedSet(s, function(id) {
+            if (!id) return;
+            var latest = getSavedSets();
+            var i = findSavedSetIndex(latest, s.name);
+            if (i !== -1) {
+              latest[i].supabase_id = id;
+              writeSavedSetsLocal(latest);
+              refreshSetNameSelect();
+            }
+          });
+        });
+        return;
+      }
+
+      var mapped = remote.map(function(row) {
+        var ids = row.joke_ids;
+        if (typeof ids === 'string') {
+          try { ids = JSON.parse(ids); } catch(e) { ids = []; }
+        }
+        if (!Array.isArray(ids)) ids = [];
+        return {
+          name: row.name,
+          ids: ids.map(String),
+          savedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
+          supabase_id: row.id
+        };
+      });
+      writeSavedSetsLocal(mapped);
+      refreshSetNameSelect();
+      var setScreen = document.getElementById('screen-sets');
+      if (setScreen && setScreen.classList.contains('active') && typeof renderSet === 'function') {
+        renderSet();
+      }
+    });
+
+  _sb.from('set_builder_state')
+    .select('active_joke_ids, active_set_name, updated_at')
+    .eq('user_id', currentUser.id)
+    .limit(1)
+    .then(function(res) {
+      if (res.error || !res.data || !res.data.length) return;
+      var row = res.data[0];
+      var ids = row.active_joke_ids;
+      if (typeof ids === 'string') {
+        try { ids = JSON.parse(ids); } catch(e) { ids = []; }
+      }
+      if (!Array.isArray(ids)) ids = [];
+      try { localStorage.setItem('c4a_active_set', JSON.stringify(ids.map(String))); } catch(e) {}
+      if (row.active_set_name) refreshSetNameSelect(row.active_set_name);
+      if (typeof restoreActiveSetIfEmpty === 'function') restoreActiveSetIfEmpty();
+    });
 }
 
 function openMySetsModal() {
@@ -939,6 +1115,9 @@ function persistCurrentSet() {
   var ids = [];
   canvas.querySelectorAll('.sslot[data-jid]').forEach(function(s){ ids.push(String(s.getAttribute('data-jid'))); });
   try { localStorage.setItem('c4a_active_set', JSON.stringify(ids)); } catch(e) {}
+  var sel = document.getElementById('set-name-select');
+  var name = sel ? (sel.value || null) : null;
+  if (typeof sbPersistActiveSet === 'function') sbPersistActiveSet(ids, name);
 }
 
 function buildSetSlotHtml(j) {

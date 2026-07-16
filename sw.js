@@ -1,4 +1,4 @@
-const CACHE = 'comedy4all-v8';
+const CACHE = 'comedy4all-v9';
 
 const SHELL = [
   '/',
