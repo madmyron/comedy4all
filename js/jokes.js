@@ -725,7 +725,8 @@ function sbPersistActiveSet(ids, name) {
   });
 }
 
-function sbLoadSavedSets() {
+function sbLoadSavedSets(opts) {
+  opts = opts || {};
   if (!_sb || !currentUser) return;
   _sb.from('saved_sets')
     .select('id, name, joke_ids, updated_at')
@@ -734,44 +735,93 @@ function sbLoadSavedSets() {
     .then(function(res) {
       if (res.error) {
         console.error('Load sets error:', res.error);
-        // Table may not exist yet — keep local sets
+        var msg = String(res.error.message || '');
+        if (msg.indexOf('saved_sets') !== -1 || msg.indexOf('schema cache') !== -1 || res.error.code === '42P01' || res.error.code === 'PGRST205') {
+          if (opts.notify) toast('Set sync not ready — run the SQL setup in Supabase first.');
+        }
+        if (opts.onDone) opts.onDone(getSavedSets());
         return;
       }
       var remote = res.data || [];
       var local = getSavedSets();
+      var byName = {};
 
-      if (!remote.length && local.length) {
-        // One-time upload of sets that only lived on this device
-        local.forEach(function(s) {
-          sbUpsertSavedSet(s, function(id) {
-            if (!id) return;
-            var latest = getSavedSets();
-            var i = findSavedSetIndex(latest, s.name);
-            if (i !== -1) {
-              latest[i].supabase_id = id;
-              writeSavedSetsLocal(latest);
-              refreshSetNameSelect();
-            }
-          });
-        });
-        return;
-      }
-
-      var mapped = remote.map(function(row) {
-        var ids = row.joke_ids;
+      function normalizeIds(ids) {
         if (typeof ids === 'string') {
           try { ids = JSON.parse(ids); } catch(e) { ids = []; }
         }
         if (!Array.isArray(ids)) ids = [];
-        return {
+        return ids.map(String);
+      }
+
+      remote.forEach(function(row) {
+        byName[String(row.name).toLowerCase()] = {
           name: row.name,
-          ids: ids.map(String),
+          ids: normalizeIds(row.joke_ids),
           savedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
-          supabase_id: row.id
+          supabase_id: row.id,
+          _fromCloud: true
         };
       });
-      writeSavedSetsLocal(mapped);
+
+      var toUpload = [];
+      local.forEach(function(s) {
+        var key = String(s.name || '').toLowerCase();
+        if (!key) return;
+        var existing = byName[key];
+        var localAt = s.savedAt || 0;
+        if (!existing) {
+          byName[key] = {
+            name: s.name,
+            ids: (s.ids || []).map(String),
+            savedAt: localAt || Date.now(),
+            supabase_id: s.supabase_id || null
+          };
+          toUpload.push(byName[key]);
+        } else if (localAt > (existing.savedAt || 0)) {
+          byName[key] = {
+            name: s.name,
+            ids: (s.ids || []).map(String),
+            savedAt: localAt,
+            supabase_id: existing.supabase_id || s.supabase_id || null
+          };
+          toUpload.push(byName[key]);
+        } else if (s.supabase_id && !existing.supabase_id) {
+          existing.supabase_id = s.supabase_id;
+        }
+      });
+
+      var merged = Object.keys(byName).map(function(k){ return byName[k]; });
+      merged.sort(function(a, b){ return (b.savedAt || 0) - (a.savedAt || 0); });
+      writeSavedSetsLocal(merged);
       refreshSetNameSelect();
+
+      var pending = toUpload.length;
+      if (!pending) {
+        if (opts.notify && merged.length) toast('Loaded ' + merged.length + ' set' + (merged.length === 1 ? '' : 's') + ' from your account.');
+        if (opts.onDone) opts.onDone(merged);
+      } else {
+        toast('Uploading ' + pending + ' set' + (pending === 1 ? '' : 's') + ' from this device…');
+        toUpload.forEach(function(s) {
+          sbUpsertSavedSet(s, function(id) {
+            if (id) {
+              var latest = getSavedSets();
+              var i = findSavedSetIndex(latest, s.name);
+              if (i !== -1) {
+                latest[i].supabase_id = id;
+                writeSavedSetsLocal(latest);
+              }
+            }
+            pending--;
+            if (pending <= 0) {
+              refreshSetNameSelect();
+              toast('Sets synced to your account \u2713');
+              if (opts.onDone) opts.onDone(getSavedSets());
+            }
+          });
+        });
+      }
+
       var setScreen = document.getElementById('screen-sets');
       if (setScreen && setScreen.classList.contains('active') && typeof renderSet === 'function') {
         renderSet();
@@ -796,19 +846,11 @@ function sbLoadSavedSets() {
     });
 }
 
-function openMySetsModal() {
-  var existing = document.getElementById('my-sets-modal');
-  if (existing) existing.remove();
-  var sets = getSavedSets().slice().sort(function(a,b){ return (b.savedAt||0) - (a.savedAt||0); });
-
-  var modal = document.createElement('div');
-  modal.id = 'my-sets-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:10001;font-family:Inter,sans-serif;padding:16px';
-  modal.addEventListener('click', function(e){ if (e.target === modal) modal.remove(); });
-
+function renderMySetsModalContent(sets) {
+  sets = (sets || getSavedSets()).slice().sort(function(a,b){ return (b.savedAt||0) - (a.savedAt||0); });
   var rows = '';
   if (!sets.length) {
-    rows = '<div style="text-align:center;color:var(--text3);font-size:13px;padding:24px 8px">No saved sets yet.<br>Build a set and tap <strong>Save Set</strong>.</div>';
+    rows = '<div style="text-align:center;color:var(--text3);font-size:13px;padding:24px 8px;line-height:1.6">No saved sets in your account yet.<br><br>If they are on your <strong>phone</strong>, open Comedy4All there → Set Builder → <strong>My Sets</strong> once (that uploads them). Then tap Refresh here.</div>';
   } else {
     sets.forEach(function(s){
       var count = (s.ids || []).length;
@@ -823,15 +865,39 @@ function openMySetsModal() {
         + '</div>';
     });
   }
+  return rows;
+}
+
+function openMySetsModal() {
+  var existing = document.getElementById('my-sets-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'my-sets-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:10001;font-family:Inter,sans-serif;padding:16px';
+  modal.addEventListener('click', function(e){ if (e.target === modal) modal.remove(); });
 
   var box = document.createElement('div');
   box.style.cssText = 'background:var(--bg);padding:20px;border-radius:14px;border:1px solid var(--border);width:min(440px,100%);max-height:80vh;display:flex;flex-direction:column';
-  box.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+  box.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
     + '<div style="font-weight:700;color:var(--text);font-size:15px">My Sets</div>'
-    + '<button class="btn btn-sm" onclick="closeMySetsModal()">Close</button></div>'
-    + '<div style="overflow-y:auto" class="scroll">' + rows + '</div>';
+    + '<div style="display:flex;gap:6px">'
+    + '<button class="btn btn-sm" onclick="sbLoadSavedSets({notify:true,onDone:function(){openMySetsModal();}})">Refresh</button>'
+    + '<button class="btn btn-sm" onclick="closeMySetsModal()">Close</button></div></div>'
+    + '<div id="my-sets-list" style="overflow-y:auto" class="scroll">' + renderMySetsModalContent() + '</div>';
   modal.appendChild(box);
   document.body.appendChild(modal);
+
+  if (typeof sbLoadSavedSets === 'function') {
+    var list = document.getElementById('my-sets-list');
+    if (list) list.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">Syncing with your account…</div>';
+    sbLoadSavedSets({
+      onDone: function(sets) {
+        var el = document.getElementById('my-sets-list');
+        if (el) el.innerHTML = renderMySetsModalContent(sets);
+      }
+    });
+  }
 }
 
 function closeMySetsModal() {
