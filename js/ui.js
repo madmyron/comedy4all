@@ -2,6 +2,22 @@
 var sidebarCollapsed = false;
 var isMobile = function(){ return window.innerWidth <= 700; };
 
+function togglePasswordVisibility(inputId, btnId) {
+  var input = document.getElementById(inputId);
+  var btn = document.getElementById(btnId);
+  if (!input || !btn) return;
+  var showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  var nextShowing = !showing;
+  btn.setAttribute('aria-pressed', nextShowing ? 'true' : 'false');
+  btn.setAttribute('aria-label', nextShowing ? 'Hide password' : 'Show password');
+  btn.setAttribute('title', nextShowing ? 'Hide password' : 'Show password');
+  var eye = btn.querySelector('.pw-eye');
+  var eyeOff = btn.querySelector('.pw-eye-off');
+  if (eye) eye.hidden = nextShowing;
+  if (eyeOff) eyeOff.hidden = !nextShowing;
+}
+
 function toggleSidebar() {
   var sb = document.getElementById('sidebar');
   var overlay = document.getElementById('sidebar-overlay');

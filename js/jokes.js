@@ -493,7 +493,262 @@ function saveEditedJoke() {
 
 var setLibSortable = null;
 var setCanvasSortable = null;
+var setScriptSortable = null;
 var _setDragEndAt = 0;
+var _setViewMode = 'bubbles';
+var _scriptBodySaveTimers = {};
+var SCRIPT_COLOR_COUNT = 8;
+
+function escapeSetHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getCurrentSetIds() {
+  var canvas = document.getElementById('set-canvas');
+  var ids = [];
+  if (!canvas) return ids;
+  canvas.querySelectorAll('.sslot[data-jid]').forEach(function(s) {
+    ids.push(String(s.getAttribute('data-jid')));
+  });
+  return ids;
+}
+
+function findCanvasSlotById(jid) {
+  var canvas = document.getElementById('set-canvas');
+  if (!canvas) return null;
+  var slots = canvas.querySelectorAll('.sslot[data-jid]');
+  for (var i = 0; i < slots.length; i++) {
+    if (String(slots[i].getAttribute('data-jid')) === String(jid)) return slots[i];
+  }
+  return null;
+}
+
+function syncCanvasOrderFromIds(ids) {
+  var canvas = document.getElementById('set-canvas');
+  if (!canvas || !ids || !ids.length) return;
+  var frag = document.createDocumentFragment();
+  var hint = canvas.querySelector('.set-empty-hint');
+  ids.forEach(function(jid) {
+    var slot = findCanvasSlotById(jid);
+    if (slot) frag.appendChild(slot);
+  });
+  // Keep any leftover slots not in ids (shouldn't happen)
+  canvas.querySelectorAll('.sslot[data-jid]').forEach(function(slot) {
+    frag.appendChild(slot);
+  });
+  canvas.innerHTML = '';
+  if (hint) canvas.appendChild(hint);
+  canvas.appendChild(frag);
+}
+
+function setViewMode(mode) {
+  if (mode !== 'script' && mode !== 'bubbles') mode = 'bubbles';
+  _setViewMode = mode;
+  try { localStorage.setItem('c4a_set_view', mode); } catch (e) {}
+  var screen = document.getElementById('screen-sets');
+  if (screen) {
+    screen.classList.toggle('set-mode-script', mode === 'script');
+    screen.classList.toggle('set-mode-bubbles', mode === 'bubbles');
+  }
+  var bubBtn = document.getElementById('set-view-bubbles');
+  var scrBtn = document.getElementById('set-view-script');
+  if (bubBtn) bubBtn.classList.toggle('active', mode === 'bubbles');
+  if (scrBtn) scrBtn.classList.toggle('active', mode === 'script');
+  var scriptEl = document.getElementById('set-script');
+  if (scriptEl) {
+    if (mode === 'script') {
+      scriptEl.hidden = false;
+      renderSetScript();
+    } else {
+      scriptEl.hidden = true;
+    }
+  }
+}
+
+function applySavedSetViewMode() {
+  var mode = 'bubbles';
+  try { mode = localStorage.getItem('c4a_set_view') || 'bubbles'; } catch (e) {}
+  setViewMode(mode === 'script' ? 'script' : 'bubbles');
+}
+
+function buildSetScriptBlockHtml(j, index) {
+  var runtime = j.runtime || '0:00';
+  return '<div class="set-script-head">'
+    + '<span class="set-script-num">' + (index + 1) + '</span>'
+    + '<span class="set-script-title">' + escapeSetHtml(j.title) + '</span>'
+    + '<span class="set-script-runtime" title="Joke length">' + escapeSetHtml(runtime) + '</span>'
+    + '<div class="set-script-actions">'
+    + '<button type="button" class="sslot-move" onclick="event.stopPropagation();moveSetSlot(this,-1)" title="Move up">&#9650;</button>'
+    + '<button type="button" class="sslot-move" onclick="event.stopPropagation();moveSetSlot(this,1)" title="Move down">&#9660;</button>'
+    + '<button type="button" class="sslot-x" onclick="event.stopPropagation();removeSetSlot(this)" title="Remove">&times;</button>'
+    + '</div></div>'
+    + '<div class="set-script-body" contenteditable="true" spellcheck="true" role="textbox" data-placeholder="Write this joke…" data-jid="' + escapeSetHtml(String(j.id)) + '"></div>';
+}
+
+function renderSetScript() {
+  var scriptEl = document.getElementById('set-script');
+  if (!scriptEl) return;
+  var ids = getCurrentSetIds();
+  if (!ids.length) {
+    scriptEl.innerHTML = '<div class="set-script-empty">Add jokes to your set, then read them here as one monologue</div>';
+    if (setScriptSortable) { setScriptSortable.destroy(); setScriptSortable = null; }
+    return;
+  }
+  var html = '';
+  var bodies = [];
+  ids.forEach(function(jid, index) {
+    var j = jokes.find(function(x) { return String(x.id) === String(jid); });
+    if (!j) return;
+    html += '<div class="set-script-block set-script-c' + (index % SCRIPT_COLOR_COUNT) + '" data-jid="' + escapeSetHtml(String(j.id)) + '">'
+      + buildSetScriptBlockHtml(j, index)
+      + '</div>';
+    var body = j.body && j.body !== 'No notes yet.' ? j.body : '';
+    bodies.push({ id: String(j.id), body: body });
+  });
+  scriptEl.innerHTML = html || '<div class="set-script-empty">Add jokes to your set, then read them here as one monologue</div>';
+
+  var bodyEls = scriptEl.querySelectorAll('.set-script-body');
+  for (var bi = 0; bi < bodyEls.length; bi++) {
+    (function(el) {
+      var jid = String(el.getAttribute('data-jid') || '');
+      var match = null;
+      for (var m = 0; m < bodies.length; m++) {
+        if (bodies[m].id === jid) { match = bodies[m]; break; }
+      }
+      el.textContent = match ? match.body : '';
+      // Keep Sortable / parent handlers from stealing caret placement
+      el.addEventListener('mousedown', function(e) {
+        e.stopPropagation();
+      });
+      el.addEventListener('click', function(e) {
+        e.stopPropagation();
+        el.focus();
+      });
+      el.addEventListener('focus', function() {
+        var block = el.closest('.set-script-block');
+        if (block) block.classList.add('is-editing');
+      });
+      el.addEventListener('blur', function() {
+        var block = el.closest('.set-script-block');
+        if (block) block.classList.remove('is-editing');
+        flushScriptBodySave(el.getAttribute('data-jid'), el.innerText);
+      });
+      el.addEventListener('input', function() {
+        queueScriptBodySave(el.getAttribute('data-jid'), el.innerText);
+      });
+      el.addEventListener('keydown', function(e) {
+        // Allow normal typing; stop set-level shortcuts from eating keys
+        e.stopPropagation();
+      });
+    })(bodyEls[bi]);
+  }
+
+  if (setScriptSortable) { setScriptSortable.destroy(); setScriptSortable = null; }
+  if (typeof Sortable !== 'undefined') {
+    setScriptSortable = new Sortable(scriptEl, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      draggable: '.set-script-block',
+      handle: '.set-script-head',
+      filter: '.set-script-body, .sslot-move, .sslot-x',
+      preventOnFilter: true,
+      // Do NOT forceFallback here — it fights contenteditable caret/selection
+      delay: 120,
+      delayOnTouchOnly: true,
+      onEnd: function() {
+        _setDragEndAt = Date.now();
+        var ordered = [];
+        scriptEl.querySelectorAll('.set-script-block[data-jid]').forEach(function(b) {
+          ordered.push(String(b.getAttribute('data-jid')));
+        });
+        syncCanvasOrderFromIds(ordered);
+        recalcSetRuntime();
+        persistCurrentSet();
+        renderSetScript();
+      }
+    });
+  }
+}
+
+function queueScriptBodySave(jid, text) {
+  if (!jid) return;
+  if (_scriptBodySaveTimers[jid]) clearTimeout(_scriptBodySaveTimers[jid]);
+  _scriptBodySaveTimers[jid] = setTimeout(function() {
+    flushScriptBodySave(jid, text);
+  }, 400);
+}
+
+function syncJokeBodyEverywhere(jid, nextBody) {
+  var joke = null;
+  for (var i = 0; i < jokes.length; i++) {
+    if (String(jokes[i].id) === String(jid)) {
+      jokes[i].body = nextBody;
+      joke = jokes[i];
+      break;
+    }
+  }
+  if (!joke) return null;
+  if (typeof displayJokes !== 'undefined') {
+    for (var d = 0; d < displayJokes.length; d++) {
+      if (String(displayJokes[d].id) === String(jid)) {
+        displayJokes[d].body = nextBody;
+        break;
+      }
+    }
+  }
+  // Refresh Joke Manager list if that screen is open (titles only, but keeps data fresh)
+  var jokesScreen = document.getElementById('screen-jokes');
+  if (jokesScreen && jokesScreen.classList.contains('active') && typeof renderJokes === 'function') {
+    // Don't rebuild the list while the user is mid-edit in Script view
+    if (!(document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('set-script-body'))) {
+      renderJokes(displayJokes);
+    }
+  }
+  // If detail drawer is open for this joke and user isn't typing in script, refresh material text
+  var panel = document.getElementById('joke-detail');
+  if (panel && panel.classList.contains('panel-open') && typeof openDetail === 'function') {
+    if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('set-script-body')) {
+      return joke;
+    }
+    var html = panel.innerHTML || '';
+    if (html.indexOf("openEditModal('" + jid + "')") !== -1
+      || html.indexOf("archiveJoke('" + jid + "')") !== -1
+      || html.indexOf("unarchiveJoke('" + jid + "')") !== -1
+      || html.indexOf("addJokeToSet('" + jid + "')") !== -1) {
+      openDetail(jid);
+    }
+  }
+  return joke;
+}
+
+function flushScriptBodySave(jid, text) {
+  if (!jid) return;
+  if (_scriptBodySaveTimers[jid]) {
+    clearTimeout(_scriptBodySaveTimers[jid]);
+    delete _scriptBodySaveTimers[jid];
+  }
+  var body = String(text == null ? '' : text).replace(/\u00a0/g, ' ').replace(/\s+$/,'');
+  var existing = null;
+  for (var i = 0; i < jokes.length; i++) {
+    if (String(jokes[i].id) === String(jid)) { existing = jokes[i]; break; }
+  }
+  if (!existing) return;
+  var nextBody = body || 'No notes yet.';
+  if (existing.body === nextBody) return;
+  syncJokeBodyEverywhere(jid, nextBody);
+  if (typeof persistScriptJokeBody === 'function') {
+    persistScriptJokeBody(jid, nextBody);
+  }
+}
+
+function afterSetOrderChanged() {
+  if (_setViewMode === 'script') renderSetScript();
+}
 
 function getSavedSets() {
   try { return JSON.parse(localStorage.getItem('c4a_saved_sets') || '[]') || []; } catch(e) { return []; }
@@ -527,8 +782,8 @@ function refreshSetNameSelect(activeName) {
 function loadSavedSet(name) {
   if (!name) return;
   var sets = getSavedSets();
-  var found = null;
-  for (var i=0;i<sets.length;i++){ if (String(sets[i].name) === String(name)) { found = sets[i]; break; } }
+  var idx = findSavedSetIndex(sets, name);
+  var found = idx !== -1 ? sets[idx] : null;
   if (!found) return;
   var canvas = document.getElementById('set-canvas');
   if (!canvas) return;
@@ -547,6 +802,7 @@ function loadSavedSet(name) {
   recalcSetRuntime();
   syncLibraryToCanvas();
   persistCurrentSet();
+  afterSetOrderChanged();
   var sel = document.getElementById('set-name-select');
   if (sel) sel.value = name;
   toast('Loaded "'+name+'"');
@@ -601,6 +857,7 @@ function clearSetCanvas() {
   recalcSetRuntime();
   syncLibraryToCanvas();
   persistCurrentSet();
+  afterSetOrderChanged();
 }
 
 function startNewSet() {
@@ -637,12 +894,9 @@ function computeSetRuntime(ids) {
 
 function deleteSavedSet(name) {
   var sets = getSavedSets();
-  var doomed = null;
-  var kept = [];
-  sets.forEach(function(s){
-    if (String(s.name) === String(name)) doomed = s;
-    else kept.push(s);
-  });
+  var doomedIdx = findSavedSetIndex(sets, name);
+  var doomed = doomedIdx !== -1 ? sets[doomedIdx] : null;
+  var kept = doomedIdx === -1 ? sets : sets.filter(function(_, i){ return i !== doomedIdx; });
   writeSavedSetsLocal(kept);
   refreshSetNameSelect();
   if (doomed) sbDeleteSavedSet(doomed);
@@ -798,7 +1052,10 @@ function sbLoadSavedSets(opts) {
 
       var pending = toUpload.length;
       if (!pending) {
-        if (opts.notify && merged.length) toast('Loaded ' + merged.length + ' set' + (merged.length === 1 ? '' : 's') + ' from your account.');
+        if (opts.notify) {
+          if (merged.length) toast('Loaded ' + merged.length + ' set' + (merged.length === 1 ? '' : 's') + ' from your account.');
+          else toast('Jokes synced. No named sets in your account yet.');
+        }
         if (opts.onDone) opts.onDone(merged);
       } else {
         toast('Uploading ' + pending + ' set' + (pending === 1 ? '' : 's') + ' from this device…');
@@ -1116,20 +1373,29 @@ function renderSet() {
           recalcSetRuntime();
           syncLibraryToCanvas();
           persistCurrentSet();
+          afterSetOrderChanged();
         },
         onEnd: function() {
           _setDragEndAt = Date.now();
           recalcSetRuntime();
           persistCurrentSet();
+          afterSetOrderChanged();
         },
         onRemove: function() {
           recalcSetRuntime();
           persistCurrentSet();
+          afterSetOrderChanged();
         }
       });
       recalcSetRuntime();
     }
     restoreActiveSetIfEmpty();
+    var screen = document.getElementById('screen-sets');
+    if (screen && !screen.classList.contains('set-mode-bubbles') && !screen.classList.contains('set-mode-script')) {
+      applySavedSetViewMode();
+    } else if (_setViewMode === 'script') {
+      renderSetScript();
+    }
   }
 }
 
@@ -1173,6 +1439,7 @@ function refreshSetViews() {
     recalcSetRuntime();
     syncLibraryToCanvas();
   }
+  if (_setViewMode === 'script') renderSetScript();
 }
 
 function persistCurrentSet() {
@@ -1225,40 +1492,53 @@ function addJokeToSet(id) {
   recalcSetRuntime();
   syncLibraryToCanvas();
   persistCurrentSet();
+  afterSetOrderChanged();
   toast('Added "'+j.title+'" to your set \u2713');
 }
 
 function moveSetSlot(btn, dir) {
   var el = btn;
-  while (el && !el.classList.contains('sslot')) { el = el.parentElement; }
+  while (el && !el.classList.contains('sslot') && !el.classList.contains('set-script-block')) {
+    el = el.parentElement;
+  }
   if (!el) return;
+  var jid = el.getAttribute('data-jid');
   var canvas = document.getElementById('set-canvas');
-  if (!canvas) return;
+  if (!canvas || !jid) return;
+  var slot = findCanvasSlotById(jid);
+  if (!slot) return;
   if (dir < 0) {
-    var prev = el.previousElementSibling;
+    var prev = slot.previousElementSibling;
     while (prev && !prev.classList.contains('sslot')) { prev = prev.previousElementSibling; }
-    if (prev) canvas.insertBefore(el, prev);
+    if (prev) canvas.insertBefore(slot, prev);
   } else {
-    var next = el.nextElementSibling;
+    var next = slot.nextElementSibling;
     while (next && !next.classList.contains('sslot')) { next = next.nextElementSibling; }
-    if (next) canvas.insertBefore(next, el);
+    if (next) canvas.insertBefore(next, slot);
   }
   recalcSetRuntime();
   persistCurrentSet();
+  afterSetOrderChanged();
 }
 
 function removeSetSlot(btn) {
   var el = btn;
-  while (el && !el.classList.contains('sslot')) { el = el.parentElement; }
-  if (el) {
-    var canvas = document.getElementById('set-canvas');
-    el.remove(); 
+  while (el && !el.classList.contains('sslot') && !el.classList.contains('set-script-block')) {
+    el = el.parentElement;
+  }
+  if (!el) return;
+  var jid = el.getAttribute('data-jid');
+  var canvas = document.getElementById('set-canvas');
+  var slot = jid ? findCanvasSlotById(jid) : (el.classList.contains('sslot') ? el : null);
+  if (slot) {
+    slot.remove();
     if (canvas && canvas.querySelectorAll('.sslot').length === 0) {
       canvas.innerHTML = '<div class="set-empty-hint" style="text-align:center;padding:30px;color:var(--text3);font-size:12px;border:2px dashed var(--border2);border-radius:var(--r2)">Tap + or drag a joke here to build your set</div>';
     }
-    recalcSetRuntime(); 
+    recalcSetRuntime();
     syncLibraryToCanvas();
     persistCurrentSet();
+    afterSetOrderChanged();
   }
 }
 

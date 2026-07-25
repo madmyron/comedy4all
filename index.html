@@ -18,7 +18,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=3">
+<link rel="stylesheet" href="css/styles.css?v=7">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -37,7 +37,7 @@
     </div>
     <div id="auth-signin">
       <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Email</label><input id="signin-email" type="email" autocomplete="email" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="michael@comedy4all.com" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignIn()"></div>
-      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><input id="signin-password" type="password" autocomplete="current-password" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignIn()"></div>
+      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><div class="pw-wrap"><input id="signin-password" type="password" autocomplete="current-password" class="pw-input" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignIn()"><button type="button" class="pw-toggle" id="signin-pw-toggle" onclick="togglePasswordVisibility('signin-password','signin-pw-toggle')" aria-label="Show password" title="Show password"><svg class="pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg><svg class="pw-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" hidden><path d="M3 3l18 18M10.5 10.5a3 3 0 004 4M9.9 5.1A10.5 10.5 0 0112 5c6.5 0 10 7 10 7a17.7 17.7 0 01-4.2 4.8M6.1 6.1C3.8 7.7 2 12 2 12s3.5 7 10 7c1.4 0 2.7-.3 3.9-.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
       <button onclick="doSignIn()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Sign In</button>
       <button onclick="doGoogleSignIn()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Continue with Google</button>
       <button onclick="showAuthTab('phone')" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">&#128241; Sign in with phone</button>
@@ -45,7 +45,7 @@
     <div id="auth-signup" style="display:none">
       <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Your Name</label><input id="signup-name" type="text" autocomplete="name" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="Michael D'Asaro" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
       <div style="margin-bottom:11px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Email</label><input id="signup-email" type="email" autocomplete="email" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="michael@comedy4all.com" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
-      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><input id="signup-password" type="password" autocomplete="new-password" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" placeholder="At least 6 characters" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignUp()"></div>
+      <div style="margin-bottom:18px"><label style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px">Password</label><div class="pw-wrap"><input id="signup-password" type="password" autocomplete="new-password" class="pw-input" placeholder="At least 6 characters" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doSignUp()"><button type="button" class="pw-toggle" id="signup-pw-toggle" onclick="togglePasswordVisibility('signup-password','signup-pw-toggle')" aria-label="Show password" title="Show password"><svg class="pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg><svg class="pw-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" hidden><path d="M3 3l18 18M10.5 10.5a3 3 0 004 4M9.9 5.1A10.5 10.5 0 0112 5c6.5 0 10 7 10 7a17.7 17.7 0 01-4.2 4.8M6.1 6.1C3.8 7.7 2 12 2 12s3.5 7 10 7c1.4 0 2.7-.3 3.9-.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
       <button id="signup-btn" onclick="doSignUp()" style="width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Create Account</button>
       <button onclick="doGoogleSignIn()" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px">Continue with Google</button>
       <button onclick="showAuthTab('phone')" style="width:100%;padding:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif">&#128241; Use phone number instead</button>
@@ -341,8 +341,10 @@
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
             <button class="btn btn-sm" onclick="startNewSet()">+ New Set</button>
             <button class="btn btn-sm" onclick="openMySetsModal()">My Sets</button>
-            <div style="flex:1"></div>
-            <button class="btn btn-sm btn-primary" onclick="saveCurrentSet()">Save Set</button>
+            <div class="set-view-toggle" role="group" aria-label="Set view">
+              <button type="button" class="btn btn-sm set-view-btn active" id="set-view-bubbles" onclick="setViewMode('bubbles')">Bubbles</button>
+              <button type="button" class="btn btn-sm set-view-btn" id="set-view-script" onclick="setViewMode('script')">Script</button>
+            </div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;color:var(--text3)">
             <span style="font-weight:600" id="set-time-top">22:30</span>
@@ -350,7 +352,8 @@
             <span style="color:var(--gold);font-weight:500">30min goal</span>
           </div>
           <div id="set-canvas"></div>
-          <div style="padding:11px;border:2px dashed var(--border2);border-radius:var(--r2);text-align:center;font-size:11px;color:var(--text3);cursor:pointer;margin-top:8px;background:var(--bg2)" onclick="toast('Drag items or continue building')">+ Add joke to set</div>
+          <div id="set-script" class="set-script" hidden></div>
+          <div id="set-add-hint" style="padding:11px;border:2px dashed var(--border2);border-radius:var(--r2);text-align:center;font-size:11px;color:var(--text3);cursor:pointer;margin-top:8px;background:var(--bg2)" onclick="toast('Drag items or continue building')">+ Add joke to set</div>
         </div>
         <div style="background:var(--bg2);border-left:1px solid var(--border);padding:14px;overflow-y:auto" class="scroll">
           <div class="sect-title">Set Stats</div>
@@ -1018,13 +1021,13 @@
 <div class="toast" id="toast-el"></div>
 
 <script src="js/data.js?v=2"></script>
-<script src="js/supabase.js?v=4"></script>
-<script src="js/ui.js?v=2"></script>
-<script src="js/jokes.js?v=12"></script>
+<script src="js/supabase.js?v=6"></script>
+<script src="js/ui.js?v=3"></script>
+<script src="js/jokes.js?v=16"></script>
 <script src="js/rehearsal.js?v=2"></script>
 <script src="js/analytics.js?v=2"></script>
 <script src="js/brooks.js?v=5"></script>
-<script src="js/settings.js?v=3"></script>
+<script src="js/settings.js?v=4"></script>
 <script src="js/shows.js?v=2"></script>
 <script src="js/projects.js?v=2"></script>
 <script src="js/studio.js?v=2"></script>

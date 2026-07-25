@@ -184,7 +184,8 @@ function doSignOut() {
 }
 
 // - SUPABASE DATA OPERATIONS -
-function sbLoadJokes() {
+function sbLoadJokes(opts) {
+  opts = opts || {};
   if (!currentUser || !_sb) return;
   setSyncStatus('syncing');
   _sb.from('jokes').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false })
@@ -211,8 +212,31 @@ function sbLoadJokes() {
       updateCounts();
       setSyncStatus('synced');
       attachGridClicks();
-      if (typeof sbLoadSavedSets === 'function') sbLoadSavedSets();
+      try { localStorage.setItem('c4a_last_sync_at', String(Date.now())); } catch(e) {}
+      if (typeof sbLoadSavedSets === 'function') {
+        sbLoadSavedSets({
+          notify: !!opts.notifySets,
+          onDone: opts.onDone
+        });
+      } else if (opts.onDone) {
+        opts.onDone();
+      }
     });
+}
+
+/** Pull jokes + named sets from the cloud right now (Settings → Force Sync). */
+function forceSyncNow() {
+  if (!currentUser || !_sb) {
+    toast('Sign in first to sync across devices.');
+    return;
+  }
+  toast('Syncing jokes and sets…');
+  sbLoadJokes({
+    notifySets: true,
+    onDone: function() {
+      if (typeof refreshSyncSettingsPanel === 'function') refreshSyncSettingsPanel();
+    }
+  });
 }
 
 function attachGridClicks() {
@@ -349,6 +373,24 @@ function _patchFunctions() {
       vp.then(function() { return _sb.from('jokes').update(updates).eq('id', eid); })
         .then(function(r) { if (r && r.error) toast('Sync failed: ' + r.error.message); else setSyncStatus('synced'); });
     }
+  };
+
+  window.persistScriptJokeBody = function(jid, body) {
+    if (!jid) return;
+    if (!(currentUser && _sb)) return;
+    // Skip ephemeral local-only ids
+    if (String(jid).indexOf('local-') === 0) return;
+    setSyncStatus('syncing');
+    var ex = jokes.find(function(j) { return String(j.id) === String(jid); });
+    var vp = (ex && currentUser)
+      ? _sb.from('joke_versions').insert({ joke_id: jid, user_id: currentUser.id, title: ex.title, body: body })
+      : Promise.resolve({});
+    vp.then(function() {
+      return _sb.from('jokes').update({ body: body }).eq('id', jid);
+    }).then(function(r) {
+      if (r && r.error) toast('Sync failed: ' + r.error.message);
+      else setSyncStatus('synced');
+    });
   };
 
   _origDelete = deleteJoke;
