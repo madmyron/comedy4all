@@ -18,7 +18,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=7">
+<link rel="stylesheet" href="css/styles.css?v=9">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -325,7 +325,7 @@
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Set Builder</div>
         <select id="set-name-select" class="btn topbar-select" style="padding:6px 9px" aria-label="Current set" onchange="loadSavedSet(this.value)"><option value="">Current set</option></select>
-        <input id="set-search" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:160px;transition:border .15s" placeholder="Search..." oninput="filterSetLibraryBySearch(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <input id="set-search" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:6px 11px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:160px;transition:border .15s" placeholder="Search title or text…" oninput="filterSetLibraryBySearch(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
         <select id="set-tag-filter" class="btn" style="padding:6px 9px;max-width:120px" onchange="filterSetLibrary(this.value)">
           <option value="">All Tags</option>
         </select>
@@ -333,9 +333,12 @@
         <button class="btn btn-sm btn-primary" onclick="saveCurrentSet()">Save Set</button>
       </div>
       <div id="sets-layout" style="height:calc(100% - 54px);overflow:hidden">
-        <div style="background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto" class="scroll">
-          <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:12px 13px 6px">Joke Library</div>
-          <div id="set-lib"></div>
+        <div style="background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column" class="scroll">
+          <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:12px 13px 6px;flex-shrink:0">Joke Library</div>
+          <div style="padding:0 10px 10px;flex-shrink:0">
+            <input id="set-lib-search" type="search" aria-label="Search joke library" placeholder="Search title or text…" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none" oninput="filterSetLibraryBySearch(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div id="set-lib" style="flex:1;overflow-y:auto"></div>
         </div>
         <div style="overflow-y:auto;padding:14px;background:var(--bg)" class="scroll">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -1021,9 +1024,9 @@
 <div class="toast" id="toast-el"></div>
 
 <script src="js/data.js?v=2"></script>
-<script src="js/supabase.js?v=6"></script>
+<script src="js/supabase.js?v=7"></script>
 <script src="js/ui.js?v=3"></script>
-<script src="js/jokes.js?v=16"></script>
+<script src="js/jokes.js?v=17"></script>
 <script src="js/rehearsal.js?v=2"></script>
 <script src="js/analytics.js?v=2"></script>
 <script src="js/brooks.js?v=5"></script>

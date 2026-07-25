@@ -376,17 +376,29 @@ function _patchFunctions() {
   };
 
   window.persistScriptJokeBody = function(jid, body) {
-    if (!jid) return;
+    window.persistScriptJokeFields(jid, { body: body });
+  };
+
+  window.persistScriptJokeFields = function(jid, fields) {
+    if (!jid || !fields) return;
     if (!(currentUser && _sb)) return;
-    // Skip ephemeral local-only ids
     if (String(jid).indexOf('local-') === 0) return;
+    var updates = {};
+    if (Object.prototype.hasOwnProperty.call(fields, 'title')) updates.title = fields.title;
+    if (Object.prototype.hasOwnProperty.call(fields, 'body')) updates.body = fields.body;
+    if (!Object.keys(updates).length) return;
     setSyncStatus('syncing');
     var ex = jokes.find(function(j) { return String(j.id) === String(jid); });
     var vp = (ex && currentUser)
-      ? _sb.from('joke_versions').insert({ joke_id: jid, user_id: currentUser.id, title: ex.title, body: body })
+      ? _sb.from('joke_versions').insert({
+          joke_id: jid,
+          user_id: currentUser.id,
+          title: updates.title != null ? updates.title : ex.title,
+          body: updates.body != null ? updates.body : ex.body
+        })
       : Promise.resolve({});
     vp.then(function() {
-      return _sb.from('jokes').update({ body: body }).eq('id', jid);
+      return _sb.from('jokes').update(updates).eq('id', jid);
     }).then(function(r) {
       if (r && r.error) toast('Sync failed: ' + r.error.message);
       else setSyncStatus('synced');

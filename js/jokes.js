@@ -580,7 +580,7 @@ function buildSetScriptBlockHtml(j, index) {
   var runtime = j.runtime || '0:00';
   return '<div class="set-script-head">'
     + '<span class="set-script-num">' + (index + 1) + '</span>'
-    + '<span class="set-script-title">' + escapeSetHtml(j.title) + '</span>'
+    + '<span class="set-script-title" contenteditable="true" spellcheck="true" role="textbox" data-placeholder="Joke title" data-jid="' + escapeSetHtml(String(j.id)) + '"></span>'
     + '<span class="set-script-runtime" title="Joke length">' + escapeSetHtml(runtime) + '</span>'
     + '<div class="set-script-actions">'
     + '<button type="button" class="sslot-move" onclick="event.stopPropagation();moveSetSlot(this,-1)" title="Move up">&#9650;</button>'
@@ -588,6 +588,36 @@ function buildSetScriptBlockHtml(j, index) {
     + '<button type="button" class="sslot-x" onclick="event.stopPropagation();removeSetSlot(this)" title="Remove">&times;</button>'
     + '</div></div>'
     + '<div class="set-script-body" contenteditable="true" spellcheck="true" role="textbox" data-placeholder="Write this joke…" data-jid="' + escapeSetHtml(String(j.id)) + '"></div>';
+}
+
+function bindScriptEditable(el, kind) {
+  if (!el) return;
+  el.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+  el.addEventListener('click', function(e) {
+    e.stopPropagation();
+    el.focus();
+  });
+  el.addEventListener('focus', function() {
+    var block = el.closest('.set-script-block');
+    if (block) block.classList.add('is-editing');
+  });
+  el.addEventListener('blur', function() {
+    var block = el.closest('.set-script-block');
+    if (block) block.classList.remove('is-editing');
+    if (kind === 'title') flushScriptTitleSave(el.getAttribute('data-jid'), el.innerText);
+    else flushScriptBodySave(el.getAttribute('data-jid'), el.innerText);
+  });
+  el.addEventListener('input', function() {
+    if (kind === 'title') queueScriptTitleSave(el.getAttribute('data-jid'), el.innerText);
+    else queueScriptBodySave(el.getAttribute('data-jid'), el.innerText);
+  });
+  el.addEventListener('keydown', function(e) {
+    e.stopPropagation();
+    if (kind === 'title' && e.key === 'Enter') {
+      e.preventDefault();
+      el.blur();
+    }
+  });
 }
 
 function renderSetScript() {
@@ -600,7 +630,7 @@ function renderSetScript() {
     return;
   }
   var html = '';
-  var bodies = [];
+  var payload = [];
   ids.forEach(function(jid, index) {
     var j = jokes.find(function(x) { return String(x.id) === String(jid); });
     if (!j) return;
@@ -608,43 +638,33 @@ function renderSetScript() {
       + buildSetScriptBlockHtml(j, index)
       + '</div>';
     var body = j.body && j.body !== 'No notes yet.' ? j.body : '';
-    bodies.push({ id: String(j.id), body: body });
+    payload.push({ id: String(j.id), title: j.title || '', body: body });
   });
   scriptEl.innerHTML = html || '<div class="set-script-empty">Add jokes to your set, then read them here as one monologue</div>';
+
+  var titleEls = scriptEl.querySelectorAll('.set-script-title');
+  for (var ti = 0; ti < titleEls.length; ti++) {
+    (function(el) {
+      var jid = String(el.getAttribute('data-jid') || '');
+      var match = null;
+      for (var m = 0; m < payload.length; m++) {
+        if (payload[m].id === jid) { match = payload[m]; break; }
+      }
+      el.textContent = match ? match.title : '';
+      bindScriptEditable(el, 'title');
+    })(titleEls[ti]);
+  }
 
   var bodyEls = scriptEl.querySelectorAll('.set-script-body');
   for (var bi = 0; bi < bodyEls.length; bi++) {
     (function(el) {
       var jid = String(el.getAttribute('data-jid') || '');
       var match = null;
-      for (var m = 0; m < bodies.length; m++) {
-        if (bodies[m].id === jid) { match = bodies[m]; break; }
+      for (var m = 0; m < payload.length; m++) {
+        if (payload[m].id === jid) { match = payload[m]; break; }
       }
       el.textContent = match ? match.body : '';
-      // Keep Sortable / parent handlers from stealing caret placement
-      el.addEventListener('mousedown', function(e) {
-        e.stopPropagation();
-      });
-      el.addEventListener('click', function(e) {
-        e.stopPropagation();
-        el.focus();
-      });
-      el.addEventListener('focus', function() {
-        var block = el.closest('.set-script-block');
-        if (block) block.classList.add('is-editing');
-      });
-      el.addEventListener('blur', function() {
-        var block = el.closest('.set-script-block');
-        if (block) block.classList.remove('is-editing');
-        flushScriptBodySave(el.getAttribute('data-jid'), el.innerText);
-      });
-      el.addEventListener('input', function() {
-        queueScriptBodySave(el.getAttribute('data-jid'), el.innerText);
-      });
-      el.addEventListener('keydown', function(e) {
-        // Allow normal typing; stop set-level shortcuts from eating keys
-        e.stopPropagation();
-      });
+      bindScriptEditable(el, 'body');
     })(bodyEls[bi]);
   }
 
@@ -655,9 +675,8 @@ function renderSetScript() {
       ghostClass: 'sortable-ghost',
       draggable: '.set-script-block',
       handle: '.set-script-head',
-      filter: '.set-script-body, .sslot-move, .sslot-x',
+      filter: '.set-script-body, .set-script-title, .sslot-move, .sslot-x',
       preventOnFilter: true,
-      // Do NOT forceFallback here — it fights contenteditable caret/selection
       delay: 120,
       delayOnTouchOnly: true,
       onEnd: function() {
@@ -672,6 +691,92 @@ function renderSetScript() {
         renderSetScript();
       }
     });
+  }
+}
+
+function queueScriptTitleSave(jid, text) {
+  if (!jid) return;
+  var key = 'title:' + jid;
+  if (_scriptBodySaveTimers[key]) clearTimeout(_scriptBodySaveTimers[key]);
+  _scriptBodySaveTimers[key] = setTimeout(function() {
+    flushScriptTitleSave(jid, text);
+  }, 400);
+}
+
+function syncJokeTitleEverywhere(jid, nextTitle) {
+  var joke = null;
+  for (var i = 0; i < jokes.length; i++) {
+    if (String(jokes[i].id) === String(jid)) {
+      jokes[i].title = nextTitle;
+      joke = jokes[i];
+      break;
+    }
+  }
+  if (!joke) return null;
+  if (typeof displayJokes !== 'undefined') {
+    for (var d = 0; d < displayJokes.length; d++) {
+      if (String(displayJokes[d].id) === String(jid)) {
+        displayJokes[d].title = nextTitle;
+        break;
+      }
+    }
+  }
+  var canvas = document.getElementById('set-canvas');
+  if (canvas) {
+    var slot = findCanvasSlotById(jid);
+    if (slot) slot.innerHTML = buildSetSlotHtml(joke);
+    if (typeof recalcSetRuntime === 'function') recalcSetRuntime();
+  }
+  var lib = document.getElementById('set-lib');
+  if (lib) {
+    var item = null;
+    lib.querySelectorAll('.set-lib-item[data-jid]').forEach(function(el) {
+      if (String(el.getAttribute('data-jid')) === String(jid)) item = el;
+    });
+    if (item) {
+      var titleEl = item.querySelector('[data-title]');
+      if (titleEl) titleEl.textContent = nextTitle;
+    }
+  }
+  var jokesScreen = document.getElementById('screen-jokes');
+  if (jokesScreen && jokesScreen.classList.contains('active') && typeof renderJokes === 'function') {
+    var ae = document.activeElement;
+    if (!(ae && ae.classList && (ae.classList.contains('set-script-body') || ae.classList.contains('set-script-title')))) {
+      renderJokes(displayJokes);
+    }
+  }
+  return joke;
+}
+
+function flushScriptTitleSave(jid, text) {
+  if (!jid) return;
+  var key = 'title:' + jid;
+  if (_scriptBodySaveTimers[key]) {
+    clearTimeout(_scriptBodySaveTimers[key]);
+    delete _scriptBodySaveTimers[key];
+  }
+  var title = String(text == null ? '' : text).replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  var existing = null;
+  for (var i = 0; i < jokes.length; i++) {
+    if (String(jokes[i].id) === String(jid)) { existing = jokes[i]; break; }
+  }
+  if (!existing) return;
+  if (!title) {
+    var titles = document.querySelectorAll('.set-script-title[data-jid]');
+    for (var t = 0; t < titles.length; t++) {
+      if (String(titles[t].getAttribute('data-jid')) === String(jid)) {
+        titles[t].textContent = existing.title || '';
+        break;
+      }
+    }
+    return;
+  }
+  if (existing.title === title) return;
+  syncJokeTitleEverywhere(jid, title);
+  if (typeof persistScriptJokeFields === 'function') {
+    persistScriptJokeFields(jid, { title: title });
+  } else if (typeof persistScriptJokeBody === 'function') {
+    // fallback: body helper only — title still updated locally
   }
 }
 
@@ -741,7 +846,9 @@ function flushScriptBodySave(jid, text) {
   var nextBody = body || 'No notes yet.';
   if (existing.body === nextBody) return;
   syncJokeBodyEverywhere(jid, nextBody);
-  if (typeof persistScriptJokeBody === 'function') {
+  if (typeof persistScriptJokeFields === 'function') {
+    persistScriptJokeFields(jid, { body: nextBody });
+  } else if (typeof persistScriptJokeBody === 'function') {
     persistScriptJokeBody(jid, nextBody);
   }
 }
@@ -1224,7 +1331,11 @@ function filterSetLibraryBySearch(q) {
   var lib = document.getElementById('set-lib');
   if (!lib) return;
   _currentSearchQuery = q || '';
-  var lower = q.toLowerCase().trim();
+  var lower = String(q || '').toLowerCase().trim();
+  var topSearch = document.getElementById('set-search');
+  var libSearch = document.getElementById('set-lib-search');
+  if (topSearch && document.activeElement !== topSearch && topSearch.value !== (q || '')) topSearch.value = q || '';
+  if (libSearch && document.activeElement !== libSearch && libSearch.value !== (q || '')) libSearch.value = q || '';
   var canvas = document.getElementById('set-canvas');
   var usedIds = [];
   if (canvas) {
@@ -1237,18 +1348,20 @@ function filterSetLibraryBySearch(q) {
     if (usedIds.indexOf(jid) !== -1) { item.style.display = 'none'; return; }
     var j = jokes.find(function(x){ return String(x.id) === jid; });
     if (!j) return;
-    if (!lower) { item.style.display = ''; return; }
-    var match = j.title.toLowerCase().indexOf(lower) !== -1
-      || (j.body && j.body.toLowerCase().indexOf(lower) !== -1)
-      || (j.tags && j.tags.some(function(t){ return t.toLowerCase().indexOf(lower) !== -1; }));
+    var title = j.title || '';
+    var body = j.body || '';
+    var match = !lower
+      || title.toLowerCase().indexOf(lower) !== -1
+      || body.toLowerCase().indexOf(lower) !== -1
+      || (j.tags && j.tags.some(function(t){ return String(t).toLowerCase().indexOf(lower) !== -1; }));
     item.style.display = match ? '' : 'none';
     var titleDiv = item.querySelector('[data-title]');
     if (titleDiv) {
-      if (match && lower) {
+      if (match && lower && title.toLowerCase().indexOf(lower) !== -1) {
         var escaped = lower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        titleDiv.innerHTML = j.title.replace(new RegExp('(' + escaped + ')', 'gi'), '<mark style="background:#ffe066;color:#26150f;border-radius:2px;padding:0 1px">$1</mark>');
+        titleDiv.innerHTML = title.replace(new RegExp('(' + escaped + ')', 'gi'), '<mark style="background:#ffe066;color:#26150f;border-radius:2px;padding:0 1px">$1</mark>');
       } else {
-        titleDiv.textContent = j.title;
+        titleDiv.textContent = title;
       }
     }
   });

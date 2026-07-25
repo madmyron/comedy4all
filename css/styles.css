@@ -321,8 +321,23 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
 .set-script-block + .set-script-block{border-top:1px solid rgba(38,21,15,.06)}
 .set-script-block:focus-within{box-shadow:inset 0 0 0 1px var(--gold-br)}
 .set-script-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.set-script-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0}
-.set-script-title{font-size:11px;font-weight:600;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.set-script-num,.set-script-title{
+  font-size:15px;font-weight:700;line-height:1.3;flex-shrink:0
+}
+.set-script-num{
+  font-family:'Inter',sans-serif;min-width:1.2em;text-align:right
+}
+.set-script-title{
+  color:var(--text);flex:1;min-width:0;flex-shrink:1;
+  outline:none;cursor:text;user-select:text;-webkit-user-select:text;
+  padding:1px 4px;margin:-1px -4px;border-radius:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.set-script-title:focus{
+  white-space:normal;overflow:visible;text-overflow:clip;
+  background:rgba(255,255,255,.45);caret-color:currentColor
+}
+.set-script-title:empty::before{content:attr(data-placeholder);color:var(--text3);font-weight:600}
 .set-script-runtime{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0;margin-right:4px}
 .set-script-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
 .set-script-actions .sslot-move,.set-script-actions .sslot-x{
@@ -350,6 +365,15 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
 .set-script-c5{background:rgba(184,134,11,.12);border-left-color:#b8860b}
 .set-script-c6{background:rgba(70,130,140,.12);border-left-color:#46828c}
 .set-script-c7{background:rgba(162,126,114,.14);border-left-color:#a27e72}
+/* Title + number: darker shade of each block accent */
+.set-script-c0 .set-script-num,.set-script-c0 .set-script-title{color:#8a4518}
+.set-script-c1 .set-script-num,.set-script-c1 .set-script-title{color:#243f7a}
+.set-script-c2 .set-script-num,.set-script-c2 .set-script-title{color:#1c4f36}
+.set-script-c3 .set-script-num,.set-script-c3 .set-script-title{color:#6e2a26}
+.set-script-c4 .set-script-num,.set-script-c4 .set-script-title{color:#5a3268}
+.set-script-c5 .set-script-num,.set-script-c5 .set-script-title{color:#745608}
+.set-script-c6 .set-script-num,.set-script-c6 .set-script-title{color:#2c5258}
+.set-script-c7 .set-script-num,.set-script-c7 .set-script-title{color:#6a4d44}
 #screen-sets.set-mode-script #set-canvas,
 #screen-sets.set-mode-script #set-add-hint{display:none!important}
 #screen-sets.set-mode-bubbles #set-script{display:none!important}
