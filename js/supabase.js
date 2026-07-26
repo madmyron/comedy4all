@@ -314,8 +314,11 @@ function _patchFunctions() {
     var rtEl    = document.getElementById('nj-runtime');
     var title   = titleEl ? titleEl.value.trim() : '';
     if (!title) { toast('Please add a title!'); return; }
+    var now = new Date().toISOString();
     var nj = {
       title: title,
+      created_at: now,
+      updated_at: now,
       body: bodyEl ? bodyEl.value.trim() : '',
       tags: modalTags.length ? modalTags.slice() : [],
       tier: modalRating >= 4 ? 'a' : modalRating >= 3 ? 'b' : 'c',
@@ -330,7 +333,7 @@ function _patchFunctions() {
       _sb.from('jokes').insert(Object.assign({}, nj, { user_id: currentUser.id })).select().single()
         .then(function(res) {
           if (res.error) { toast('Save failed: ' + res.error.message); return; }
-          jokes.unshift(res.data); displayJokes = jokes.slice(); updateCounts();
+          jokes.unshift(res.data); displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice(); updateCounts();
           var scr = document.getElementById('screen-jokes');
           if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
           setSyncStatus('synced');
@@ -338,7 +341,7 @@ function _patchFunctions() {
         });
     } else {
       nj.id = 'local-' + Date.now();
-      jokes.unshift(nj); displayJokes = jokes.slice(); updateCounts();
+      jokes.unshift(nj); displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice(); updateCounts();
       var scr = document.getElementById('screen-jokes');
       if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
       toast('Saved locally (sign in to sync)');
@@ -357,11 +360,12 @@ function _patchFunctions() {
       runtime: rtEl ? rtEl.value.trim() || '1:00' : '1:00',
       tier: tierEl ? tierEl.value : 'b', rating: modalRating || 3,
       tags: modalTags.length ? modalTags.slice() : [],
-      score: parseFloat((6 + (modalRating || 3) * 0.5).toFixed(1))
+      score: parseFloat((6 + (modalRating || 3) * 0.5).toFixed(1)),
+      updated_at: new Date().toISOString()
     };
     var eid = editingId; closeEditModal();
     for (var i = 0; i < jokes.length; i++) { if (jokes[i].id === eid) { Object.assign(jokes[i], updates); break; } }
-    displayJokes = jokes.slice();
+    displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
     var scr = document.getElementById('screen-jokes');
     if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
     if (typeof refreshSetViews === 'function') refreshSetViews();
@@ -387,6 +391,7 @@ function _patchFunctions() {
     if (Object.prototype.hasOwnProperty.call(fields, 'title')) updates.title = fields.title;
     if (Object.prototype.hasOwnProperty.call(fields, 'body')) updates.body = fields.body;
     if (!Object.keys(updates).length) return;
+    updates.updated_at = new Date().toISOString();
     setSyncStatus('syncing');
     var ex = jokes.find(function(j) { return String(j.id) === String(jid); });
     var vp = (ex && currentUser)

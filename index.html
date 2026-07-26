@@ -295,7 +295,7 @@
           <option value="">All Tags</option>
         </select>
         <select id="sort-select" class="btn" style="padding:6px 9px" onchange="sortJokes(this.value)">
-          <option value="custom">Custom Order</option><option value="score">Top Rated</option><option value="alpha">A&ndash;Z</option><option value="newest">Newest First</option>
+          <option value="custom">Custom Order</option><option value="score">Top Rated</option><option value="alpha">A&ndash;Z</option><option value="created-desc">Created Newest</option><option value="created-asc">Created Oldest</option><option value="updated-desc">Edited Newest</option><option value="updated-asc">Edited Oldest</option>
         </select>
         <button id="topbar-new-joke-btn" class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
       </div>
@@ -335,8 +335,16 @@
       <div id="sets-layout" style="height:calc(100% - 54px);overflow:hidden">
         <div style="background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column" class="scroll">
           <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:12px 13px 6px;flex-shrink:0">Joke Library</div>
-          <div style="padding:0 10px 10px;flex-shrink:0">
+          <div style="padding:0 10px 8px;flex-shrink:0;display:flex;flex-direction:column;gap:6px">
             <input id="set-lib-search" type="search" aria-label="Search joke library" placeholder="Search title or text…" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none" oninput="filterSetLibraryBySearch(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+            <select id="set-lib-sort" class="btn" aria-label="Joke library order" style="width:100%;padding:6px 9px;font-size:12px" onchange="setLibSortMode(this.value)">
+              <option value="alpha">A-Z</option>
+              <option value="created-desc">Created Newest</option>
+              <option value="created-asc">Created Oldest</option>
+              <option value="updated-desc">Edited Newest</option>
+              <option value="updated-asc">Edited Oldest</option>
+              <option value="manual">Manual</option>            
+            </select>
           </div>
           <div id="set-lib" style="flex:1;overflow-y:auto"></div>
         </div>
@@ -1026,7 +1034,7 @@
 <script src="js/data.js?v=2"></script>
 <script src="js/supabase.js?v=7"></script>
 <script src="js/ui.js?v=3"></script>
-<script src="js/jokes.js?v=17"></script>
+<script src="js/jokes.js?v=19"></script>
 <script src="js/rehearsal.js?v=2"></script>
 <script src="js/analytics.js?v=2"></script>
 <script src="js/brooks.js?v=5"></script>

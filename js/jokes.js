@@ -2,6 +2,55 @@
 var jokeGridSortable = null;
 var _currentSearchQuery = '';
 
+function normalizeJokeSortMode(mode) {
+  if (mode === 'newest') return 'created-desc';
+  if (mode === 'oldest') return 'created-asc';
+  if (mode === 'edited-newest') return 'updated-desc';
+  if (mode === 'edited-oldest') return 'updated-asc';
+  var valid = ['custom', 'score', 'alpha', 'created-desc', 'created-asc', 'updated-desc', 'updated-asc', 'manual'];
+  return valid.indexOf(mode) !== -1 ? mode : 'custom';
+}
+
+function jokeDateMs(j, kind) {
+  if (!j) return 0;
+  var raw = kind === 'updated'
+    ? (j.updated_at || j.created_at || 0)
+    : (j.created_at || j.updated_at || 0);
+  var ms = new Date(raw).getTime();
+  if (!isNaN(ms) && ms > 0) return ms;
+  var id = String(j.id == null ? '' : j.id);
+  var localMatch = id.match(/local-(\d+)/);
+  if (localMatch) return Number(localMatch[1]) || 0;
+  var n = Number(j.id);
+  return isNaN(n) ? 0 : n;
+}
+
+function compareJokeTitles(a, b) {
+  return String(a.title || '').localeCompare(String(b.title || ''), undefined, { sensitivity: 'base' });
+}
+
+function applyJokeSort(list, mode) {
+  var sorted = (list || []).slice();
+  mode = normalizeJokeSortMode(mode);
+  if (mode === 'score') sorted.sort(function(a, b) { return (b.score || 0) - (a.score || 0); });
+  else if (mode === 'alpha') sorted.sort(compareJokeTitles);
+  else if (mode === 'created-desc') sorted.sort(function(a, b) { return jokeDateMs(b, 'created') - jokeDateMs(a, 'created'); });
+  else if (mode === 'created-asc') sorted.sort(function(a, b) { return jokeDateMs(a, 'created') - jokeDateMs(b, 'created'); });
+  else if (mode === 'updated-desc') sorted.sort(function(a, b) { return jokeDateMs(b, 'updated') - jokeDateMs(a, 'updated'); });
+  else if (mode === 'updated-asc') sorted.sort(function(a, b) { return jokeDateMs(a, 'updated') - jokeDateMs(b, 'updated'); });
+  return sorted;
+}
+
+function getJokeManagerSortMode() {
+  var sortSelect = document.getElementById('sort-select');
+  return normalizeJokeSortMode(sortSelect ? sortSelect.value : 'custom');
+}
+
+function applyActiveJokeManagerSort(list) {
+  var mode = getJokeManagerSortMode();
+  return mode === 'custom' ? (list || []).slice() : applyJokeSort(list, mode);
+}
+
 function tagColor(t) {
   if (t==='Travel') return 'gold';
   if (t==='Tech') return 'blue';
@@ -59,7 +108,7 @@ function renderJokes(list) {
     if (jokeGridSortable) jokeGridSortable.destroy();
     
     var sortSelect = document.getElementById('sort-select');
-    var isCustomOrder = sortSelect && sortSelect.value === 'custom';
+    var isCustomOrder = sortSelect && normalizeJokeSortMode(sortSelect.value) === 'custom';
     
     jokeGridSortable = new Sortable(grid, {
       animation: 150,
@@ -201,9 +250,10 @@ function unarchiveJoke(id) {
 function filterJokes(q) {
   _currentSearchQuery = q || '';
   var pool = jokes;
-  displayJokes = q ? pool.filter(function(j){
+  var next = q ? pool.filter(function(j){
     return j.title.toLowerCase().indexOf(q.toLowerCase())>-1 || j.body.toLowerCase().indexOf(q.toLowerCase())>-1;
   }) : pool.slice();
+  displayJokes = applyActiveJokeManagerSort(next);
   renderJokes(displayJokes);
 }
 
@@ -230,28 +280,25 @@ function rebuildTagDropdown() {
   }
 }
 function filterByTag(t) {
-  displayJokes = t ? jokes.filter(function(j){return j.tags.indexOf(t)>-1;}) : jokes.slice();
+  displayJokes = applyActiveJokeManagerSort(t ? jokes.filter(function(j){return j.tags.indexOf(t)>-1;}) : jokes.slice());
   renderJokes(displayJokes);
 }
 function filterByTier(t) {
+  var next;
   if (t==='archived') {
-    displayJokes = archivedJokes.slice();
+    next = archivedJokes.slice();
   } else {
-    displayJokes = t ? jokes.filter(function(j){return j.tier===t;}) : jokes.slice();
+    next = t ? jokes.filter(function(j){return j.tier===t;}) : jokes.slice();
   }
+  displayJokes = applyActiveJokeManagerSort(next);
   renderJokes(displayJokes);
 }
 function sortJokes(by) {
-  var s = displayJokes.slice();
-  if (by==='score') s.sort(function(a,b){return b.score-a.score;});
-  else if (by==='alpha') s.sort(function(a,b){return a.title.localeCompare(b.title);});
-  else if (by==='newest') s.sort(function(a,b){return b.id-a.id;});
-  // If 'custom', we leave it alone (or it triggers re-render to activate drag & drop)
+  by = normalizeJokeSortMode(by);
+  var s = by === 'custom' ? displayJokes.slice() : applyJokeSort(displayJokes, by);
   if (by !== 'custom') {
-     // If not custom, disable Sortable
      if (jokeGridSortable) jokeGridSortable.option('disabled', true);
   }
-  
   displayJokes = s;
   renderJokes(s);
 }
@@ -329,8 +376,11 @@ function saveNewJoke() {
   var runtimeEl = document.getElementById('nj-runtime');
   var title = titleEl ? titleEl.value.trim() : '';
   if (!title) { toast('Please add a title!'); return; }
+  var now = new Date().toISOString();
   var nj = {
     title: title,
+    created_at: now,
+    updated_at: now,
     body: bodyEl ? bodyEl.value.trim() || '' : '',
     tags: modalTags.length ? modalTags.slice() : [],
     tier: modalRating >= 4 ? 'a' : modalRating >= 3 ? 'b' : 'c',
@@ -345,7 +395,7 @@ function saveNewJoke() {
     _sb.from('jokes').insert(Object.assign({}, nj, { user_id: currentUser.id })).select().single()
       .then(function(res) {
         if (res.error) { toast('Save failed: ' + res.error.message); return; }
-        jokes.unshift(res.data); displayJokes = jokes.slice(); updateCounts();
+        jokes.unshift(res.data); displayJokes = applyActiveJokeManagerSort(jokes); updateCounts();
         var scr = document.getElementById('screen-jokes');
         if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
         setSyncStatus('synced');
@@ -353,7 +403,7 @@ function saveNewJoke() {
       });
   } else {
     nj.id = 'local-' + Date.now();
-    jokes.unshift(nj); displayJokes = jokes.slice(); updateCounts();
+    jokes.unshift(nj); displayJokes = applyActiveJokeManagerSort(jokes); updateCounts();
     var scr = document.getElementById('screen-jokes');
     if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
     toast('Saved locally (sign in to sync)');
@@ -478,11 +528,12 @@ function saveEditedJoke() {
       jokes[i].rating = modalRating || jokes[i].rating;
       jokes[i].tags = modalTags.slice();
       jokes[i].score = parseFloat((6 + jokes[i].rating * 0.5).toFixed(1));
+      jokes[i].updated_at = new Date().toISOString();
       break;
     }
   }
   var eid = editingId;
-  displayJokes = jokes.slice();
+  displayJokes = applyActiveJokeManagerSort(jokes);
   closeEditModal();
   renderJokes(displayJokes);
   refreshSetViews();
@@ -708,6 +759,7 @@ function syncJokeTitleEverywhere(jid, nextTitle) {
   for (var i = 0; i < jokes.length; i++) {
     if (String(jokes[i].id) === String(jid)) {
       jokes[i].title = nextTitle;
+      jokes[i].updated_at = new Date().toISOString();
       joke = jokes[i];
       break;
     }
@@ -717,6 +769,7 @@ function syncJokeTitleEverywhere(jid, nextTitle) {
     for (var d = 0; d < displayJokes.length; d++) {
       if (String(displayJokes[d].id) === String(jid)) {
         displayJokes[d].title = nextTitle;
+        displayJokes[d].updated_at = new Date().toISOString();
         break;
       }
     }
@@ -793,6 +846,7 @@ function syncJokeBodyEverywhere(jid, nextBody) {
   for (var i = 0; i < jokes.length; i++) {
     if (String(jokes[i].id) === String(jid)) {
       jokes[i].body = nextBody;
+      jokes[i].updated_at = new Date().toISOString();
       joke = jokes[i];
       break;
     }
@@ -802,6 +856,7 @@ function syncJokeBodyEverywhere(jid, nextBody) {
     for (var d = 0; d < displayJokes.length; d++) {
       if (String(displayJokes[d].id) === String(jid)) {
         displayJokes[d].body = nextBody;
+        displayJokes[d].updated_at = new Date().toISOString();
         break;
       }
     }
@@ -1368,6 +1423,154 @@ function filterSetLibraryBySearch(q) {
 }
 
 var _libLastTouch = 0;
+var _setLibSortBy = 'alpha';
+
+function isSetLibSortMode(mode) {
+  mode = normalizeJokeSortMode(mode);
+  return mode === 'alpha' || mode === 'created-desc' || mode === 'created-asc' || mode === 'updated-desc' || mode === 'updated-asc' || mode === 'manual';
+}
+
+function getSetLibSortMode() {
+  try {
+    var saved = normalizeJokeSortMode(localStorage.getItem('c4a_set_lib_sort'));
+    if (isSetLibSortMode(saved)) return saved;
+  } catch (e) {}
+  return 'alpha';
+}
+
+function setLibSortMode(mode) {
+  mode = normalizeJokeSortMode(mode);
+  if (!isSetLibSortMode(mode)) mode = 'alpha';
+  _setLibSortBy = mode;
+  try { localStorage.setItem('c4a_set_lib_sort', mode); } catch (e) {}
+  var sel = document.getElementById('set-lib-sort');
+  if (sel && sel.value !== mode) sel.value = mode;
+  renderSetLibraryList();
+  if (typeof syncLibraryToCanvas === 'function') syncLibraryToCanvas();
+  var qEl = document.getElementById('set-lib-search') || document.getElementById('set-search');
+  if (qEl && qEl.value && typeof filterSetLibraryBySearch === 'function') filterSetLibraryBySearch(qEl.value);
+  if (mode === 'manual') toast('Drag jokes in the library to reorder');
+}
+
+function getOrderedSetLibraryJokes() {
+  var mode = normalizeJokeSortMode(_setLibSortBy || getSetLibSortMode());
+  if (mode === 'manual') return jokes.slice();
+  return applyJokeSort(jokes, mode);
+}
+
+function persistSetLibManualOrderFromDom() {
+  var lib = document.getElementById('set-lib');
+  if (!lib) return;
+  var orderedIds = [];
+  lib.querySelectorAll('.set-lib-item[data-jid]').forEach(function(el) {
+    orderedIds.push(String(el.getAttribute('data-jid')));
+  });
+  if (!orderedIds.length) return;
+  var byId = {};
+  jokes.forEach(function(j) { byId[String(j.id)] = j; });
+  var next = [];
+  orderedIds.forEach(function(id) {
+    if (byId[id]) {
+      next.push(byId[id]);
+      delete byId[id];
+    }
+  });
+  Object.keys(byId).forEach(function(id) { next.push(byId[id]); });
+  jokes = next;
+  if (typeof displayJokes !== 'undefined') displayJokes = jokes.slice();
+  try {
+    localStorage.setItem('c4a_joke_order', JSON.stringify(jokes.map(function(j) { return String(j.id); })));
+  } catch (e) {}
+  toast('Library order saved \u2713');
+  if (typeof currentUser !== 'undefined' && currentUser && typeof _sb !== 'undefined' && _sb) {
+    var updates = jokes.map(function(j, i) {
+      return _sb.from('jokes').update({ sort_order: i }).eq('id', j.id);
+    });
+    Promise.all(updates).catch(function() {});
+  }
+}
+
+function renderSetLibraryList() {
+  var lib = document.getElementById('set-lib');
+  if (!lib) return;
+  _setLibSortBy = getSetLibSortMode();
+  var sel = document.getElementById('set-lib-sort');
+  if (sel) sel.value = _setLibSortBy;
+
+  var list = getOrderedSetLibraryJokes();
+  var hint = _setLibSortBy === 'manual'
+    ? 'drag to reorder · + to add'
+    : 'tap to open · + to add';
+  lib.innerHTML = list.map(function(j){
+    var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
+    return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:8px;padding:9px 10px 9px 12px;border-bottom:1px solid var(--border);border-left:3px solid '+color+';transition:background .12s;cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+      +'<div style="flex:1;min-width:0"><div data-title style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">'+hint+'</div></div>'
+      +'<button class="set-lib-add" onclick="event.stopPropagation();addJokeToSet(\''+j.id+'\')" style="flex-shrink:0;width:34px;height:34px;border-radius:9px;border:1px solid var(--gold-br);background:var(--gold-bg);color:var(--gold);font-size:20px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'
+      +'</div>';
+  }).join('');
+
+  var libItems = lib.querySelectorAll('.set-lib-item');
+  for (var li = 0; li < libItems.length; li++) {
+    (function(item) {
+      var pressTimer = null;
+
+      item.addEventListener('touchstart', function(e) {
+        if (e.target.closest('.drag-handle') || e.target.closest('.set-lib-add')) return;
+        _libLastTouch = Date.now();
+        pressTimer = setTimeout(function() {
+          pressTimer = null;
+          var jid = item.getAttribute('data-jid');
+          openDetail(jid);
+          item.style.background = 'var(--gold-bg)';
+          setTimeout(function(){ item.style.background = ''; }, 400);
+        }, 500);
+      }, { passive: true });
+
+      item.addEventListener('touchend', function() {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      });
+
+      item.addEventListener('touchmove', function() {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      }, { passive: true });
+
+      item.addEventListener('click', function(e) {
+        if (e.target.closest('.drag-handle') || e.target.closest('.set-lib-add')) return;
+        if (Date.now() - _setDragEndAt < 350) return;
+        var jid = item.getAttribute('data-jid');
+        if (jid) openDetail(jid);
+      });
+    })(libItems[li]);
+  }
+
+  if (setLibSortable) setLibSortable.destroy();
+  if (typeof Sortable !== 'undefined') {
+    var allowManualSort = _setLibSortBy === 'manual';
+    setLibSortable = new Sortable(lib, {
+      group: { name: 'setbuilder', pull: 'clone', put: false },
+      sort: allowManualSort,
+      animation: 150,
+      draggable: '.set-lib-item',
+      filter: '.set-lib-add',
+      preventOnFilter: false,
+      forceFallback: true,
+      fallbackOnBody: true,
+      fallbackTolerance: 4,
+      delay: allowManualSort ? 120 : 160,
+      delayOnTouchOnly: true,
+      touchStartThreshold: 8,
+      onUpdate: function() {
+        if (_setLibSortBy !== 'manual') return;
+        _setDragEndAt = Date.now();
+        persistSetLibManualOrderFromDom();
+      },
+      onEnd: function() {
+        _setDragEndAt = Date.now();
+      }
+    });
+  }
+}
+
 function renderSet() {
   refreshSetNameSelect();
   var setTagFilter = document.getElementById('set-tag-filter');
@@ -1377,71 +1580,10 @@ function renderSet() {
     setTagFilter.innerHTML = '<option value="">All Tags</option>' + allTags.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
   }
 
-  var lib = document.getElementById('set-lib');
-  if (lib) {
-    lib.innerHTML = jokes.map(function(j){
-      var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
-      return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:8px;padding:9px 10px 9px 12px;border-bottom:1px solid var(--border);border-left:3px solid '+color+';transition:background .12s;cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
-        +'<div style="flex:1;min-width:0"><div data-title style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">tap to open &middot; + to add</div></div>'
-        +'<button class="set-lib-add" onclick="event.stopPropagation();addJokeToSet(\''+j.id+'\')" style="flex-shrink:0;width:34px;height:34px;border-radius:9px;border:1px solid var(--gold-br);background:var(--gold-bg);color:var(--gold);font-size:20px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'
-        +'</div>';
-    }).join('');
-    
-    var libItems = lib.querySelectorAll('.set-lib-item');
-    for (var li = 0; li < libItems.length; li++) {
-      (function(item) {
-        var pressTimer = null;
-
-        item.addEventListener('touchstart', function(e) {
-          if (e.target.closest('.drag-handle') || e.target.closest('.set-lib-add')) return;
-          _libLastTouch = Date.now();
-          pressTimer = setTimeout(function() {
-            pressTimer = null;
-            var jid = item.getAttribute('data-jid');
-            openDetail(jid);
-            item.style.background = 'var(--gold-bg)';
-            setTimeout(function(){ item.style.background = ''; }, 400);
-          }, 500);
-        }, { passive: true });
-
-        item.addEventListener('touchend', function() {
-          if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-        });
-
-        item.addEventListener('touchmove', function() {
-          if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-        }, { passive: true });
-
-        item.addEventListener('click', function(e) {
-          if (e.target.closest('.drag-handle') || e.target.closest('.set-lib-add')) return;
-          if (e.target.closest('.set-lib-item')) {
-            var jid = item.getAttribute('data-jid');
-            if (jid) openDetail(jid);
-          }
-        });
-      })(libItems[li]);
-    }
-
-    if (setLibSortable) setLibSortable.destroy();
-    
-    if (typeof Sortable !== 'undefined') {
-      setLibSortable = new Sortable(lib, {
-        group: { name: 'setbuilder', pull: 'clone', put: false },
-        sort: false,
-        animation: 150,
-        draggable: '.set-lib-item',
-        filter: '.set-lib-add',
-        preventOnFilter: false,
-        forceFallback: true,
-        fallbackOnBody: true,
-        fallbackTolerance: 4,
-        delay: 160,
-        delayOnTouchOnly: true,
-        touchStartThreshold: 8
-      });
-    }
-  }
-
+  renderSetLibraryList();
+  if (typeof syncLibraryToCanvas === 'function') syncLibraryToCanvas();
+  var qEl = document.getElementById('set-lib-search') || document.getElementById('set-search');
+  if (qEl && qEl.value) filterSetLibraryBySearch(qEl.value);
   var canvas = document.getElementById('set-canvas');
   if (canvas) {
     if (!setCanvasSortable && typeof Sortable !== 'undefined') {
