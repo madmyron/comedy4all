@@ -18,7 +18,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=9">
+<link rel="stylesheet" href="css/styles.css?v=10">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -294,8 +294,14 @@
         <select id="tag-filter-select" class="btn" style="padding:6px 9px" onchange="filterByTag(this.value)">
           <option value="">All Tags</option>
         </select>
-        <select id="sort-select" class="btn" style="padding:6px 9px" onchange="sortJokes(this.value)">
-          <option value="custom">Custom Order</option><option value="score">Top Rated</option><option value="alpha">A&ndash;Z</option><option value="created-desc">Created Newest</option><option value="created-asc">Created Oldest</option><option value="updated-desc">Edited Newest</option><option value="updated-asc">Edited Oldest</option>
+        <select id="sort-select" class="btn" style="padding:6px 9px" onchange="sortJokes(this.value)" aria-label="Sort jokes">
+          <option value="custom">Sort: Manual</option>
+          <option value="score">Sort: Top Rated</option>
+          <option value="alpha">Sort: A–Z</option>
+          <option value="created-desc">Sort: Created Newest</option>
+          <option value="created-asc">Sort: Created Oldest</option>
+          <option value="updated-desc">Sort: Edited Newest</option>
+          <option value="updated-asc">Sort: Edited Oldest</option>
         </select>
         <button id="topbar-new-joke-btn" class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
       </div>
@@ -337,13 +343,14 @@
           <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:12px 13px 6px;flex-shrink:0">Joke Library</div>
           <div style="padding:0 10px 8px;flex-shrink:0;display:flex;flex-direction:column;gap:6px">
             <input id="set-lib-search" type="search" aria-label="Search joke library" placeholder="Search title or text…" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none" oninput="filterSetLibraryBySearch(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+            <label for="set-lib-sort" style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.04em">Sort list</label>
             <select id="set-lib-sort" class="btn" aria-label="Joke library order" style="width:100%;padding:6px 9px;font-size:12px" onchange="setLibSortMode(this.value)">
-              <option value="alpha">A-Z</option>
+              <option value="alpha">A–Z</option>
               <option value="created-desc">Created Newest</option>
               <option value="created-asc">Created Oldest</option>
               <option value="updated-desc">Edited Newest</option>
               <option value="updated-asc">Edited Oldest</option>
-              <option value="manual">Manual</option>            
+              <option value="manual">Manual</option>
             </select>
           </div>
           <div id="set-lib" style="flex:1;overflow-y:auto"></div>
@@ -1034,7 +1041,7 @@
 <script src="js/data.js?v=2"></script>
 <script src="js/supabase.js?v=7"></script>
 <script src="js/ui.js?v=3"></script>
-<script src="js/jokes.js?v=19"></script>
+<script src="js/jokes.js?v=20"></script>
 <script src="js/rehearsal.js?v=2"></script>
 <script src="js/analytics.js?v=2"></script>
 <script src="js/brooks.js?v=5"></script>

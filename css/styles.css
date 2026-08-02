@@ -216,6 +216,7 @@ body::before{
 .jtitle{font-size:13px;font-weight:600;margin-bottom:4px;color:var(--text)}
 .jprev{font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .jmeta{display:flex;align-items:center;justify-content:space-between;font-size:10px}
+.jdate{font-size:10px;color:var(--text3);margin:-2px 0 8px;line-height:1.35}
 .stars{color:var(--gold)}
 /* REHEARSAL */
 .rj-text{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.75;color:var(--text);margin-bottom:14px;font-weight:400}
@@ -576,15 +577,17 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
   .joke-grid{grid-template-columns:1fr 1fr!important}
   .topbar input[type=text], .topbar select:not(:first-of-type){display:none}
   #joke-search{display:inline-flex!important;width:120px!important;min-width:0!important;font-size:11px!important}
+  #sort-select{display:inline-flex!important;max-width:148px!important;min-width:0!important;padding:5px 6px!important;font-size:11px!important}
   #screen-jokes .topbar-title{display:none}
   #sets-topbar .topbar-title{display:none}
   #sets-topbar .btn:not(.btn-primary):not(#set-search){display:none}
   #screen-sets .topbar select{display:inline-flex!important;flex:0 0 auto!important;flex-shrink:0!important;min-width:132px!important;max-width:170px!important;text-overflow:ellipsis}
   #screen-sets #set-tag-filter{display:none!important}
   #sets-layout{display:flex!important;flex-direction:row!important;flex:1!important;height:0!important;overflow:hidden!important}
-  #sets-layout > div:first-child{width:120px!important;min-width:120px!important;flex-shrink:0!important;overflow-y:auto!important;border-right:1px solid var(--border)!important;display:block!important}
+  #sets-layout > div:first-child{width:148px!important;min-width:148px!important;flex-shrink:0!important;overflow-y:auto!important;border-right:1px solid var(--border)!important;display:flex!important;flex-direction:column!important}
   #sets-layout > div:nth-child(2){flex:1!important;overflow-y:auto!important;min-width:0!important;padding:10px 10px 100px!important}
   #sets-layout > div:last-child{display:none!important}
+  #set-lib-sort{font-size:11px!important;padding:5px 6px!important}
   #screen-studio > div:last-child{grid-template-columns:1fr!important;grid-template-rows:minmax(140px,180px) 1fr!important;height:calc(100% - 50px)!important}
   #screen-studio > div:last-child > div:first-child{display:block!important;border-right:none!important;border-bottom:1px solid var(--border)}
   #screen-studio > div:last-child > div:last-child{display:flex!important;min-height:0}

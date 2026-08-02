@@ -29,6 +29,25 @@ function compareJokeTitles(a, b) {
   return String(a.title || '').localeCompare(String(b.title || ''), undefined, { sensitivity: 'base' });
 }
 
+function formatJokeDate(raw) {
+  if (!raw) return '';
+  var ms = new Date(raw).getTime();
+  if (isNaN(ms) || ms <= 0) return '';
+  return new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function jokeDateLine(j) {
+  if (!j) return '';
+  var created = formatJokeDate(j.created_at);
+  var updated = formatJokeDate(j.updated_at);
+  if (!created && !updated) return '';
+  if (created && updated && created === updated) return 'Created ' + created;
+  var parts = [];
+  if (created) parts.push('Created ' + created);
+  if (updated) parts.push('Edited ' + updated);
+  return parts.join(' · ');
+}
+
 function applyJokeSort(list, mode) {
   var sorted = (list || []).slice();
   mode = normalizeJokeSortMode(mode);
@@ -89,10 +108,12 @@ function renderJokes(list) {
     var archivedClass = j.archived ? ' archived' : '';
     var daysSince = j.updated_at ? Math.floor((Date.now()-new Date(j.updated_at).getTime())/86400000) : 0;
     var ageBadge = (daysSince > 60 && !j.archived) ? '<span style="font-size:9px;background:var(--red-bg);color:var(--red);border-radius:4px;padding:1px 5px;margin-left:4px">'+daysSince+'d</span>' : '';
+    var dateLine = jokeDateLine(j);
     return '<div class="jcard t'+j.tier+archivedClass+'" data-jid="'+j.id+'" style="cursor:pointer">'
       +'<div class="jtitle">'+j.title+ageBadge+'</div>'
       +'<div class="jprev">'+(j.body||'')+'</div>'
       +'<div style="margin-bottom:8px">'+j.tags.map(function(t){return '<span class="tag tag-'+tagColor(t)+'">'+t+'</span>';}).join('')+'</div>'
+      +(dateLine ? '<div class="jdate">'+dateLine+'</div>' : '')
       +'<div class="jmeta"><span class="stars">'+stars+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--text3);font-size:10px">'+j.runtime+'</span></div>'
       +'</div>';
   }).join('');
@@ -170,7 +191,8 @@ function openDetail(id) {
     +'<button class="btn btn-sm" onclick="closeDetail()" style="flex-shrink:0;padding:3px 8px;font-size:11px">x</button>'
     +'</div>'
     +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+j.tags.map(function(t){return '<span class="tag tag-'+tagColor(t)+'">'+t+'</span>';}).join('')+' '+tierLabel+'</div>'
-    +'<div style="display:flex;gap:14px;font-size:11px;color:var(--text3)"><span> '+j.runtime+'</span><span style="color:var(--gold)">'+stars+'</span></div>'
+    +'<div style="display:flex;gap:14px;font-size:11px;color:var(--text3);flex-wrap:wrap"><span>'+j.runtime+'</span><span style="color:var(--gold)">'+stars+'</span></div>'
+    +(jokeDateLine(j) ? '<div style="font-size:11px;color:var(--text3);margin-top:6px">'+jokeDateLine(j)+'</div>' : '')
     +'</div>'
     +'<div style="flex:1;overflow-y:auto;padding:14px" class="scroll">'
     +'<div class="sect-title">Material</div>'
@@ -1503,8 +1525,9 @@ function renderSetLibraryList() {
     : 'tap to open · + to add';
   lib.innerHTML = list.map(function(j){
     var color = j.tier==='a'?'var(--gold)':j.tier==='b'?'var(--blue)':'var(--text3)';
+    var dateLine = jokeDateLine(j);
     return '<div data-jid="'+j.id+'" class="set-lib-item" style="display:flex;align-items:center;gap:8px;padding:9px 10px 9px 12px;border-bottom:1px solid var(--border);border-left:3px solid '+color+';transition:background .12s;cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
-      +'<div style="flex:1;min-width:0"><div data-title style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">'+hint+'</div></div>'
+      +'<div style="flex:1;min-width:0"><div data-title style="font-size:12px;font-weight:500;color:var(--text)">'+j.title+'</div><div style="font-size:10px;color:var(--text3)">'+j.runtime+(dateLine ? ' · '+dateLine : '')+'</div><div style="font-size:9px;color:var(--text3);margin-top:2px;opacity:.6">'+hint+'</div></div>'
       +'<button class="set-lib-add" onclick="event.stopPropagation();addJokeToSet(\''+j.id+'\')" style="flex-shrink:0;width:34px;height:34px;border-radius:9px;border:1px solid var(--gold-br);background:var(--gold-bg);color:var(--gold);font-size:20px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'
       +'</div>';
   }).join('');
