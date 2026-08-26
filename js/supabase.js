@@ -188,25 +188,32 @@ function sbLoadJokes(opts) {
   opts = opts || {};
   if (!currentUser || !_sb) return;
   setSyncStatus('syncing');
-  _sb.from('jokes').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false })
+  _sb.from('jokes').select('*').eq('user_id', currentUser.id).order('updated_at', { ascending: false })
     .then(function(res) {
       if (res.error) { setSyncStatus('error'); return; }
       var all = res.data || [];
       jokes = all.filter(function(j) { return !j.archived; });
-      try {
-        var savedOrder = JSON.parse(localStorage.getItem('c4a_joke_order') || '[]');
-        if (savedOrder.length) {
-          jokes.sort(function(a, b) {
-            var ai = savedOrder.indexOf(String(a.id));
-            var bi = savedOrder.indexOf(String(b.id));
-            if (ai === -1) return 1;
-            if (bi === -1) return -1;
-            return ai - bi;
-          });
-        }
-      } catch(e) {}
+      var mgrMode = typeof getJokeManagerSortMode === 'function' ? getJokeManagerSortMode() : 'updated-desc';
+      if (mgrMode === 'custom') {
+        try {
+          var savedOrder = JSON.parse(localStorage.getItem('c4a_joke_order') || '[]');
+          if (savedOrder.length) {
+            jokes.sort(function(a, b) {
+              var ai = savedOrder.indexOf(String(a.id));
+              var bi = savedOrder.indexOf(String(b.id));
+              if (ai === -1) return 1;
+              if (bi === -1) return -1;
+              return ai - bi;
+            });
+          }
+        } catch(e) {}
+      }
       archivedJokes = all.filter(function(j) { return j.archived; });
-      displayJokes = jokes.slice();
+      displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
+      var sortSelect = document.getElementById('sort-select');
+      if (sortSelect && typeof normalizeJokeSortMode === 'function') {
+        sortSelect.value = normalizeJokeSortMode(mgrMode);
+      }
       var scr = document.getElementById('screen-jokes');
       if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
       updateCounts();
@@ -263,7 +270,8 @@ function sbStartRealtime() {
         var ev = payload.eventType, rec = payload.new, old = payload.old;
         if (ev === 'INSERT') {
           if (!rec.archived && !jokes.some(function(j) { return j.id === rec.id; })) {
-            jokes.unshift(rec); displayJokes = jokes.slice();
+            jokes.unshift(rec);
+            displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
           }
         } else if (ev === 'UPDATE') {
           if (!rec.archived) {
@@ -276,11 +284,11 @@ function sbStartRealtime() {
             for (var i = 0; i < archivedJokes.length; i++) { if (archivedJokes[i].id === rec.id) { archivedJokes[i] = rec; fa = true; break; } }
             if (!fa) archivedJokes.unshift(rec);
           }
-          displayJokes = jokes.slice();
+          displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
         } else if (ev === 'DELETE') {
           jokes = jokes.filter(function(j) { return j.id !== old.id; });
           archivedJokes = archivedJokes.filter(function(j) { return j.id !== old.id; });
-          displayJokes = jokes.slice();
+          displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
         }
         var s = document.getElementById('screen-jokes');
         if (s && s.classList.contains('active')) renderJokes(displayJokes);
@@ -445,7 +453,8 @@ function _patchFunctions() {
     var j = null, idx = -1;
     for (var i = 0; i < archivedJokes.length; i++) { if (archivedJokes[i].id === id) { j = archivedJokes[i]; idx = i; break; } }
     if (!j) return;
-    j.archived = false; jokes.unshift(j); archivedJokes.splice(idx, 1); displayJokes = jokes.slice();
+    j.archived = false; jokes.unshift(j); archivedJokes.splice(idx, 1);
+    displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
     closeDetail(); updateCounts(); renderJokes(displayJokes);
     toast('Joke restored! \u2713');
     if (currentUser && _sb) {

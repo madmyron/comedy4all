@@ -2,13 +2,15 @@
 var jokeGridSortable = null;
 var _currentSearchQuery = '';
 
+var DEFAULT_JOKE_SORT_MODE = 'updated-desc';
+
 function normalizeJokeSortMode(mode) {
   if (mode === 'newest') return 'created-desc';
   if (mode === 'oldest') return 'created-asc';
-  if (mode === 'edited-newest') return 'updated-desc';
+  if (mode === 'edited-newest' || mode === 'last-worked') return 'updated-desc';
   if (mode === 'edited-oldest') return 'updated-asc';
   var valid = ['custom', 'score', 'alpha', 'created-desc', 'created-asc', 'updated-desc', 'updated-asc', 'manual'];
-  return valid.indexOf(mode) !== -1 ? mode : 'custom';
+  return valid.indexOf(mode) !== -1 ? mode : DEFAULT_JOKE_SORT_MODE;
 }
 
 function jokeDateMs(j, kind) {
@@ -16,13 +18,21 @@ function jokeDateMs(j, kind) {
   var raw = kind === 'updated'
     ? (j.updated_at || j.created_at || 0)
     : (j.created_at || j.updated_at || 0);
-  var ms = new Date(raw).getTime();
+  var ms = 0;
+  if (raw) {
+    if (typeof raw === 'number') ms = raw;
+    else {
+      var s = String(raw).trim();
+      // Some drivers return "YYYY-MM-DD HH:MM:SS+00" — normalize for Date.parse
+      if (/^\d{4}-\d{2}-\d{2} /.test(s)) s = s.replace(' ', 'T');
+      ms = new Date(s).getTime();
+    }
+  }
   if (!isNaN(ms) && ms > 0) return ms;
   var id = String(j.id == null ? '' : j.id);
   var localMatch = id.match(/local-(\d+)/);
   if (localMatch) return Number(localMatch[1]) || 0;
-  var n = Number(j.id);
-  return isNaN(n) ? 0 : n;
+  return 0;
 }
 
 function compareJokeTitles(a, b) {
@@ -61,13 +71,25 @@ function applyJokeSort(list, mode) {
 }
 
 function getJokeManagerSortMode() {
+  try {
+    var saved = localStorage.getItem('c4a_joke_mgr_sort');
+    if (saved) return normalizeJokeSortMode(saved);
+  } catch (e) {}
   var sortSelect = document.getElementById('sort-select');
-  return normalizeJokeSortMode(sortSelect ? sortSelect.value : 'custom');
+  if (sortSelect && sortSelect.value) return normalizeJokeSortMode(sortSelect.value);
+  return DEFAULT_JOKE_SORT_MODE;
 }
 
 function applyActiveJokeManagerSort(list) {
   var mode = getJokeManagerSortMode();
   return mode === 'custom' ? (list || []).slice() : applyJokeSort(list, mode);
+}
+
+function persistJokeManagerSortMode(mode) {
+  mode = normalizeJokeSortMode(mode);
+  try { localStorage.setItem('c4a_joke_mgr_sort', mode); } catch (e) {}
+  var sortSelect = document.getElementById('sort-select');
+  if (sortSelect && sortSelect.value !== mode) sortSelect.value = mode;
 }
 
 function tagColor(t) {
@@ -93,7 +115,17 @@ function renderJokes(list) {
   var cnt = document.getElementById('joke-count');
   if (!grid) return;
   rebuildTagDropdown();
-  var isArchiveView = (list === archivedJokes || (list.length > 0 && list[0] && list[0].archived));
+  var isArchiveView = (list === archivedJokes || (list && list.length > 0 && list[0] && list[0].archived));
+  var mode = getJokeManagerSortMode();
+  var sortSelect = document.getElementById('sort-select');
+  if (sortSelect && sortSelect.value !== mode) sortSelect.value = mode;
+  // Re-sort on every paint so stale manual order / load paths can't leave oldest-first
+  if (!isArchiveView && mode !== 'custom') {
+    list = applyJokeSort(list || [], mode);
+    displayJokes = list;
+  } else {
+    list = list || [];
+  }
   if (cnt) cnt.textContent = list.length + (isArchiveView ? ' archived' : ' jokes');
   if (list.length === 0) {
     var msg = isArchiveView
@@ -128,8 +160,7 @@ function renderJokes(list) {
   if (!isArchiveView && typeof Sortable !== 'undefined') {
     if (jokeGridSortable) jokeGridSortable.destroy();
     
-    var sortSelect = document.getElementById('sort-select');
-    var isCustomOrder = sortSelect && normalizeJokeSortMode(sortSelect.value) === 'custom';
+    var isCustomOrder = mode === 'custom';
     
     jokeGridSortable = new Sortable(grid, {
       animation: 150,
@@ -262,7 +293,7 @@ function unarchiveJoke(id) {
   j.archived = false;
   jokes.unshift(j);
   archivedJokes.splice(idx, 1);
-  displayJokes = jokes.slice();
+  displayJokes = applyActiveJokeManagerSort(jokes);
   closeDetail();
   updateCounts();
   renderJokes(displayJokes);
@@ -317,6 +348,7 @@ function filterByTier(t) {
 }
 function sortJokes(by) {
   by = normalizeJokeSortMode(by);
+  persistJokeManagerSortMode(by);
   var s = by === 'custom' ? displayJokes.slice() : applyJokeSort(displayJokes, by);
   if (by !== 'custom') {
      if (jokeGridSortable) jokeGridSortable.option('disabled', true);
@@ -1445,24 +1477,45 @@ function filterSetLibraryBySearch(q) {
 }
 
 var _libLastTouch = 0;
-var _setLibSortBy = 'alpha';
+var _setLibSortBy = DEFAULT_JOKE_SORT_MODE;
 
 function isSetLibSortMode(mode) {
   mode = normalizeJokeSortMode(mode);
   return mode === 'alpha' || mode === 'created-desc' || mode === 'created-asc' || mode === 'updated-desc' || mode === 'updated-asc' || mode === 'manual';
 }
 
+function migrateJokeSortDefaults() {
+  try {
+    if (localStorage.getItem('c4a_sort_pref_v') === '3') return;
+    localStorage.setItem('c4a_sort_pref_v', '3');
+    localStorage.setItem('c4a_joke_mgr_sort', DEFAULT_JOKE_SORT_MODE);
+    localStorage.setItem('c4a_set_lib_sort', DEFAULT_JOKE_SORT_MODE);
+    // Old drag order was winning and showing first-written jokes at the top
+    localStorage.removeItem('c4a_joke_order');
+  } catch (e) {}
+}
+
+function initJokeSortPreferences() {
+  migrateJokeSortDefaults();
+  var mgrMode = getJokeManagerSortMode();
+  persistJokeManagerSortMode(mgrMode);
+  _setLibSortBy = getSetLibSortMode();
+  var libSel = document.getElementById('set-lib-sort');
+  if (libSel) libSel.value = _setLibSortBy;
+}
+
 function getSetLibSortMode() {
+  migrateJokeSortDefaults();
   try {
     var saved = normalizeJokeSortMode(localStorage.getItem('c4a_set_lib_sort'));
     if (isSetLibSortMode(saved)) return saved;
   } catch (e) {}
-  return 'alpha';
+  return DEFAULT_JOKE_SORT_MODE;
 }
 
 function setLibSortMode(mode) {
   mode = normalizeJokeSortMode(mode);
-  if (!isSetLibSortMode(mode)) mode = 'alpha';
+  if (!isSetLibSortMode(mode)) mode = DEFAULT_JOKE_SORT_MODE;
   _setLibSortBy = mode;
   try { localStorage.setItem('c4a_set_lib_sort', mode); } catch (e) {}
   var sel = document.getElementById('set-lib-sort');
@@ -1499,7 +1552,9 @@ function persistSetLibManualOrderFromDom() {
   });
   Object.keys(byId).forEach(function(id) { next.push(byId[id]); });
   jokes = next;
-  if (typeof displayJokes !== 'undefined') displayJokes = jokes.slice();
+  if (typeof displayJokes !== 'undefined') {
+    displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
+  }
   try {
     localStorage.setItem('c4a_joke_order', JSON.stringify(jokes.map(function(j) { return String(j.id); })));
   } catch (e) {}

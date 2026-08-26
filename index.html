@@ -295,13 +295,13 @@
           <option value="">All Tags</option>
         </select>
         <select id="sort-select" class="btn" style="padding:6px 9px" onchange="sortJokes(this.value)" aria-label="Sort jokes">
-          <option value="custom">Sort: Manual</option>
-          <option value="score">Sort: Top Rated</option>
-          <option value="alpha">Sort: A–Z</option>
+          <option value="updated-desc" selected>Sort: Last Worked On</option>
+          <option value="updated-asc">Sort: Worked On Oldest</option>
           <option value="created-desc">Sort: Created Newest</option>
           <option value="created-asc">Sort: Created Oldest</option>
-          <option value="updated-desc">Sort: Edited Newest</option>
-          <option value="updated-asc">Sort: Edited Oldest</option>
+          <option value="score">Sort: Top Rated</option>
+          <option value="alpha">Sort: A–Z</option>
+          <option value="custom">Sort: Manual</option>
         </select>
         <button id="topbar-new-joke-btn" class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
       </div>
@@ -345,11 +345,11 @@
             <input id="set-lib-search" type="search" aria-label="Search joke library" placeholder="Search title or text…" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none" oninput="filterSetLibraryBySearch(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
             <label for="set-lib-sort" style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.04em">Sort list</label>
             <select id="set-lib-sort" class="btn" aria-label="Joke library order" style="width:100%;padding:6px 9px;font-size:12px" onchange="setLibSortMode(this.value)">
-              <option value="alpha">A–Z</option>
+              <option value="updated-desc" selected>Last Worked On</option>
+              <option value="updated-asc">Worked On Oldest</option>
               <option value="created-desc">Created Newest</option>
               <option value="created-asc">Created Oldest</option>
-              <option value="updated-desc">Edited Newest</option>
-              <option value="updated-asc">Edited Oldest</option>
+              <option value="alpha">A–Z</option>
               <option value="manual">Manual</option>
             </select>
           </div>
@@ -1039,9 +1039,9 @@
 <div class="toast" id="toast-el"></div>
 
 <script src="js/data.js?v=2"></script>
-<script src="js/supabase.js?v=7"></script>
+<script src="js/supabase.js?v=9"></script>
 <script src="js/ui.js?v=3"></script>
-<script src="js/jokes.js?v=20"></script>
+<script src="js/jokes.js?v=22"></script>
 <script src="js/rehearsal.js?v=2"></script>
 <script src="js/analytics.js?v=2"></script>
 <script src="js/brooks.js?v=5"></script>
@@ -1051,11 +1051,11 @@
 <script src="js/studio.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/plugins/Swap/Sortable.Swap.js"></script>
-<script src="js/init.js"></script>
+<script src="js/init.js?v=4"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js');
+      navigator.serviceWorker.register('/sw.js?v=15');
     });
   }
 </script>
