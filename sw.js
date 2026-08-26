@@ -1,7 +1,6 @@
-const CACHE = 'comedy4all-v15';
+const CACHE = 'comedy4all-v21';
 
 const SHELL = [
-  '/',
   '/css/styles.css',
   '/js/analytics.js',
   '/js/brooks.js',
@@ -28,9 +27,8 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    ).then(function() { return self.clients.claim(); })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
@@ -41,18 +39,21 @@ self.addEventListener('fetch', e => {
   // Let Supabase and external API calls go straight to network — never cache them
   if (!url.origin.includes('comedy4all.com') && url.origin !== self.location.origin) return;
 
-  // Navigation (HTML): network-first so the latest version always loads;
-  // fall back to cached shell if offline
-  if (e.request.mode === 'navigate') {
+  const path = url.pathname;
+  const isHtml = e.request.mode === 'navigate' || path === '/' || path === '/index.html' || path.endsWith('.html');
+
+  // HTML: always network-first (never serve a stale shell for Simple Browser / non-navigate loads)
+  if (isHtml) {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match('/'))
+      fetch(e.request)
+        .then(function(res) { return res; })
+        .catch(function() { return caches.match('/index.html').then(function(c) { return c || caches.match('/'); }); })
     );
     return;
   }
 
-  // App JS/CSS: network-first so code/CSS updates are not stuck behind stale cache (especially on phones)
-  const path = url.pathname;
-  if (path.startsWith('/js/') || path.startsWith('/css/')) {
+  // App JS/CSS: network-first so code/CSS updates are not stuck behind stale cache
+  if (path.startsWith('/js/') || path.startsWith('/css/') || path === '/sw.js') {
     e.respondWith(
       fetch(e.request)
         .then(function(res) {

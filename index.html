@@ -18,7 +18,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=10">
+<link rel="stylesheet" href="css/styles.css?v=15">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -303,22 +303,36 @@
           <option value="alpha">Sort: A–Z</option>
           <option value="custom">Sort: Manual</option>
         </select>
+        <button type="button" class="btn btn-sm" id="topbar-packs-btn" onclick="setJokeViewMode(jokeViewMode==='packs'?'all':'packs')">Packs</button>
         <button id="topbar-new-joke-btn" class="btn btn-sm btn-primary" onclick="openNewJoke()">+ New Joke</button>
       </div>
       <div style="display:flex;flex:1;overflow:hidden">
         <div class="content scroll" style="flex:1">
           <div class="joke-toolbar">
             <div class="joke-toolbar-tags">
+              <div class="joke-view-toggle" role="group" aria-label="Joke view">
+                <button type="button" class="btn btn-sm joke-view-btn active" id="view-all-btn" onclick="setJokeViewMode('all')">All</button>
+                <button type="button" class="btn btn-sm joke-view-btn" id="view-packs-btn" onclick="setJokeViewMode('packs')">Packs</button>
+              </div>
               <span class="tag tag-tier-a" style="cursor:pointer" onclick="filterByTier('a')">A-Tier</span>
               <span class="tag tag-tier-b" style="cursor:pointer" onclick="filterByTier('b')">B-Tier</span>
               <span class="tag tag-tier-c" style="cursor:pointer" onclick="filterByTier('c')">C-Tier</span>
               <span class="tag tag-gray" style="cursor:pointer" onclick="filterByTier('')">All</span>
               <span class="tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid #b8d4f4;cursor:pointer" onclick="filterByTier('archived')">&#128230; Archived</span>
+              <button type="button" class="btn btn-sm" id="joke-merge-btn" onclick="onMergeToolbarClick()">Merge</button>
             </div>
             <div class="joke-toolbar-meta">
               <span style="font-size:11px;color:var(--text3)" id="joke-count">9 jokes</span>
               <button class="btn btn-sm btn-primary" id="mobile-new-joke-btn" onclick="openNewJoke()">+ New Joke</button>
             </div>
+          </div>
+          <div id="pack-breadcrumb" class="pack-breadcrumb" style="display:none">
+            <button type="button" class="btn btn-sm" onclick="closePack()">← Packs</button>
+            <span id="pack-breadcrumb-label" class="pack-breadcrumb-label"></span>
+            <button type="button" class="btn btn-sm btn-primary" onclick="openAddJokesToPackModal()">+ Add jokes</button>
+            <button type="button" class="btn btn-sm" id="pack-merge-btn" onclick="onMergeToolbarClick()">Merge</button>
+            <button type="button" class="btn btn-sm" onclick="renameActivePack()">Rename</button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="deleteActivePack()">Remove pack</button>
           </div>
           <div class="joke-grid" id="joke-grid"></div>
         </div>
@@ -885,81 +899,212 @@
   </div>
 </div>
 
-<!-- NEW JOKE MODAL -->
-<div class="overlay" id="joke-modal" style="display:none" onclick="if(event.target===this)closeNewJoke()">
-  <div class="mbox">
-    <div style="font-size:16px;font-weight:600;margin-bottom:17px">&#9997;&#65039; Write a New Joke</div>
-    <div style="margin-bottom:12px"><label class="mlbl">Title / Hook</label><input class="minput" id="nj-title" placeholder="Working title for this bit..."></div>
-    <div style="margin-bottom:12px"><label class="mlbl">Full Joke / Notes</label><textarea class="minput" id="nj-body" placeholder="Setup, punchline, crowd work, alternate tags..."></textarea></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div style="margin-bottom:12px"><label class="mlbl">Runtime</label><input class="minput" id="nj-runtime" placeholder="e.g. 1:30"></div>
-      <div style="margin-bottom:12px"><label class="mlbl">Your Rating</label><div id="nj-stars" style="display:flex;gap:2px;margin-top:5px"></div></div>
-    </div>
+<!-- PACK NAME MODAL -->
+<div class="overlay" id="pack-name-modal" style="display:none" data-mode="new" onclick="if(event.target===this)closePackNameModal()">
+  <div class="mbox" style="max-width:420px">
+    <div id="pack-name-title" style="font-size:16px;font-weight:600;margin-bottom:17px">New pack</div>
     <div style="margin-bottom:12px">
-      <label class="mlbl">Tags</label>
-      <div style="display:flex;flex-wrap:wrap;gap:5px" id="modal-tags">
-        <span class="tag tag-gold" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Travel')">Travel</span>
-        <span class="tag tag-blue" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Tech')">Tech</span>
-        <span class="tag tag-purple" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Dating')">Dating</span>
-        <span class="tag tag-green" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Family')">Family</span>
-        <span class="tag tag-yellow" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Work')">Work</span>
-        <span class="tag tag-teal" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Current Events')">Current Events</span>
-        <span id="custom-tags-container"></span>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <input id="custom-tag-input" type="text" placeholder="Add custom tag..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key==='Enter'){addCustomTag();event.preventDefault();}">
-        <button onclick="addCustomTag()" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">+ Add</button>
-      </div>
+      <label class="mlbl" for="pack-name-input">Pack name</label>
+      <input class="minput" id="pack-name-input" placeholder="e.g. Cat jokes" onkeydown="if(event.key==='Enter'){savePackNameModal();event.preventDefault();}">
     </div>
     <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px">
-      <button class="btn" onclick="closeNewJoke()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveNewJoke()">Save Joke</button>
+      <button class="btn" onclick="closePackNameModal()">Cancel</button>
+      <button class="btn btn-primary" id="pack-name-save" onclick="savePackNameModal()">Create pack</button>
     </div>
   </div>
 </div>
 
-<!-- EDIT JOKE MODAL -->
-<div class="overlay" id="edit-modal" style="display:none" onclick="if(event.target===this)closeEditModal()">
-  <div class="mbox">
-    <div style="font-size:16px;font-weight:600;margin-bottom:17px">&#9999;&#65039; Edit Joke</div>
-    <div style="margin-bottom:12px"><label class="mlbl">Title / Hook</label><input class="minput" id="ej-title" placeholder="Working title..."></div>
-    <div style="margin-bottom:12px"><label class="mlbl">Full Joke / Notes</label><textarea class="minput" id="ej-body" placeholder="Setup, punchline, crowd work..." style="height:120px"></textarea></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div style="margin-bottom:12px"><label class="mlbl">Runtime</label><input class="minput" id="ej-runtime" placeholder="e.g. 1:30"></div>
-      <div style="margin-bottom:12px">
-        <label class="mlbl">Tier</label>
-        <select class="minput" id="ej-tier" style="cursor:pointer">
-          <option value="a">A-Tier (Best material)</option>
-          <option value="b">B-Tier (Solid)</option>
-          <option value="c">C-Tier (Needs work)</option>
-        </select>
-      </div>
+<!-- PACK DELETE MODAL -->
+<div class="overlay" id="pack-delete-modal" style="display:none" onclick="if(event.target===this)closePackDeleteModal()">
+  <div class="mbox" style="max-width:420px">
+    <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:var(--red)">Remove pack?</div>
+    <div id="pack-delete-msg" style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:18px"></div>
+    <div style="display:flex;gap:9px;justify-content:flex-end">
+      <button class="btn" onclick="closePackDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeleteActivePack()">Remove pack</button>
     </div>
-    <div style="margin-bottom:12px">
-      <label class="mlbl">Your Rating</label>
-      <div id="ej-stars" style="display:flex;gap:2px;margin-top:5px"></div>
-    </div>
-    <div style="margin-bottom:12px">
-      <label class="mlbl">Tags</label>
-      <div style="display:flex;flex-wrap:wrap;gap:5px" id="edit-modal-tags">
-        <span class="tag tag-gold edit-tag" onclick="toggleEditTag(this,'Travel')">Travel</span>
-        <span class="tag tag-blue edit-tag" onclick="toggleEditTag(this,'Tech')">Tech</span>
-        <span class="tag tag-purple edit-tag" onclick="toggleEditTag(this,'Dating')">Dating</span>
-        <span class="tag tag-green edit-tag" onclick="toggleEditTag(this,'Family')">Family</span>
-        <span class="tag tag-yellow edit-tag" onclick="toggleEditTag(this,'Work')">Work</span>
-        <span class="tag tag-teal edit-tag" onclick="toggleEditTag(this,'Current Events')">Current Events</span>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <input id="edit-custom-tag-input" type="text" placeholder="Add custom tag..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key==='Enter'){addEditCustomTag();event.preventDefault();}">
-        <button onclick="addEditCustomTag()" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">+ Add</button>
-      </div>
-    </div>
-    <div style="display:flex;gap:9px;justify-content:space-between;margin-top:18px;align-items:center">
-      <button class="btn btn-sm btn-danger" onclick="closeEditModal();confirmDelete(editingId)">&#128465;&#65039; Delete Joke</button>
+  </div>
+</div>
+
+<!-- ADD JOKES TO PACK MODAL -->
+<div class="overlay" id="pack-add-jokes-modal" style="display:none" onclick="if(event.target===this)closeAddJokesToPackModal()">
+  <div class="mbox" style="max-width:520px;max-height:85vh;display:flex;flex-direction:column">
+    <div style="font-size:16px;font-weight:600;margin-bottom:6px">Add jokes to pack</div>
+    <div id="pack-add-jokes-subtitle" style="font-size:12px;color:var(--text3);margin-bottom:12px"></div>
+    <input id="pack-add-jokes-search" class="minput" placeholder="Search your jokes..." style="margin-bottom:10px" oninput="filterAddJokesToPackList(this.value)">
+    <div id="pack-add-jokes-list" class="scroll" style="flex:1;overflow-y:auto;max-height:50vh;border:1px solid var(--border);border-radius:var(--r2);padding:6px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:9px;justify-content:space-between;align-items:center">
+      <span id="pack-add-jokes-count" style="font-size:11px;color:var(--text3)">0 selected</span>
       <div style="display:flex;gap:9px">
+        <button class="btn" onclick="closeAddJokesToPackModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAddJokesToPack()">Add to pack</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MERGE JOKES MODAL -->
+<div class="overlay" id="merge-jokes-modal" style="display:none" onclick="if(event.target===this)closeMergeJokesModal()">
+  <div class="mbox" style="max-width:640px;max-height:90vh;display:flex;flex-direction:column">
+    <div style="font-size:16px;font-weight:600;margin-bottom:6px">Merge jokes</div>
+    <div id="merge-jokes-status" style="font-size:12px;color:var(--text3);margin-bottom:12px">Brooks is stitching these into one bit…</div>
+    <div id="merge-jokes-loading" style="padding:24px;text-align:center;color:var(--text3);font-size:13px">Merging…</div>
+    <div id="merge-jokes-form" style="display:none;flex:1;overflow:auto" class="scroll">
+      <div style="margin-bottom:12px">
+        <label class="mlbl" for="merge-title">Merged title</label>
+        <input class="minput" id="merge-title" placeholder="Working title">
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlbl" for="merge-body">Merged material</label>
+        <textarea class="minput" id="merge-body" style="min-height:220px" placeholder="Combined joke notes"></textarea>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlbl" for="merge-runtime">Runtime</label>
+        <input class="minput" id="merge-runtime" placeholder="e.g. 2:00" style="max-width:120px">
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Sources will be archived after you save.</div>
+    </div>
+    <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:14px">
+      <button class="btn" onclick="closeMergeJokesModal()">Cancel</button>
+      <button class="btn btn-primary" id="merge-jokes-save" style="display:none" onclick="confirmMergeJokes()">Save merged joke</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW JOKE MODAL — large sheet, same size as edit / read panel -->
+<div class="overlay overlay-sheet" id="joke-modal" style="display:none" onclick="if(event.target===this)closeNewJoke()">
+  <div class="mbox mbox-sheet">
+    <div class="mbox-sheet-head">
+      <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 12px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="font-size:16px;font-weight:600">&#9997;&#65039; Write a New Joke</div>
+        <button class="btn btn-sm" onclick="closeNewJoke()" type="button">&#10005; Close</button>
+      </div>
+    </div>
+    <div class="mbox-sheet-body scroll">
+      <div style="margin-bottom:12px"><label class="mlbl">Title / Hook</label><input class="minput" id="nj-title" placeholder="Working title for this bit..."></div>
+      <div class="edit-body-wrap" style="margin-bottom:12px">
+        <label class="mlbl">Full Joke / Notes</label>
+        <textarea class="minput edit-body-input" id="nj-body" placeholder="Setup, punchline, crowd work, alternate tags..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="margin-bottom:12px"><label class="mlbl">Runtime</label><input class="minput" id="nj-runtime" placeholder="e.g. 1:30"></div>
+        <div style="margin-bottom:12px"><label class="mlbl">Your Rating</label><div id="nj-stars" style="display:flex;gap:2px;margin-top:5px"></div></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlbl">Tags</label>
+        <div style="display:flex;flex-wrap:wrap;gap:5px" id="modal-tags">
+          <span class="tag tag-gold" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Travel')">Travel</span>
+          <span class="tag tag-blue" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Tech')">Tech</span>
+          <span class="tag tag-purple" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Dating')">Dating</span>
+          <span class="tag tag-green" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Family')">Family</span>
+          <span class="tag tag-yellow" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Work')">Work</span>
+          <span class="tag tag-teal" style="cursor:pointer;opacity:.4" onclick="toggleTag(this,'Current Events')">Current Events</span>
+          <span id="custom-tags-container"></span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <input id="custom-tag-input" type="text" placeholder="Add custom tag..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key==='Enter'){addCustomTag();event.preventDefault();}">
+          <button onclick="addCustomTag()" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">+ Add</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlbl">Packs</label>
+        <div style="display:flex;flex-wrap:wrap;gap:5px" id="modal-packs"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <input id="custom-pack-input" type="text" placeholder="Add pack (e.g. Cat jokes)..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key==='Enter'){addCustomPack(false);event.preventDefault();}">
+          <button onclick="addCustomPack(false)" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">+ Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="mbox-sheet-foot" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <button type="button" class="btn btn-sm" onclick="openPutInPackModal('new')">+ Put in a pack</button>
+      <div style="display:flex;gap:9px">
+        <button class="btn" onclick="closeNewJoke()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewJoke()">Save Joke</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT JOKE MODAL — large sheet, same size as read panel -->
+<div class="overlay overlay-sheet" id="edit-modal" style="display:none" onclick="if(event.target===this)closeEditModal()">
+  <div class="mbox mbox-sheet">
+    <div class="mbox-sheet-head">
+      <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 12px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="font-size:16px;font-weight:600">&#9999;&#65039; Edit Joke</div>
+        <button class="btn btn-sm" onclick="closeEditModal()" type="button">&#10005; Close</button>
+      </div>
+    </div>
+    <div class="mbox-sheet-body scroll">
+      <div style="margin-bottom:12px"><label class="mlbl">Title / Hook</label><input class="minput" id="ej-title" placeholder="Working title..."></div>
+      <div class="edit-body-wrap" style="margin-bottom:12px">
+        <label class="mlbl">Full Joke / Notes</label>
+        <textarea class="minput edit-body-input" id="ej-body" placeholder="Setup, punchline, crowd work..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="margin-bottom:12px"><label class="mlbl">Runtime</label><input class="minput" id="ej-runtime" placeholder="e.g. 1:30"></div>
+        <div style="margin-bottom:12px">
+          <label class="mlbl">Tier</label>
+          <select class="minput" id="ej-tier" style="cursor:pointer">
+            <option value="a">A-Tier (Best material)</option>
+            <option value="b">B-Tier (Solid)</option>
+            <option value="c">C-Tier (Needs work)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlbl">Your Rating</label>
+        <div id="ej-stars" style="display:flex;gap:2px;margin-top:5px"></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlbl">Tags</label>
+        <div style="display:flex;flex-wrap:wrap;gap:5px" id="edit-modal-tags">
+          <span class="tag tag-gold edit-tag" onclick="toggleEditTag(this,'Travel')">Travel</span>
+          <span class="tag tag-blue edit-tag" onclick="toggleEditTag(this,'Tech')">Tech</span>
+          <span class="tag tag-purple edit-tag" onclick="toggleEditTag(this,'Dating')">Dating</span>
+          <span class="tag tag-green edit-tag" onclick="toggleEditTag(this,'Family')">Family</span>
+          <span class="tag tag-yellow edit-tag" onclick="toggleEditTag(this,'Work')">Work</span>
+          <span class="tag tag-teal edit-tag" onclick="toggleEditTag(this,'Current Events')">Current Events</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <input id="edit-custom-tag-input" type="text" placeholder="Add custom tag..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key==='Enter'){addEditCustomTag();event.preventDefault();}">
+          <button onclick="addEditCustomTag()" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">+ Add</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlbl">Packs</label>
+        <div style="display:flex;flex-wrap:wrap;gap:5px" id="edit-modal-packs"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <input id="edit-custom-pack-input" type="text" placeholder="Add pack..." style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;outline:none;background:var(--bg3);color:var(--text)" onkeydown="if(event.key==='Enter'){addCustomPack(true);event.preventDefault();}">
+          <button onclick="addCustomPack(true)" style="padding:5px 12px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">+ Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="mbox-sheet-foot">
+      <button class="btn btn-sm btn-danger" onclick="closeEditModal();confirmDelete(editingId)">&#128465;&#65039; Delete Joke</button>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button type="button" class="btn btn-sm" onclick="openPutInPackModal('edit')">+ Put in a pack</button>
         <button class="btn" onclick="closeEditModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveEditedJoke()">Save Changes</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- PUT JOKE IN PACK MODAL -->
+<div class="overlay" id="put-in-pack-modal" style="display:none" data-mode="new" data-jid="" onclick="if(event.target===this)closePutInPackModal()">
+  <div class="mbox" style="max-width:420px">
+    <div style="font-size:16px;font-weight:600;margin-bottom:6px">Put in a pack</div>
+    <div id="put-in-pack-subtitle" style="font-size:12px;color:var(--text3);margin-bottom:12px">Tap packs to include this joke.</div>
+    <div id="put-in-pack-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;min-height:36px"></div>
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <input id="put-in-pack-new" class="minput" placeholder="Or create a pack…" style="flex:1" onkeydown="if(event.key==='Enter'){addPackFromPutInModal();event.preventDefault();}">
+      <button type="button" class="btn btn-sm btn-primary" onclick="addPackFromPutInModal()">+ Add</button>
+    </div>
+    <div style="display:flex;gap:9px;justify-content:flex-end">
+      <button class="btn" onclick="closePutInPackModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePutInPackModal()">Done</button>
     </div>
   </div>
 </div>
@@ -1039,23 +1184,27 @@
 <div class="toast" id="toast-el"></div>
 
 <script src="js/data.js?v=2"></script>
-<script src="js/supabase.js?v=9"></script>
-<script src="js/ui.js?v=3"></script>
-<script src="js/jokes.js?v=22"></script>
+<script src="js/supabase.js?v=11"></script>
+<script src="js/ui.js?v=4"></script>
+<script src="js/jokes.js?v=32"></script>
 <script src="js/rehearsal.js?v=2"></script>
 <script src="js/analytics.js?v=2"></script>
-<script src="js/brooks.js?v=5"></script>
+<script src="js/brooks.js?v=6"></script>
 <script src="js/settings.js?v=4"></script>
 <script src="js/shows.js?v=2"></script>
 <script src="js/projects.js?v=2"></script>
 <script src="js/studio.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/plugins/Swap/Sortable.Swap.js"></script>
-<script src="js/init.js?v=4"></script>
+<script src="js/init.js?v=6"></script>
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js?v=15');
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        return Promise.all(regs.map(function(r) { return r.update(); }));
+      }).then(function() {
+        return navigator.serviceWorker.register('/sw.js?v=21');
+      }).catch(function() {});
     });
   }
 </script>

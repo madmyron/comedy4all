@@ -193,6 +193,8 @@ function sbLoadJokes(opts) {
       if (res.error) { setSyncStatus('error'); return; }
       var all = res.data || [];
       jokes = all.filter(function(j) { return !j.archived; });
+      archivedJokes = all.filter(function(j) { return j.archived; });
+      if (typeof normalizeAllJokePacks === 'function') normalizeAllJokePacks();
       var mgrMode = typeof getJokeManagerSortMode === 'function' ? getJokeManagerSortMode() : 'updated-desc';
       if (mgrMode === 'custom') {
         try {
@@ -208,14 +210,22 @@ function sbLoadJokes(opts) {
           }
         } catch(e) {}
       }
-      archivedJokes = all.filter(function(j) { return j.archived; });
       displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
       var sortSelect = document.getElementById('sort-select');
       if (sortSelect && typeof normalizeJokeSortMode === 'function') {
         sortSelect.value = normalizeJokeSortMode(mgrMode);
       }
       var scr = document.getElementById('screen-jokes');
-      if (scr && scr.classList.contains('active')) renderJokes(displayJokes);
+      if (scr && scr.classList.contains('active')) {
+        if (typeof jokeViewMode !== 'undefined' && jokeViewMode === 'packs' && !activePackName && typeof renderPackTiles === 'function') {
+          renderPackTiles();
+        } else if (typeof activePackName !== 'undefined' && activePackName && typeof jokesInPack === 'function') {
+          displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokesInPack(activePackName)) : jokesInPack(activePackName);
+          renderJokes(displayJokes);
+        } else {
+          renderJokes(displayJokes);
+        }
+      }
       updateCounts();
       setSyncStatus('synced');
       attachGridClicks();
@@ -252,12 +262,14 @@ function attachGridClicks() {
   grid._clickAttached = true;
   grid.addEventListener('click', function(e) {
     var card = e.target.closest('.jcard');
-    if (!card) return;
+    if (!card || card.classList.contains('pack-card')) return;
     var jid = card.getAttribute('data-jid');
-    if (jid) { openDetail(jid); return; }
-    var cards = grid.querySelectorAll('.jcard');
-    var idx = Array.from(cards).indexOf(card);
-    if (jokes[idx]) openDetail(jokes[idx].id);
+    if (!jid) return;
+    if (typeof jokeSelectMode !== 'undefined' && jokeSelectMode) {
+      if (typeof toggleJokeSelected === 'function') toggleJokeSelected(jid);
+      return;
+    }
+    openDetail(jid);
   });
 }
 function sbStartRealtime() {
@@ -329,6 +341,7 @@ function _patchFunctions() {
       updated_at: now,
       body: bodyEl ? bodyEl.value.trim() : '',
       tags: modalTags.length ? modalTags.slice() : [],
+      packs: (typeof modalPacks !== 'undefined' && modalPacks.length) ? modalPacks.slice() : [],
       tier: modalRating >= 4 ? 'a' : modalRating >= 3 ? 'b' : 'c',
       rating: modalRating || 3,
       runtime: rtEl ? rtEl.value.trim() || '1:00' : '1:00',
@@ -336,6 +349,7 @@ function _patchFunctions() {
       archived: false
     };
     closeNewJoke();
+    for (var pi = 0; pi < (nj.packs || []).length; pi++) rememberPackName(nj.packs[pi]);
     if (currentUser && _sb) {
       setSyncStatus('syncing');
       _sb.from('jokes').insert(Object.assign({}, nj, { user_id: currentUser.id })).select().single()
@@ -368,10 +382,12 @@ function _patchFunctions() {
       runtime: rtEl ? rtEl.value.trim() || '1:00' : '1:00',
       tier: tierEl ? tierEl.value : 'b', rating: modalRating || 3,
       tags: modalTags.length ? modalTags.slice() : [],
+      packs: (typeof modalPacks !== 'undefined' && modalPacks.length) ? modalPacks.slice() : [],
       score: parseFloat((6 + (modalRating || 3) * 0.5).toFixed(1)),
       updated_at: new Date().toISOString()
     };
     var eid = editingId; closeEditModal();
+    for (var pi = 0; pi < (updates.packs || []).length; pi++) rememberPackName(updates.packs[pi]);
     for (var i = 0; i < jokes.length; i++) { if (jokes[i].id === eid) { Object.assign(jokes[i], updates); break; } }
     displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
     var scr = document.getElementById('screen-jokes');

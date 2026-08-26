@@ -2024,26 +2024,40 @@ function callBrooksAPI(prompt, callback, options) {
   var xhr = new XMLHttpRequest();
   if (!brooksConfigureAnthropicXhr(xhr)) {
     toast('Add your API key in Settings, or set an Anthropic proxy URL.');
+    if (typeof callback === 'function') callback(null);
     return;
   }
   options = options || {};
+  var done = false;
+  function finish(reply) {
+    if (done) return;
+    done = true;
+    if (typeof callback === 'function') callback(reply);
+  }
+  var timeoutMs = options.timeout_ms || 20000;
+  var timer = setTimeout(function() {
+    try { xhr.abort(); } catch (e) {}
+    finish(null);
+  }, timeoutMs);
 
   xhr.onload = function() {
+    clearTimeout(timer);
     if (xhr.status === 200) {
       try {
         var data = JSON.parse(xhr.responseText);
         var reply = (data.content || []).filter(function(c){ return c.type === 'text'; }).map(function(c){ return c.text; }).join('');
-        callback(reply);
+        finish(reply);
       } catch(e) {
         console.error('Parse error', e);
-        callback(null);
+        finish(null);
       }
     } else {
       console.error('API error ' + xhr.status);
-      callback(null);
+      finish(null);
     }
   };
-  xhr.onerror = function() { callback(null); };
+  xhr.onerror = function() { clearTimeout(timer); finish(null); };
+  xhr.onabort = function() { clearTimeout(timer); finish(null); };
   
   var messages = options.messages || [{ role: 'user', content: prompt }];
   var payload = JSON.stringify({

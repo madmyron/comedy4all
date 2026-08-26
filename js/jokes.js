@@ -1,6 +1,13 @@
 // - JOKE MANAGER -
 var jokeGridSortable = null;
 var _currentSearchQuery = '';
+var jokeViewMode = 'all'; // 'all' | 'packs'
+var activePackName = null;
+var modalPacks = [];
+var jokeSelectMode = false;
+var selectedJokeIds = {};
+var _mergeSourceIds = [];
+var _mergeDraftMeta = null;
 
 var DEFAULT_JOKE_SORT_MODE = 'updated-desc';
 
@@ -110,11 +117,922 @@ function tagColor(t) {
   return colors[index];
 }
 
+function escapePackHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeJokePacks(j) {
+  if (!j) return [];
+  if (!Array.isArray(j.packs)) j.packs = [];
+  j.packs = j.packs.map(function(p) { return String(p || '').trim(); }).filter(Boolean);
+  return j.packs;
+}
+
+function normalizeAllJokePacks() {
+  var all = jokes.concat(archivedJokes);
+  var fromJokes = [];
+  for (var i = 0; i < all.length; i++) {
+    var packs = normalizeJokePacks(all[i]);
+    for (var k = 0; k < packs.length; k++) {
+      if (fromJokes.indexOf(packs[k]) === -1) fromJokes.push(packs[k]);
+    }
+  }
+  savePackCatalog(loadPackCatalog().concat(fromJokes));
+}
+
+function loadPackCatalog() {
+  try {
+    var raw = JSON.parse(localStorage.getItem('c4a_pack_catalog') || '[]');
+    return Array.isArray(raw) ? raw.map(function(p) { return String(p || '').trim(); }).filter(Boolean) : [];
+  } catch (e) { return []; }
+}
+
+function savePackCatalog(names) {
+  var uniq = [];
+  for (var i = 0; i < names.length; i++) {
+    var n = String(names[i] || '').trim();
+    if (n && uniq.indexOf(n) === -1) uniq.push(n);
+  }
+  uniq.sort(function(a, b) { return a.localeCompare(b, undefined, { sensitivity: 'base' }); });
+  try { localStorage.setItem('c4a_pack_catalog', JSON.stringify(uniq)); } catch (e) {}
+  return uniq;
+}
+
+function rememberPackName(name) {
+  name = String(name || '').trim();
+  if (!name) return;
+  var cat = loadPackCatalog();
+  if (cat.indexOf(name) === -1) {
+    cat.push(name);
+    savePackCatalog(cat);
+  }
+}
+
+function getAllPackNames() {
+  var names = loadPackCatalog().slice();
+  var all = jokes.concat(archivedJokes);
+  for (var i = 0; i < all.length; i++) {
+    var packs = normalizeJokePacks(all[i]);
+    for (var k = 0; k < packs.length; k++) {
+      if (names.indexOf(packs[k]) === -1) names.push(packs[k]);
+    }
+  }
+  names.sort(function(a, b) { return a.localeCompare(b, undefined, { sensitivity: 'base' }); });
+  return names;
+}
+
+function countJokesInPack(name) {
+  var n = 0;
+  for (var i = 0; i < jokes.length; i++) {
+    if (normalizeJokePacks(jokes[i]).indexOf(name) !== -1) n++;
+  }
+  return n;
+}
+
+function jokesInPack(name) {
+  return jokes.filter(function(j) { return normalizeJokePacks(j).indexOf(name) !== -1; });
+}
+
+function jokesWithoutPack() {
+  return jokes.filter(function(j) { return normalizeJokePacks(j).length === 0; });
+}
+
+function setJokeViewMode(mode) {
+  jokeViewMode = mode === 'packs' ? 'packs' : 'all';
+  if (jokeViewMode === 'all') activePackName = null;
+  if (jokeViewMode === 'packs' && !activePackName) clearJokeSelection();
+  try { localStorage.setItem('c4a_joke_view_mode', jokeViewMode); } catch (e) {}
+  updateJokeViewToggle();
+  updatePackBreadcrumb();
+  updateJokeSelectUi();
+  if (jokeViewMode === 'packs' && !activePackName) {
+    renderPackTiles();
+  } else if (activePackName) {
+    displayJokes = applyActiveJokeManagerSort(jokesInPack(activePackName));
+    renderJokes(displayJokes);
+  } else {
+    displayJokes = applyActiveJokeManagerSort(jokes.slice());
+    renderJokes(displayJokes);
+  }
+}
+
+function updateJokeViewToggle() {
+  var allBtn = document.getElementById('view-all-btn');
+  var packsBtn = document.getElementById('view-packs-btn');
+  var topPacks = document.getElementById('topbar-packs-btn');
+  if (allBtn) allBtn.classList.toggle('active', jokeViewMode === 'all');
+  if (packsBtn) packsBtn.classList.toggle('active', jokeViewMode === 'packs');
+  if (topPacks) {
+    topPacks.classList.toggle('btn-primary', jokeViewMode === 'packs');
+    topPacks.textContent = jokeViewMode === 'packs' ? 'Packs ✓' : 'Packs';
+  }
+}
+
+function updatePackBreadcrumb() {
+  var bar = document.getElementById('pack-breadcrumb');
+  var label = document.getElementById('pack-breadcrumb-label');
+  if (!bar) return;
+  if (jokeViewMode === 'packs' && activePackName) {
+    bar.style.display = 'flex';
+    if (label) label.textContent = activePackName + ' · ' + countJokesInPack(activePackName) + ' jokes';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function openPack(name) {
+  activePackName = name;
+  jokeViewMode = 'packs';
+  updateJokeViewToggle();
+  updatePackBreadcrumb();
+  displayJokes = applyActiveJokeManagerSort(jokesInPack(name));
+  renderJokes(displayJokes);
+}
+
+function closePack() {
+  activePackName = null;
+  updatePackBreadcrumb();
+  renderPackTiles();
+}
+
+function promptNewPack() {
+  openPackNameModal('new', '');
+}
+
+function renameActivePack() {
+  if (!activePackName) return;
+  openPackNameModal('rename', activePackName);
+}
+
+function openPackNameModal(mode, currentName) {
+  var overlay = document.getElementById('pack-name-modal');
+  var title = document.getElementById('pack-name-title');
+  var input = document.getElementById('pack-name-input');
+  var saveBtn = document.getElementById('pack-name-save');
+  if (!overlay || !input) {
+    toast('Pack name form missing — refresh the page');
+    return;
+  }
+  overlay.setAttribute('data-mode', mode === 'rename' ? 'rename' : 'new');
+  if (title) title.textContent = mode === 'rename' ? 'Rename pack' : 'New pack';
+  if (saveBtn) saveBtn.textContent = mode === 'rename' ? 'Save name' : 'Create pack';
+  input.value = currentName || '';
+  overlay.style.display = 'flex';
+  setTimeout(function() {
+    input.focus();
+    input.select();
+  }, 30);
+}
+
+function closePackNameModal() {
+  var overlay = document.getElementById('pack-name-modal');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function savePackNameModal() {
+  var overlay = document.getElementById('pack-name-modal');
+  var input = document.getElementById('pack-name-input');
+  if (!overlay || !input) return;
+  var mode = overlay.getAttribute('data-mode') || 'new';
+  var name = String(input.value || '').trim();
+  if (!name) { toast('Pack needs a name'); return; }
+  closePackNameModal();
+  if (mode === 'rename') {
+    applyPackRename(activePackName, name);
+    return;
+  }
+  if (getAllPackNames().indexOf(name) !== -1) {
+    toast('Pack already exists');
+    openPack(name);
+    return;
+  }
+  rememberPackName(name);
+  toast('Pack "' + name + '" created — add jokes via Edit → Packs');
+  openPack(name);
+}
+
+function applyPackRename(oldName, next) {
+  if (!oldName || !next || next === oldName) return;
+  var all = jokes.concat(archivedJokes);
+  var touched = [];
+  for (var i = 0; i < all.length; i++) {
+    var packs = normalizeJokePacks(all[i]);
+    var idx = packs.indexOf(oldName);
+    if (idx === -1) continue;
+    packs[idx] = next;
+    all[i].packs = packs;
+    all[i].updated_at = new Date().toISOString();
+    touched.push(all[i]);
+  }
+  var cat = loadPackCatalog().filter(function(p) { return p !== oldName; });
+  cat.push(next);
+  savePackCatalog(cat);
+  activePackName = next;
+  updatePackBreadcrumb();
+  displayJokes = applyActiveJokeManagerSort(jokesInPack(next));
+  renderJokes(displayJokes);
+  toast('Renamed to "' + next + '"');
+  syncPackUpdates(touched);
+}
+
+function deleteActivePack() {
+  if (!activePackName) return;
+  openPackDeleteModal();
+}
+
+function openPackDeleteModal() {
+  var overlay = document.getElementById('pack-delete-modal');
+  var msg = document.getElementById('pack-delete-msg');
+  if (!overlay) {
+    toast('Refresh the page, then try Remove pack again');
+    return;
+  }
+  if (msg) msg.textContent = 'Remove pack "' + activePackName + '" from all jokes? Jokes stay — only the pack label is removed.';
+  overlay.style.display = 'flex';
+}
+
+function closePackDeleteModal() {
+  var overlay = document.getElementById('pack-delete-modal');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function confirmDeleteActivePack() {
+  if (!activePackName) { closePackDeleteModal(); return; }
+  var oldName = activePackName;
+  closePackDeleteModal();
+  var all = jokes.concat(archivedJokes);
+  var touched = [];
+  for (var i = 0; i < all.length; i++) {
+    var packs = normalizeJokePacks(all[i]);
+    var idx = packs.indexOf(oldName);
+    if (idx === -1) continue;
+    packs.splice(idx, 1);
+    all[i].packs = packs;
+    all[i].updated_at = new Date().toISOString();
+    touched.push(all[i]);
+  }
+  savePackCatalog(loadPackCatalog().filter(function(p) { return p !== oldName; }));
+  activePackName = null;
+  updatePackBreadcrumb();
+  renderPackTiles();
+  toast('Pack removed');
+  syncPackUpdates(touched);
+}
+
+var _packAddSelected = {};
+var _packAddCandidates = [];
+
+function jokesNotInPack(name) {
+  return jokes.filter(function(j) { return normalizeJokePacks(j).indexOf(name) === -1; });
+}
+
+function openAddJokesToPackModal() {
+  if (!activePackName) {
+    toast('Open a pack first');
+    return;
+  }
+  var overlay = document.getElementById('pack-add-jokes-modal');
+  var sub = document.getElementById('pack-add-jokes-subtitle');
+  var search = document.getElementById('pack-add-jokes-search');
+  if (!overlay) {
+    toast('Refresh the page, then try Add jokes again');
+    return;
+  }
+  _packAddSelected = {};
+  _packAddCandidates = jokesNotInPack(activePackName);
+  if (sub) sub.textContent = 'Pick jokes to add to "' + activePackName + '"';
+  if (search) search.value = '';
+  renderAddJokesToPackList('');
+  updateAddJokesSelectedCount();
+  overlay.style.display = 'flex';
+  if (search) setTimeout(function() { search.focus(); }, 30);
+}
+
+function closeAddJokesToPackModal() {
+  var overlay = document.getElementById('pack-add-jokes-modal');
+  if (overlay) overlay.style.display = 'none';
+  _packAddSelected = {};
+}
+
+function filterAddJokesToPackList(q) {
+  renderAddJokesToPackList(q || '');
+}
+
+function renderAddJokesToPackList(q) {
+  var list = document.getElementById('pack-add-jokes-list');
+  if (!list) return;
+  q = String(q || '').toLowerCase().trim();
+  var rows = _packAddCandidates.filter(function(j) {
+    if (!q) return true;
+    return String(j.title || '').toLowerCase().indexOf(q) !== -1
+      || String(j.body || '').toLowerCase().indexOf(q) !== -1;
+  });
+  if (!rows.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">'
+      + (_packAddCandidates.length ? 'No matches.' : 'Every joke is already in this pack.')
+      + '</div>';
+    return;
+  }
+  list.innerHTML = rows.map(function(j) {
+    var id = String(j.id);
+    var checked = !!_packAddSelected[id];
+    return '<label class="pack-add-row" style="display:flex;gap:10px;align-items:flex-start;padding:8px 8px;border-radius:8px;cursor:pointer">'
+      + '<input type="checkbox" ' + (checked ? 'checked ' : '') + 'onchange="toggleAddJokeToPack(\'' + id.replace(/'/g, "\\'") + '\', this.checked)" style="margin-top:3px">'
+      + '<span style="flex:1;min-width:0">'
+      + '<div style="font-size:13px;font-weight:600;color:var(--text)">' + escapePackHtml(j.title || 'Untitled') + '</div>'
+      + '<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapePackHtml((j.body || '').slice(0, 80)) + '</div>'
+      + '</span></label>';
+  }).join('');
+}
+
+function toggleAddJokeToPack(id, on) {
+  if (on) _packAddSelected[id] = true;
+  else delete _packAddSelected[id];
+  updateAddJokesSelectedCount();
+}
+
+function updateAddJokesSelectedCount() {
+  var el = document.getElementById('pack-add-jokes-count');
+  var n = Object.keys(_packAddSelected).length;
+  if (el) el.textContent = n + ' selected';
+}
+
+function saveAddJokesToPack() {
+  if (!activePackName) { closeAddJokesToPackModal(); return; }
+  var ids = Object.keys(_packAddSelected);
+  if (!ids.length) { toast('Pick at least one joke'); return; }
+  var pack = activePackName;
+  var touched = [];
+  var now = new Date().toISOString();
+  for (var i = 0; i < jokes.length; i++) {
+    var j = jokes[i];
+    if (!_packAddSelected[String(j.id)]) continue;
+    var packs = normalizeJokePacks(j);
+    if (packs.indexOf(pack) === -1) {
+      packs.push(pack);
+      j.packs = packs;
+      j.updated_at = now;
+      touched.push(j);
+    }
+  }
+  rememberPackName(pack);
+  closeAddJokesToPackModal();
+  displayJokes = applyActiveJokeManagerSort(jokesInPack(pack));
+  updatePackBreadcrumb();
+  renderJokes(displayJokes);
+  toast('Added ' + touched.length + ' joke' + (touched.length === 1 ? '' : 's') + ' to "' + pack + '"');
+  syncPackUpdates(touched);
+}
+
+function selectedJokeCount() {
+  return Object.keys(selectedJokeIds).length;
+}
+
+function updateJokeSelectUi() {
+  var n = selectedJokeCount();
+  var mergeBtn = document.getElementById('joke-merge-btn');
+  var packMerge = document.getElementById('pack-merge-btn');
+  var label = 'Merge';
+  if (jokeSelectMode) {
+    label = n >= 2 ? ('Merge ' + n) : ('Merge · ' + n);
+  }
+  if (mergeBtn) {
+    mergeBtn.textContent = label;
+    mergeBtn.classList.toggle('btn-primary', jokeSelectMode && n >= 2);
+  }
+  if (packMerge) {
+    packMerge.textContent = label;
+    packMerge.classList.toggle('btn-primary', jokeSelectMode && n >= 2);
+  }
+}
+
+function onMergeToolbarClick() {
+  if (!jokeSelectMode) {
+    toggleJokeSelectMode();
+    return;
+  }
+  if (selectedJokeCount() >= 2) {
+    startMergeSelectedJokes();
+    return;
+  }
+  clearJokeSelection();
+  if (jokeViewMode === 'packs' && !activePackName) renderPackTiles();
+  else renderJokes(displayJokes);
+  toast('Pick at least 2 jokes, then tap Merge again');
+}
+
+function toggleJokeSelectMode() {
+  jokeSelectMode = !jokeSelectMode;
+  if (!jokeSelectMode) selectedJokeIds = {};
+  updateJokeSelectUi();
+  if (jokeViewMode === 'packs' && !activePackName) renderPackTiles();
+  else renderJokes(displayJokes);
+  if (jokeSelectMode) toast('Tap jokes to pick, then Merge again');
+}
+
+function clearJokeSelection() {
+  jokeSelectMode = false;
+  selectedJokeIds = {};
+  updateJokeSelectUi();
+}
+
+function toggleJokeSelected(id) {
+  id = String(id);
+  if (selectedJokeIds[id]) delete selectedJokeIds[id];
+  else selectedJokeIds[id] = true;
+  updateJokeSelectUi();
+  var card = document.querySelector('.jcard[data-jid="' + id.replace(/"/g, '\\"') + '"]');
+  if (card) card.classList.toggle('jcard-selected', !!selectedJokeIds[id]);
+}
+
+function getSelectedJokes() {
+  var out = [];
+  var ids = Object.keys(selectedJokeIds);
+  for (var i = 0; i < ids.length; i++) {
+    var id = ids[i];
+    for (var k = 0; k < jokes.length; k++) {
+      if (String(jokes[k].id) === id) { out.push(jokes[k]); break; }
+    }
+  }
+  return out;
+}
+
+function parseRuntimeToSeconds(rt) {
+  var parts = String(rt || '0:00').split(':');
+  var m = parseInt(parts[0], 10) || 0;
+  var s = parseInt(parts[1], 10) || 0;
+  return m * 60 + s;
+}
+
+function formatSecondsRuntime(total) {
+  total = Math.max(0, Math.round(total) || 0);
+  var m = Math.floor(total / 60);
+  var s = total % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function unionJokeTags(list) {
+  var tags = [];
+  for (var i = 0; i < list.length; i++) {
+    var t = list[i].tags || [];
+    for (var k = 0; k < t.length; k++) {
+      if (tags.indexOf(t[k]) === -1) tags.push(t[k]);
+    }
+  }
+  return tags;
+}
+
+function unionJokePacks(list) {
+  var packs = [];
+  for (var i = 0; i < list.length; i++) {
+    var p = normalizeJokePacks(list[i]);
+    for (var k = 0; k < p.length; k++) {
+      if (packs.indexOf(p[k]) === -1) packs.push(p[k]);
+    }
+  }
+  if (activePackName && packs.indexOf(activePackName) === -1) packs.push(activePackName);
+  return packs;
+}
+
+function bestJokeRating(list) {
+  var best = 3;
+  for (var i = 0; i < list.length; i++) {
+    var r = list[i].rating || 0;
+    if (r > best) best = r;
+  }
+  return best;
+}
+
+function parseMergeAiJson(text) {
+  if (!text) return null;
+  var raw = String(text).trim();
+  var fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) raw = fence[1].trim();
+  var start = raw.indexOf('{');
+  var end = raw.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) return null;
+  try {
+    return JSON.parse(raw.slice(start, end + 1));
+  } catch (e) {
+    return null;
+  }
+}
+
+function buildLocalMergeDraft(selected) {
+  var secs = 0;
+  for (var i = 0; i < selected.length; i++) secs += parseRuntimeToSeconds(selected[i].runtime);
+  return {
+    title: selected.map(function(j) { return j.title; }).filter(Boolean).slice(0, 2).join(' / ') || 'Merged bit',
+    body: selected.map(function(j) {
+      return (j.title ? ('# ' + j.title + '\n') : '') + (j.body || '');
+    }).join('\n\n---\n\n'),
+    runtime: formatSecondsRuntime(secs || 60)
+  };
+}
+
+function showMergeDraft(draft, statusText) {
+  var titleEl = document.getElementById('merge-title');
+  var bodyEl = document.getElementById('merge-body');
+  var rtEl = document.getElementById('merge-runtime');
+  var status = document.getElementById('merge-jokes-status');
+  var loading = document.getElementById('merge-jokes-loading');
+  var form = document.getElementById('merge-jokes-form');
+  var saveBtn = document.getElementById('merge-jokes-save');
+  if (loading) loading.style.display = 'none';
+  if (form) form.style.display = 'block';
+  if (saveBtn) saveBtn.style.display = '';
+  if (status && statusText) status.textContent = statusText;
+  if (titleEl) titleEl.value = draft.title || '';
+  if (bodyEl) bodyEl.value = draft.body || '';
+  if (rtEl) rtEl.value = draft.runtime || '2:00';
+}
+
+function startMergeSelectedJokes() {
+  var selected = getSelectedJokes();
+  if (selected.length < 2) {
+    toast('Select at least 2 jokes to merge');
+    return;
+  }
+  _mergeSourceIds = selected.map(function(j) { return String(j.id); });
+  openMergeJokesModal(selected);
+
+  // Instant local draft so the modal never sits on "Merging…" forever
+  var localDraft = buildLocalMergeDraft(selected);
+  showMergeDraft(localDraft, 'Quick merge ready — you can save now. Trying Brooks for a smarter stitch…');
+
+  if (typeof callBrooksAPI !== 'function') {
+    showMergeDraft(localDraft, 'Quick merge ready (Brooks not loaded). Edit if needed, then save.');
+    return;
+  }
+
+  var blocks = selected.map(function(j, i) {
+    return 'JOKE ' + (i + 1) + '\nTitle: ' + (j.title || '') + '\nRuntime: ' + (j.runtime || '') + '\nTags: ' + ((j.tags || []).join(', ') || 'none') + '\nBody:\n' + (j.body || '');
+  }).join('\n\n---\n\n');
+  var prompt = 'Merge these stand-up joke notes into ONE cohesive bit.\n'
+    + 'Keep the funniest lines, cut duplicates, preserve voice. Do not invent a new premise.\n'
+    + 'Return ONLY JSON with keys title, body, runtime (like "2:30").\n\n'
+    + blocks;
+
+  callBrooksAPI(prompt, function(reply) {
+    var parsed = parseMergeAiJson(reply);
+    if (!parsed || !(parsed.title || parsed.body)) {
+      showMergeDraft(localDraft, 'Brooks was slow or unavailable — quick merge is ready. Edit if needed, then save.');
+      return;
+    }
+    showMergeDraft({
+      title: parsed.title || localDraft.title,
+      body: parsed.body || localDraft.body,
+      runtime: parsed.runtime || localDraft.runtime
+    }, 'Brooks merge ready — edit if needed, then save. Sources will be archived.');
+  }, {
+    max_tokens: 1800,
+    timeout_ms: 10000,
+    system: 'You merge stand-up joke notes into one bit. Reply with JSON only.'
+  });
+}
+
+function openMergeJokesModal(selected) {
+  var overlay = document.getElementById('merge-jokes-modal');
+  var status = document.getElementById('merge-jokes-status');
+  var loading = document.getElementById('merge-jokes-loading');
+  var form = document.getElementById('merge-jokes-form');
+  var saveBtn = document.getElementById('merge-jokes-save');
+  if (!overlay) { toast('Refresh the page, then try Merge again'); return; }
+  _mergeDraftMeta = {
+    tags: unionJokeTags(selected),
+    packs: unionJokePacks(selected),
+    rating: bestJokeRating(selected)
+  };
+  if (status) status.textContent = 'Merging ' + selected.length + ' jokes with Brooks…';
+  if (loading) loading.style.display = 'block';
+  if (form) form.style.display = 'none';
+  if (saveBtn) saveBtn.style.display = 'none';
+  overlay.style.display = 'flex';
+}
+
+function closeMergeJokesModal() {
+  var overlay = document.getElementById('merge-jokes-modal');
+  if (overlay) overlay.style.display = 'none';
+  _mergeSourceIds = [];
+  _mergeDraftMeta = null;
+}
+
+function archiveJokeQuiet(id) {
+  id = String(id);
+  var j = null, idx = -1;
+  for (var i = 0; i < jokes.length; i++) {
+    if (String(jokes[i].id) === id) { j = jokes[i]; idx = i; break; }
+  }
+  if (!j) return;
+  j.archived = true;
+  archivedJokes.unshift(j);
+  jokes.splice(idx, 1);
+  displayJokes = displayJokes.filter(function(x) { return String(x.id) !== id; });
+  if (currentUser && _sb && id.indexOf('local-') !== 0) {
+    _sb.from('jokes').update({ archived: true }).eq('id', id).then(function() {});
+  }
+}
+
+function confirmMergeJokes() {
+  var titleEl = document.getElementById('merge-title');
+  var bodyEl = document.getElementById('merge-body');
+  var rtEl = document.getElementById('merge-runtime');
+  var title = titleEl ? titleEl.value.trim() : '';
+  var body = bodyEl ? bodyEl.value.trim() : '';
+  var runtime = rtEl ? (rtEl.value.trim() || '2:00') : '2:00';
+  if (!title) { toast('Add a title for the merged joke'); return; }
+  if (!_mergeSourceIds.length) { toast('No source jokes selected'); return; }
+  var meta = _mergeDraftMeta || { tags: [], packs: [], rating: 3 };
+  var rating = meta.rating || 3;
+  var now = new Date().toISOString();
+  var nj = {
+    title: title,
+    created_at: now,
+    updated_at: now,
+    body: body || '',
+    tags: meta.tags || [],
+    packs: meta.packs || [],
+    tier: rating >= 4 ? 'a' : rating >= 3 ? 'b' : 'c',
+    rating: rating,
+    runtime: runtime,
+    score: parseFloat((6 + rating * 0.5).toFixed(1)),
+    archived: false
+  };
+  var sources = _mergeSourceIds.slice();
+  closeMergeJokesModal();
+  clearJokeSelection();
+
+  function finishWithJoke(saved) {
+    for (var i = 0; i < sources.length; i++) archiveJokeQuiet(sources[i]);
+    for (var p = 0; p < (saved.packs || []).length; p++) rememberPackName(saved.packs[p]);
+    jokes.unshift(saved);
+    if (activePackName) displayJokes = applyActiveJokeManagerSort(jokesInPack(activePackName));
+    else displayJokes = applyActiveJokeManagerSort(jokes.slice());
+    updateCounts();
+    updateJokeSelectUi();
+    renderJokes(displayJokes);
+    if (typeof openDetail === 'function') openDetail(saved.id);
+    toast('Merged into "' + saved.title + '" — sources archived');
+  }
+
+  if (currentUser && _sb) {
+    setSyncStatus('syncing');
+    _sb.from('jokes').insert(Object.assign({}, nj, { user_id: currentUser.id })).select().single()
+      .then(function(res) {
+        if (res.error) {
+          setSyncStatus('error');
+          toast('Merge save failed: ' + res.error.message);
+          return;
+        }
+        setSyncStatus('synced');
+        finishWithJoke(res.data);
+      });
+  } else {
+    nj.id = 'local-' + Date.now();
+    finishWithJoke(nj);
+  }
+}
+
+function syncPackUpdates(list) {
+  if (!(currentUser && _sb) || !list || !list.length) return;
+  setSyncStatus('syncing');
+  var updates = list.map(function(j) {
+    if (String(j.id).indexOf('local-') === 0) return Promise.resolve({});
+    return _sb.from('jokes').update({ packs: normalizeJokePacks(j), updated_at: j.updated_at }).eq('id', j.id);
+  });
+  Promise.all(updates).then(function(results) {
+    var err = null;
+    for (var i = 0; i < results.length; i++) {
+      if (results[i] && results[i].error) { err = results[i].error; break; }
+    }
+    if (err) {
+      setSyncStatus('error');
+      toast('Pack sync failed — run sql/joke_packs.sql in Supabase? ' + err.message);
+    } else setSyncStatus('synced');
+  });
+}
+
+function renderPackTiles() {
+  var grid = document.getElementById('joke-grid');
+  var cnt = document.getElementById('joke-count');
+  if (!grid) return;
+  if (jokeGridSortable) { jokeGridSortable.destroy(); jokeGridSortable = null; }
+  var names = getAllPackNames();
+  var unpacked = jokesWithoutPack().length;
+  if (cnt) cnt.textContent = names.length + ' packs';
+  var html = '';
+  html += '<div class="pack-util-row">'
+    + '<button type="button" class="pack-util-tile pack-util-new" onclick="promptNewPack()">+ New Pack</button>'
+    + '<button type="button" class="pack-util-tile pack-util-loose" onclick="setJokeViewMode(\'all\')">Loose jokes · ' + unpacked + '</button>'
+    + '</div>';
+  if (names.length === 0) {
+    html += '<div style="grid-column:1/-1;text-align:center;padding:28px 16px;color:var(--text3);font-size:13px">No packs yet. Use <b>+ New Pack</b> above.</div>';
+  } else {
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i];
+      var n = countJokesInPack(name);
+      html += '<div class="jcard pack-card" data-pack="' + escapePackHtml(name) + '" style="cursor:pointer">'
+        + '<div class="jtitle">' + escapePackHtml(name) + '</div>'
+        + '<div class="pack-count">' + n + ' joke' + (n === 1 ? '' : 's') + '</div>'
+        + '<div class="jprev">Tap to open</div>'
+        + '</div>';
+    }
+  }
+  grid.innerHTML = html;
+  var cards = grid.querySelectorAll('[data-pack]');
+  for (var c = 0; c < cards.length; c++) {
+    (function(el) {
+      el.addEventListener('click', function() { openPack(el.getAttribute('data-pack')); });
+    })(cards[c]);
+  }
+}
+
+function rebuildModalPackChips(containerId, selected) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  selected = selected || [];
+  var names = getAllPackNames();
+  for (var i = 0; i < selected.length; i++) {
+    if (names.indexOf(selected[i]) === -1) names.push(selected[i]);
+  }
+  names.sort(function(a, b) { return a.localeCompare(b, undefined, { sensitivity: 'base' }); });
+  el.innerHTML = '';
+  for (var k = 0; k < names.length; k++) {
+    var pname = names[k];
+    var sp = document.createElement('span');
+    var on = selected.indexOf(pname) !== -1;
+    sp.className = 'tag tag-' + tagColor(pname) + (containerId.indexOf('edit') === 0 ? ' edit-pack' : '');
+    sp.style.cursor = 'pointer';
+    sp.style.opacity = on ? '1' : '.4';
+    if (containerId.indexOf('edit') === 0 && !on) sp.classList.add('off');
+    sp.textContent = pname;
+    sp.onclick = (function(chip, pack) {
+      return function() {
+        if (containerId.indexOf('edit') === 0) toggleEditPack(chip, pack);
+        else togglePack(chip, pack);
+      };
+    })(sp, pname);
+    el.appendChild(sp);
+  }
+}
+
+function togglePack(el, pack) {
+  var idx = modalPacks.indexOf(pack);
+  if (idx > -1) { modalPacks.splice(idx, 1); el.style.opacity = '.4'; }
+  else { modalPacks.push(pack); el.style.opacity = '1'; rememberPackName(pack); }
+}
+
+function toggleEditPack(el, pack) {
+  el.classList.toggle('off');
+  el.style.opacity = el.classList.contains('off') ? '.4' : '1';
+  var idx = modalPacks.indexOf(pack);
+  if (idx > -1) modalPacks.splice(idx, 1);
+  else { modalPacks.push(pack); rememberPackName(pack); }
+}
+
+function addCustomPack(isEdit) {
+  var input = document.getElementById(isEdit ? 'edit-custom-pack-input' : 'custom-pack-input');
+  if (!input) return;
+  var pack = input.value.trim();
+  if (!pack) return;
+  rememberPackName(pack);
+  if (modalPacks.indexOf(pack) === -1) modalPacks.push(pack);
+  rebuildModalPackChips(isEdit ? 'edit-modal-packs' : 'modal-packs', modalPacks);
+  input.value = '';
+}
+
+var _putInPackSelected = [];
+var _putInPackMode = 'new';
+var _putInPackJokeId = null;
+
+function openPutInPackModal(mode, jokeId) {
+  mode = mode || 'new';
+  _putInPackMode = mode;
+  _putInPackJokeId = jokeId ? String(jokeId) : null;
+  var overlay = document.getElementById('put-in-pack-modal');
+  var sub = document.getElementById('put-in-pack-subtitle');
+  var input = document.getElementById('put-in-pack-new');
+  if (!overlay) {
+    toast('Refresh the page, then try again');
+    return;
+  }
+  if (mode === 'new' || mode === 'edit') {
+    _putInPackSelected = (modalPacks || []).slice();
+  } else {
+    var j = null;
+    for (var i = 0; i < jokes.length; i++) {
+      if (String(jokes[i].id) === _putInPackJokeId) { j = jokes[i]; break; }
+    }
+    if (!j) {
+      for (var a = 0; a < archivedJokes.length; a++) {
+        if (String(archivedJokes[a].id) === _putInPackJokeId) { j = archivedJokes[a]; break; }
+      }
+    }
+    if (!j) { toast('Joke not found'); return; }
+    _putInPackSelected = normalizeJokePacks(j).slice();
+  }
+  if (sub) {
+    if (mode === 'new') sub.textContent = 'Choose packs for this new joke (saved when you hit Save Joke).';
+    else if (mode === 'edit') sub.textContent = 'Choose packs, then Save Changes on the edit form.';
+    else sub.textContent = 'Tap packs to include this joke.';
+  }
+  if (input) input.value = '';
+  renderPutInPackList();
+  overlay.style.display = 'flex';
+  if (input) setTimeout(function() { input.focus(); }, 30);
+}
+
+function closePutInPackModal() {
+  var overlay = document.getElementById('put-in-pack-modal');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function renderPutInPackList() {
+  var list = document.getElementById('put-in-pack-list');
+  if (!list) return;
+  var names = getAllPackNames();
+  for (var i = 0; i < _putInPackSelected.length; i++) {
+    if (names.indexOf(_putInPackSelected[i]) === -1) names.push(_putInPackSelected[i]);
+  }
+  names.sort(function(a, b) { return a.localeCompare(b, undefined, { sensitivity: 'base' }); });
+  if (!names.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text3)">No packs yet — create one below.</div>';
+    return;
+  }
+  list.innerHTML = names.map(function(name) {
+    var on = _putInPackSelected.indexOf(name) !== -1;
+    return '<button type="button" class="tag tag-' + tagColor(name) + '" style="cursor:pointer;opacity:' + (on ? '1' : '.4') + ';border:none" onclick="togglePutInPack(\'' + String(name).replace(/'/g, "\\'") + '\')">' + escapePackHtml(name) + (on ? ' ✓' : '') + '</button>';
+  }).join('');
+}
+
+function togglePutInPack(name) {
+  var idx = _putInPackSelected.indexOf(name);
+  if (idx > -1) _putInPackSelected.splice(idx, 1);
+  else {
+    _putInPackSelected.push(name);
+    rememberPackName(name);
+  }
+  renderPutInPackList();
+}
+
+function addPackFromPutInModal() {
+  var input = document.getElementById('put-in-pack-new');
+  if (!input) return;
+  var name = input.value.trim();
+  if (!name) return;
+  rememberPackName(name);
+  if (_putInPackSelected.indexOf(name) === -1) _putInPackSelected.push(name);
+  input.value = '';
+  renderPutInPackList();
+}
+
+function savePutInPackModal() {
+  var chosen = _putInPackSelected.slice();
+  if (_putInPackMode === 'new' || _putInPackMode === 'edit') {
+    modalPacks = chosen.slice();
+    rebuildModalPackChips(_putInPackMode === 'edit' ? 'edit-modal-packs' : 'modal-packs', modalPacks);
+    closePutInPackModal();
+    toast(chosen.length ? ('In ' + chosen.length + ' pack' + (chosen.length === 1 ? '' : 's')) : 'No packs selected');
+    return;
+  }
+  var id = _putInPackJokeId;
+  var j = null;
+  for (var i = 0; i < jokes.length; i++) {
+    if (String(jokes[i].id) === id) { j = jokes[i]; break; }
+  }
+  if (!j) { closePutInPackModal(); toast('Joke not found'); return; }
+  j.packs = chosen.slice();
+  j.updated_at = new Date().toISOString();
+  for (var p = 0; p < chosen.length; p++) rememberPackName(chosen[p]);
+  closePutInPackModal();
+  if (typeof openDetail === 'function') openDetail(j.id);
+  if (activePackName) displayJokes = applyActiveJokeManagerSort(jokesInPack(activePackName));
+  else if (jokeViewMode === 'packs' && !activePackName) { /* stay on pack tiles */ }
+  else displayJokes = applyActiveJokeManagerSort(jokes.slice());
+  if (!(jokeViewMode === 'packs' && !activePackName)) renderJokes(displayJokes);
+  else renderPackTiles();
+  toast(chosen.length ? ('Added to ' + chosen.length + ' pack' + (chosen.length === 1 ? '' : 's')) : 'Removed from all packs');
+  if (currentUser && _sb && String(j.id).indexOf('local-') !== 0) {
+    syncPackUpdates([j]);
+  }
+}
+
 function renderJokes(list) {
   var grid = document.getElementById('joke-grid');
   var cnt = document.getElementById('joke-count');
   if (!grid) return;
+  if (jokeViewMode === 'packs' && !activePackName && !_currentSearchQuery) {
+    renderPackTiles();
+    return;
+  }
   rebuildTagDropdown();
+  updatePackBreadcrumb();
+  updateJokeSelectUi();
   var isArchiveView = (list === archivedJokes || (list && list.length > 0 && list[0] && list[0].archived));
   var mode = getJokeManagerSortMode();
   var sortSelect = document.getElementById('sort-select');
@@ -126,10 +1044,15 @@ function renderJokes(list) {
   } else {
     list = list || [];
   }
-  if (cnt) cnt.textContent = list.length + (isArchiveView ? ' archived' : ' jokes');
+  if (cnt) {
+    if (activePackName) cnt.textContent = list.length + ' in pack';
+    else cnt.textContent = list.length + (isArchiveView ? ' archived' : ' jokes');
+  }
   if (list.length === 0) {
     var msg = isArchiveView
       ? '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);font-size:13px">No archived jokes yet.<br><span style="font-size:11px">Archive jokes from the detail panel to keep them off your main list.</span></div>'
+      : activePackName
+        ? '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);font-size:13px">No jokes in this pack yet.<br><button class="btn btn-sm btn-primary" onclick="openAddJokesToPackModal()" style="margin-top:12px">+ Add jokes</button></div>'
       : '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);font-size:13px">No jokes found. <button class="btn btn-sm btn-primary" onclick="openNewJoke()" style="margin-left:8px">+ Add a Joke</button></div>';
     grid.innerHTML = msg;
     return;
@@ -141,9 +1064,15 @@ function renderJokes(list) {
     var daysSince = j.updated_at ? Math.floor((Date.now()-new Date(j.updated_at).getTime())/86400000) : 0;
     var ageBadge = (daysSince > 60 && !j.archived) ? '<span style="font-size:9px;background:var(--red-bg);color:var(--red);border-radius:4px;padding:1px 5px;margin-left:4px">'+daysSince+'d</span>' : '';
     var dateLine = jokeDateLine(j);
-    return '<div class="jcard t'+j.tier+archivedClass+'" data-jid="'+j.id+'" style="cursor:pointer">'
+    var packs = normalizeJokePacks(j);
+    var packLine = packs.length
+      ? '<div style="margin-bottom:6px">'+packs.map(function(p){return '<span class="tag tag-'+tagColor(p)+'">'+escapePackHtml(p)+'</span>';}).join('')+'</div>'
+      : '';
+    return '<div class="jcard t'+j.tier+archivedClass+(selectedJokeIds[String(j.id)]?' jcard-selected':'')+(jokeSelectMode?' jcard-selectable':'')+'" data-jid="'+j.id+'" style="cursor:pointer">'
+      +(jokeSelectMode ? '<div class="jcard-check">'+(selectedJokeIds[String(j.id)]?'✓':'')+'</div>' : '')
       +'<div class="jtitle">'+j.title+ageBadge+'</div>'
       +'<div class="jprev">'+(j.body||'')+'</div>'
+      +packLine
       +'<div style="margin-bottom:8px">'+j.tags.map(function(t){return '<span class="tag tag-'+tagColor(t)+'">'+t+'</span>';}).join('')+'</div>'
       +(dateLine ? '<div class="jdate">'+dateLine+'</div>' : '')
       +'<div class="jmeta"><span class="stars">'+stars+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--text3);font-size:10px">'+j.runtime+'</span></div>'
@@ -152,7 +1081,12 @@ function renderJokes(list) {
   var cards = grid.querySelectorAll('[data-jid]');
   for (var ci=0; ci<cards.length; ci++) {
     (function(el) {
-      el.addEventListener('click', function() { openDetail(el.getAttribute('data-jid')); });
+      el.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var jid = el.getAttribute('data-jid');
+        if (jokeSelectMode) toggleJokeSelected(jid);
+        else openDetail(jid);
+      });
     })(cards[ci]);
   }
 
@@ -222,6 +1156,7 @@ function openDetail(id) {
     +'<button class="btn btn-sm" onclick="closeDetail()" style="flex-shrink:0;padding:3px 8px;font-size:11px">x</button>'
     +'</div>'
     +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+j.tags.map(function(t){return '<span class="tag tag-'+tagColor(t)+'">'+t+'</span>';}).join('')+' '+tierLabel+'</div>'
+    +(normalizeJokePacks(j).length ? '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+normalizeJokePacks(j).map(function(p){return '<span class="tag tag-'+tagColor(p)+'" style="cursor:pointer" onclick="openPack(\''+String(p).replace(/'/g, "\\'")+'\')">'+escapePackHtml(p)+'</span>';}).join('')+'</div>' : '')
     +'<div style="display:flex;gap:14px;font-size:11px;color:var(--text3);flex-wrap:wrap"><span>'+j.runtime+'</span><span style="color:var(--gold)">'+stars+'</span></div>'
     +(jokeDateLine(j) ? '<div style="font-size:11px;color:var(--text3);margin-top:6px">'+jokeDateLine(j)+'</div>' : '')
     +'</div>'
@@ -233,6 +1168,7 @@ function openDetail(id) {
     +'</div>'
     +'<div class="detail-actions">'
     +'<button class="btn btn-primary btn-sm" onclick="addJokeToSet(\''+j.id+'\')">+ Add to Set</button>'
+    +(!isArchived ? '<button class="btn btn-sm" onclick="openPutInPackModal(\'detail\',\''+j.id+'\')">+ Add to Pack</button>' : '')
     +(isArchived
       ? '<button class="btn btn-sm btn-archive" onclick="unarchiveJoke(\''+j.id+'\')"> Restore</button>'
       : '<button class="btn btn-sm" onclick="openEditModal(\''+j.id+'\')"> Edit</button>'
@@ -302,7 +1238,7 @@ function unarchiveJoke(id) {
 
 function filterJokes(q) {
   _currentSearchQuery = q || '';
-  var pool = jokes;
+  var pool = activePackName ? jokesInPack(activePackName) : jokes;
   var next = q ? pool.filter(function(j){
     return j.title.toLowerCase().indexOf(q.toLowerCase())>-1 || j.body.toLowerCase().indexOf(q.toLowerCase())>-1;
   }) : pool.slice();
@@ -333,15 +1269,23 @@ function rebuildTagDropdown() {
   }
 }
 function filterByTag(t) {
-  displayJokes = applyActiveJokeManagerSort(t ? jokes.filter(function(j){return j.tags.indexOf(t)>-1;}) : jokes.slice());
+  var pool = activePackName ? jokesInPack(activePackName) : jokes;
+  displayJokes = applyActiveJokeManagerSort(t ? pool.filter(function(j){return j.tags.indexOf(t)>-1;}) : pool.slice());
   renderJokes(displayJokes);
 }
 function filterByTier(t) {
+  if (t === 'archived') {
+    activePackName = null;
+    jokeViewMode = 'all';
+    updateJokeViewToggle();
+    updatePackBreadcrumb();
+  }
   var next;
   if (t==='archived') {
     next = archivedJokes.slice();
   } else {
-    next = t ? jokes.filter(function(j){return j.tier===t;}) : jokes.slice();
+    var pool = activePackName ? jokesInPack(activePackName) : jokes;
+    next = t ? pool.filter(function(j){return j.tier===t;}) : pool.slice();
   }
   displayJokes = applyActiveJokeManagerSort(next);
   renderJokes(displayJokes);
@@ -359,7 +1303,7 @@ function sortJokes(by) {
 
 // - NEW JOKE MODAL -
 function openNewJoke() {
-  modalRating = 0; modalTags = [];
+  modalRating = 0; modalTags = []; modalPacks = [];
   document.getElementById('joke-modal').style.display = 'flex';
   var t = document.getElementById('nj-title');
   var b = document.getElementById('nj-body');
@@ -381,6 +1325,11 @@ function openNewJoke() {
   }
   var tagEls = document.querySelectorAll('#modal-tags .tag');
   for (var i=0;i<tagEls.length;i++) tagEls[i].style.opacity = '.4';
+  if (activePackName) {
+    modalPacks = [activePackName];
+    rememberPackName(activePackName);
+  }
+  rebuildModalPackChips('modal-packs', modalPacks);
 }
 function closeNewJoke() {
   document.getElementById('joke-modal').style.display = 'none';
@@ -437,6 +1386,7 @@ function saveNewJoke() {
     updated_at: now,
     body: bodyEl ? bodyEl.value.trim() || '' : '',
     tags: modalTags.length ? modalTags.slice() : [],
+    packs: modalPacks.length ? modalPacks.slice() : [],
     tier: modalRating >= 4 ? 'a' : modalRating >= 3 ? 'b' : 'c',
     rating: modalRating || 3,
     runtime: runtimeEl ? runtimeEl.value.trim() || '1:00' : '1:00',
@@ -444,6 +1394,7 @@ function saveNewJoke() {
     archived: false
   };
   closeNewJoke();
+  for (var pi = 0; pi < (nj.packs || []).length; pi++) rememberPackName(nj.packs[pi]);
   if (currentUser && _sb) {
     setSyncStatus('syncing');
     _sb.from('jokes').insert(Object.assign({}, nj, { user_id: currentUser.id })).select().single()
@@ -487,6 +1438,7 @@ function openEditModal(id) {
   if (er) er.value = j.runtime;
   if (etr) etr.value = j.tier;
   modalRating = j.rating;
+  modalPacks = normalizeJokePacks(j).slice();
   var stars = document.getElementById('ej-stars');
   if (stars) {
     stars.innerHTML = '';
@@ -527,6 +1479,7 @@ function openEditModal(id) {
       editTagsEl.appendChild(sp);
     }
   }
+  rebuildModalPackChips('edit-modal-packs', modalPacks);
 }
 function closeEditModal() {
   document.getElementById('edit-modal').style.display = 'none';
@@ -581,8 +1534,10 @@ function saveEditedJoke() {
       jokes[i].tier = tierEl ? tierEl.value : jokes[i].tier;
       jokes[i].rating = modalRating || jokes[i].rating;
       jokes[i].tags = modalTags.slice();
+      jokes[i].packs = modalPacks.slice();
       jokes[i].score = parseFloat((6 + jokes[i].rating * 0.5).toFixed(1));
       jokes[i].updated_at = new Date().toISOString();
+      for (var rpi = 0; rpi < modalPacks.length; rpi++) rememberPackName(modalPacks[rpi]);
       break;
     }
   }

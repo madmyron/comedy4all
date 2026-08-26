@@ -5,8 +5,15 @@ function runIfAvailable(fn) {
 }
 
 if (typeof initJokeSortPreferences === 'function') initJokeSortPreferences();
+try {
+  var savedView = localStorage.getItem('c4a_joke_view_mode');
+  if (savedView === 'packs' || savedView === 'all') jokeViewMode = savedView;
+} catch (e) {}
+if (typeof normalizeAllJokePacks === 'function') normalizeAllJokePacks();
 displayJokes = typeof applyActiveJokeManagerSort === 'function' ? applyActiveJokeManagerSort(jokes) : jokes.slice();
-renderJokes(displayJokes);
+if (typeof updateJokeViewToggle === 'function') updateJokeViewToggle();
+if (jokeViewMode === 'packs' && typeof renderPackTiles === 'function') renderPackTiles();
+else renderJokes(displayJokes);
 renderSet();
 renderAnalytics();
 runIfAvailable(typeof renderWaveform === 'function' ? renderWaveform : null);

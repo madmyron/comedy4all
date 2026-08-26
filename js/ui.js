@@ -81,7 +81,11 @@ function performGo(name) {
   for (var i=0;i<ni.length;i++) ni[i].classList.add('active');
   if (name==='home') {}
   if (name==='projects') loadProjects();
-  if (name==='jokes') renderJokes(displayJokes);
+  if (name==='jokes') {
+    if (typeof updateJokeViewToggle === 'function') updateJokeViewToggle();
+    if (typeof jokeViewMode !== 'undefined' && jokeViewMode === 'packs' && !activePackName && typeof renderPackTiles === 'function') renderPackTiles();
+    else renderJokes(displayJokes);
+  }
   if (name==='sets') renderSet();
   if (name==='analytics') renderAnalytics();
   if (name==='rehearsal') {
