@@ -2,7 +2,7 @@
 var settingsTabs={
   subscription:'',
   notifications:'<div style="max-width:460px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Notifications</h3>'+[['Show reminders','24h reminder before each show'],['Brooks suggestions','Alert when Brooks finds improvements'],['Sync alerts','Alert when mobile sync fails'],['Weekly report','Weekly performance digest']].map(function(x){return '<div class="srow"><div><div style="font-size:13px;color:var(--text);font-weight:500">'+x[0]+'</div><div style="font-size:11px;color:var(--text3);margin-top:1px">'+x[1]+'</div></div><button class="stoggle on" onclick="this.classList.toggle(\'on\')"></button></div>';}).join('')+'</div>',
-  ai:'<div style="max-width:460px"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Brooks AI Settings</h3><div class="sect-title">API Key (direct)</div><p style="font-size:12px;color:var(--text3);margin-bottom:8px">Paste your Anthropic API key to call Anthropic from this browser (Anthropic allows this with their browser header). Or skip this and use an Anthropic proxy below.</p><input id="settings-api-key-input" type="password" placeholder="sk-ant-..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;color:var(--text);font-size:13px;font-family:\'DM Mono\',monospace;outline:none;margin-bottom:6px;box-sizing:border-box" oninput="saveApiKey(this.value)"><div style="font-size:10px;color:var(--text3);margin-bottom:16px">Stored only in this browser. Sent only to api.anthropic.com unless you configure a proxy.</div><div class="sect-title" style="margin-top:10px">Anthropic proxy (optional)</div><p style="font-size:12px;color:var(--text3);margin-bottom:8px">Base URL of your proxy server (no trailing slash), e.g. <span style="font-family:\'DM Mono\',monospace;font-size:11px">https://anthropic-proxy.onrender.com</span>. Brooks then posts to <span style="font-family:\'DM Mono\',monospace;font-size:11px">…/v1/messages</span> — same JSON as Anthropic.</p><input id="settings-anthropic-proxy-url" type="url" placeholder="https://…" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;color:var(--text);font-size:13px;font-family:\'DM Mono\',monospace;outline:none;margin-bottom:8px;box-sizing:border-box" oninput="saveAnthropicProxyUrl(this.value)"><div style="font-size:10px;color:var(--text3);margin-bottom:10px">If your proxy requires a shared secret, set it here (sent as <span style="font-family:\'DM Mono\',monospace;font-size:10px">Authorization: Bearer …</span>).</div><input id="settings-proxy-secret" type="password" placeholder="Proxy secret (optional)" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;color:var(--text);font-size:13px;font-family:\'DM Mono\',monospace;outline:none;margin-bottom:16px;box-sizing:border-box" oninput="saveAnthropicProxySecret(this.value)"><div class="sep"></div>'+[['Background analysis','Continuously analyzes your jokes'],['Writing prompts','Daily prompts based on your style'],['Post-show insights','Auto-analysis after recordings'],['Tier suggestions','Auto-suggest A/B/C tier']].map(function(x){return '<div class="srow"><div><div style="font-size:13px;color:var(--text);font-weight:500">'+x[0]+'</div><div style="font-size:11px;color:var(--text3);margin-top:1px">'+x[1]+'</div></div><button class="stoggle on" onclick="this.classList.toggle(\'on\')"></button></div>';}).join('')+'</div>',
+  ai:'',
   sync:'',
   theme:'',
   export:'<div class="export-panel"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Data &amp; Export</h3><div class="export-actions"><button class="btn" onclick="toast(\'Jokes exported!\')">[PDF] Export all jokes (PDF)</button><button class="btn" onclick="toast(\'Sets exported!\')">[PDF] Export all sets (PDF)</button><button class="btn" onclick="toast(\'Report exported!\')">[PDF] Analytics report (PDF)</button><button class="btn" onclick="toast(\'Backup downloaded!\')">[ZIP] Full backup (JSON)</button><div style="height:1px;background:var(--border);margin:3px 0"></div><button class="btn" style="color:var(--red)" onclick="toast(\'Check email to confirm.\')">Delete account</button></div></div>',
@@ -74,13 +74,38 @@ function refreshSyncSettingsPanel() {
   }
 }
 
+function renderAiSettings() {
+  var proxyDefault = (typeof BROOKS_DEFAULT_ANTHROPIC_PROXY === 'string') ? BROOKS_DEFAULT_ANTHROPIC_PROXY : 'http://localhost:8788';
+  var mono = 'font-family:\'DM Mono\',monospace;font-size:11px';
+  var inputCss = 'width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;color:var(--text);font-size:13px;font-family:\'DM Mono\',monospace;outline:none;margin-bottom:8px;box-sizing:border-box';
+  var toggles = [['Background analysis','Continuously analyzes your jokes'],['Writing prompts','Daily prompts based on your style'],['Post-show insights','Auto-analysis after recordings'],['Tier suggestions','Auto-suggest A/B/C tier']].map(function(x){
+    return '<div class="srow"><div><div style="font-size:13px;color:var(--text);font-weight:500">'+x[0]+'</div><div style="font-size:11px;color:var(--text3);margin-top:1px">'+x[1]+'</div></div><button class="stoggle on" onclick="this.classList.toggle(\'on\')"></button></div>';
+  }).join('');
+  return '<div style="max-width:460px">'
+    + '<h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)">Brooks AI Settings</h3>'
+    + '<div class="sect-title">Anthropic proxy (recommended)</div>'
+    + '<p style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6">Brooks should call Anthropic through <span style="' + mono + '">anthropic-proxy</span> so your API key stays on the server, not in this browser. New setups use <span style="' + mono + '">' + proxyDefault + '</span>. Run <span style="' + mono + '">npm run proxy:dev</span>, or paste a production proxy URL if you have one. Brooks posts to <span style="' + mono + '">…/v1/messages</span>.</p>'
+    + '<input id="settings-anthropic-proxy-url" type="url" placeholder="' + proxyDefault + '" style="' + inputCss + '" oninput="saveAnthropicProxyUrl(this.value)">'
+    + '<div style="font-size:10px;color:var(--text3);margin-bottom:10px;line-height:1.6">The Anthropic API key lives on the proxy. Do not paste it here.</div>'
+    + '<div style="font-size:10px;color:var(--text3);margin-bottom:8px;line-height:1.6">Optional proxy gate only — if your proxy checks <span style="' + mono + '">Authorization: Bearer …</span>. Leave blank for the local proxy. This is not your Anthropic key.</div>'
+    + '<input id="settings-proxy-secret" type="password" placeholder="Proxy gate (optional — not an API key)" style="' + inputCss + '" oninput="saveAnthropicProxySecret(this.value)">'
+    + '<div class="sep"></div>'
+    + '<div class="sect-title">Direct API key (optional)</div>'
+    + '<p style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6">Skip this if you are using the proxy. Only paste a key if you want this browser to call Anthropic directly.</p>'
+    + '<input id="settings-api-key-input" type="password" placeholder="sk-ant-... (optional)" style="' + inputCss + '" oninput="saveApiKey(this.value)">'
+    + '<div style="font-size:10px;color:var(--text3);margin-bottom:16px;line-height:1.6">Optional. Stored only in this browser and sent only to api.anthropic.com.</div>'
+    + '<div class="sep"></div>'
+    + toggles
+    + '</div>';
+}
+
 function showTab(tab,el){
   var items=document.querySelectorAll('.snav-item');
   for(var i=0;i<items.length;i++) items[i].classList.remove('active');
   if(el) el.classList.add('active');
   var body=document.getElementById('settings-body');
   if(body) {
-    body.innerHTML=tab==='profile' ? renderProfileSettings() : (tab==='subscription' ? renderSubscriptionSettings() : (tab==='theme' ? renderThemeSettings() : (tab==='sync' ? renderSyncSettings() : (settingsTabs[tab]||''))));
+    body.innerHTML=tab==='profile' ? renderProfileSettings() : (tab==='subscription' ? renderSubscriptionSettings() : (tab==='theme' ? renderThemeSettings() : (tab==='sync' ? renderSyncSettings() : (tab==='ai' ? renderAiSettings() : (settingsTabs[tab]||'')))));
     if (tab === 'ai') {
       var saki = document.getElementById('settings-api-key-input');
       if (saki) {
@@ -90,7 +115,7 @@ function showTab(tab,el){
       }
       var proxyEl = document.getElementById('settings-anthropic-proxy-url');
       if (proxyEl) {
-        try { proxyEl.value = localStorage.getItem('c4a_anthropic_proxy') || ''; } catch (e) {}
+        proxyEl.value = (typeof getBrooksProxyUrlForInput === 'function') ? getBrooksProxyUrlForInput() : 'http://localhost:8788';
       }
       var secretEl = document.getElementById('settings-proxy-secret');
       if (secretEl) {

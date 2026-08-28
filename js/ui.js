@@ -113,12 +113,9 @@ function performGo(name) {
     if (typeof onBrooksProjectChange === 'function' && currentBrooksProjectId) {
       onBrooksProjectChange(currentBrooksProjectId);
     }
-    if (apiKey && apiKey.length > 10) {
-      document.querySelectorAll('.cmsg.ai').forEach(function(el) {
-        if (el.textContent.indexOf('SETUP') !== -1) el.style.display = 'none';
-      });
-    }
+    if (typeof hideBrooksSetupMessages === 'function') hideBrooksSetupMessages();
     if (typeof syncBrooksApiKeyInputs === 'function') syncBrooksApiKeyInputs();
+    if (typeof syncBrooksProxyInputs === 'function') syncBrooksProxyInputs();
     try {
       var saved = localStorage.getItem('c4a_apikey') || '';
       if (saved) {
