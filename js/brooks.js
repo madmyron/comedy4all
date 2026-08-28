@@ -1214,7 +1214,44 @@ function sendBrooks(){
   xhr.send(payload);
 }
 
+function brooksStoryMiningActionLabel(type) {
+  if (type === 'sitcom') return 'sitcom ideas';
+  if (type === 'sitcom-diversity') return 'a sitcom diversity audit';
+  if (type === 'movie') return 'movie ideas';
+  return 'a comedy special arc';
+}
+
+function confirmHeavyBrooksScan(type, onConfirm) {
+  var count = (jokes && jokes.length) ? jokes.length : 0;
+  var scope = count === 1 ? '1 joke' : (count + ' jokes');
+  var title = 'Run a full library scan?';
+  var message = 'This sends your whole library (' + scope + ') plus a long Story Mining prompt to Brooks for ' + brooksStoryMiningActionLabel(type) + '. Haiku still costs money.';
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal(title, message, [
+      { label: 'Run scan', primary: true, onClick: onConfirm },
+      { label: 'Cancel', onClick: function(){} }
+    ]);
+    return;
+  }
+  if (window.confirm(message)) onConfirm();
+}
+
 function runStoryMining(type) {
+  if (!document.getElementById('chat-msgs')) return;
+  if (!hasBrooksAccess()) {
+    document.getElementById('brooks-upgrade-overlay').style.display = 'flex';
+    return;
+  }
+  if (!brooksAnthropicCredentialsReady()) {
+    toast(brooksNeedCredentialsMessage());
+    return;
+  }
+  confirmHeavyBrooksScan(type, function() {
+    executeStoryMining(type);
+  });
+}
+
+function executeStoryMining(type) {
   var msgs = document.getElementById('chat-msgs');
   if (!msgs) return;
   var welcome = document.getElementById('brooks-welcome');
@@ -1225,14 +1262,6 @@ function runStoryMining(type) {
   brooksScriptFormat = null;
   _brooksPendingTag = 'jokes-work';
   updateBrooksScriptActionBar();
-  if (!hasBrooksAccess()) {
-    document.getElementById('brooks-upgrade-overlay').style.display = 'flex';
-    return;
-  }
-  if (!brooksAnthropicCredentialsReady()) {
-    toast(brooksNeedCredentialsMessage());
-    return;
-  }
   var jokeList = jokes.map(function(j, i) {
     return (i+1) + '. [' + (j.tier||'?').toUpperCase() + '-tier, ' + (j.rating||'?') + '/5 stars] TITLE: ' + (j.title||'Untitled') + (j.body ? ' | MATERIAL: ' + j.body : '');
   }).join('\n');
