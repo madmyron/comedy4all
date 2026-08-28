@@ -61,12 +61,14 @@ showAuthScreen();
   initSupabase(url, key);
   try { localStorage.setItem('c4a_sb_url', url); localStorage.setItem('c4a_sb_key', key); } catch(e) {}
   try { apiKey = localStorage.getItem('c4a_apikey') || ''; } catch(e) {}
+  if (typeof ensureBrooksDefaultAnthropicProxy === 'function') ensureBrooksDefaultAnthropicProxy();
   if (typeof updateBrooksContext === 'function') updateBrooksContext();
   setTimeout(function() {
     var ki2 = document.getElementById('api-key-input');
     if (ki2 && apiKey) ki2.value = apiKey;
     var ki3 = document.getElementById('settings-api-key-input');
     if (ki3 && apiKey) ki3.value = apiKey;
+    if (typeof syncBrooksProxyInputs === 'function') syncBrooksProxyInputs();
   }, 500);
   try {
     var savedTheme = localStorage.getItem('c4a_theme') || (localStorage.getItem('c4a_dark') === '1' ? 'midnight' : 'spotlight');
@@ -107,6 +109,9 @@ function onboardSkip() { onboardNext(3); }
 function onboardFinish() {
   document.getElementById('onboard-overlay').style.display = 'none';
   try { localStorage.setItem('c4a_onboarded', '1'); } catch(e) {}
+  if (typeof ensureBrooksDefaultAnthropicProxy === 'function') ensureBrooksDefaultAnthropicProxy();
+  if (typeof syncBrooksProxyInputs === 'function') syncBrooksProxyInputs();
+  if (typeof updateBrooksContext === 'function') updateBrooksContext();
 }
 
 // Hook onboarding into showApp

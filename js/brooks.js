@@ -167,7 +167,7 @@ function brooksScriptKickoff(fmt) {
     return;
   }
   if (!brooksAnthropicCredentialsReady()) {
-    toast('Add your API key in Settings, or set an Anthropic proxy URL.');
+    toast(brooksNeedCredentialsMessage());
     return;
   }
   var msgs = document.getElementById('chat-msgs');
@@ -188,8 +188,8 @@ function brooksScriptKickoff(fmt) {
   if (!brooksConfigureAnthropicXhr(xhr)) {
     if (btn) { btn.disabled = false; }
     var tkFail = document.getElementById('brooks-typing-kickoff');
-    if (tkFail) tkFail.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Missing API key or proxy URL.</span>';
-    toast('Missing Anthropic API key or proxy URL.');
+    if (tkFail) tkFail.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">' + brooksNeedCredentialsMessage() + '</span>';
+    toast(brooksNeedCredentialsMessage());
     return;
   }
   xhr.onreadystatechange = function() {
@@ -207,7 +207,7 @@ function brooksScriptKickoff(fmt) {
         if (tk) tk.innerHTML = '<div class="mfrom">BROOKS AI</div>Something glitched. Try Send with a hello.';
       }
     } else if (xhr.status === 401) {
-      if (tk) tk.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Invalid API key.</span>';
+      if (tk) tk.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Anthropic auth failed. Check the proxy (or optional direct key).</span>';
     } else {
       if (tk) tk.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Error ' + xhr.status + '.</span>';
     }
@@ -305,7 +305,7 @@ function showBrooksSaveProjectModal() {
 
 function brooksSuggestThreeTitles(done) {
   if (!brooksAnthropicCredentialsReady()) {
-    toast('Add your API key or configure an Anthropic proxy URL in Settings.');
+    toast(brooksNeedCredentialsMessage());
     return;
   }
   var transcript = '';
@@ -316,7 +316,7 @@ function brooksSuggestThreeTitles(done) {
   var prompt = 'Based on this script-development conversation, suggest exactly 3 catchy working titles. Return ONLY valid JSON: {"titles":["...","...","..."]} — no markdown.\n\nCONVERSATION:\n' + transcript;
   var xhr = new XMLHttpRequest();
   if (!brooksConfigureAnthropicXhr(xhr)) {
-    toast('Missing Anthropic API key or proxy URL.');
+    toast(brooksNeedCredentialsMessage());
     return;
   }
   xhr.onload = function() {
@@ -594,18 +594,13 @@ function updateBrooksContext(){
   var userEmail=(window._c4aUserEmail||'').toLowerCase();
   if(el) el.innerHTML='\u2713 '+jokes.length+' joke'+(jokes.length===1?'':'s')+' in your library<br>\u2713 Top scoring joke: '+(top?top.title:'None yet')+(top?' ('+(top.score||0)+')':'')+'<br>\u2713 Brooks access: '+(access?'<span style="color:var(--green)">Unlocked</span>':'<span style="color:var(--text3)">Premium only</span>')+(brooksAnthropicProxyConfigured()?'<br>\u2713 Anthropic: <span style="color:var(--green)">via proxy</span> (key stays on server)':'<br>\u2713 Anthropic: <span style="color:var(--text3)">direct</span> (browser sends key to Anthropic)');
   syncBrooksApiKeyInputs(key);
+  syncBrooksProxyInputs();
+  hideBrooksSetupMessages();
   if(inviteInput && inviteCode) inviteInput.value=inviteCode;
   if(accessEl){
     accessEl.innerHTML=access
       ? 'Brooks AI is currently <strong style="color:var(--green)">Unlocked</strong>.<br>'+(userEmail==='michael@comedy4all.com'?'Friend trial code: <strong style="color:var(--gold)">BROOKS-FRIEND-2026</strong>':'Friend access is active on this device.')
       : 'Brooks AI is a <strong style="color:var(--gold)">Premium</strong> feature.<br>Enter a friend code below or upgrade to unlock it.';
-  }
-  if (apiKey && apiKey.length > 10) {
-    document.querySelectorAll('.cmsg.ai').forEach(function(el) {
-      if (el.textContent.indexOf('SETUP') !== -1) {
-        el.style.display = 'none';
-      }
-    });
   }
 }
 
@@ -927,6 +922,8 @@ function sbLoadBrooksConversations() {
     });
 }
 
+var BROOKS_DEFAULT_ANTHROPIC_PROXY = 'http://localhost:8788';
+
 function saveApiKey(v){
   console.log('saveApiKey called with:', v);
   var trimmed=v.trim();
@@ -937,12 +934,32 @@ function saveApiKey(v){
   updateBrooksContext();
 }
 
-function getBrooksAnthropicProxyBase() {
+function getBrooksStoredProxyRaw() {
   try {
-    return (localStorage.getItem('c4a_anthropic_proxy') || '').trim();
+    return localStorage.getItem('c4a_anthropic_proxy');
   } catch (e) {
-    return '';
+    return null;
   }
+}
+
+function getBrooksAnthropicDirectKey() {
+  return apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
+}
+
+function getBrooksAnthropicProxyBase() {
+  var stored = getBrooksStoredProxyRaw();
+  if (stored !== null) return stored.trim();
+  var key = getBrooksAnthropicDirectKey();
+  if (key && key.length > 10) return '';
+  return BROOKS_DEFAULT_ANTHROPIC_PROXY;
+}
+
+function getBrooksProxyUrlForInput() {
+  var stored = getBrooksStoredProxyRaw();
+  if (stored !== null) return stored.trim();
+  var key = getBrooksAnthropicDirectKey();
+  if (key && key.length > 10) return '';
+  return BROOKS_DEFAULT_ANTHROPIC_PROXY;
 }
 
 function brooksAnthropicProxyConfigured() {
@@ -950,14 +967,39 @@ function brooksAnthropicProxyConfigured() {
   return u.length >= 8 && /^https?:\/\//i.test(u);
 }
 
-function getBrooksAnthropicDirectKey() {
-  return apiKey || (function(){ try { return localStorage.getItem('c4a_apikey') || ''; } catch(e) { return ''; } })();
+function brooksNeedCredentialsMessage() {
+  return 'Start the Anthropic proxy at ' + BROOKS_DEFAULT_ANTHROPIC_PROXY + ' (npm run proxy:dev). A direct API key in Settings is optional.';
+}
+
+function ensureBrooksDefaultAnthropicProxy() {
+  if (getBrooksStoredProxyRaw() !== null) return;
+  var key = getBrooksAnthropicDirectKey();
+  if (key && key.length > 10) return;
+  try {
+    localStorage.setItem('c4a_anthropic_proxy', BROOKS_DEFAULT_ANTHROPIC_PROXY);
+  } catch (e) {}
 }
 
 function brooksAnthropicCredentialsReady() {
   if (brooksAnthropicProxyConfigured()) return true;
   var k = getBrooksAnthropicDirectKey();
   return !!(k && k.length > 10);
+}
+
+function hideBrooksSetupMessages() {
+  if (!brooksAnthropicCredentialsReady()) return;
+  document.querySelectorAll('.cmsg.ai').forEach(function(el) {
+    if (el.textContent.indexOf('SETUP') !== -1) el.style.display = 'none';
+  });
+}
+
+function syncBrooksProxyInputs() {
+  var url = getBrooksProxyUrlForInput();
+  var ids = ['settings-anthropic-proxy-url', 'brooks-proxy-url-input'];
+  for (var i = 0; i < ids.length; i++) {
+    var el = document.getElementById(ids[i]);
+    if (el) el.value = url;
+  }
 }
 
 /** Opens POST to Messages API on xhr and sets headers. Returns false only in direct mode without a key. */
@@ -983,8 +1025,7 @@ function brooksConfigureAnthropicXhr(xhr, asyncFlag) {
 function saveAnthropicProxyUrl(v) {
   var trimmed = (v || '').trim();
   try {
-    if (trimmed) localStorage.setItem('c4a_anthropic_proxy', trimmed);
-    else localStorage.removeItem('c4a_anthropic_proxy');
+    localStorage.setItem('c4a_anthropic_proxy', trimmed);
   } catch (e) {}
   updateBrooksContext();
 }
@@ -1039,7 +1080,7 @@ function sendBrooks(){
     return;
   }
   if (!brooksAnthropicCredentialsReady()) {
-    toast('Add your Anthropic API key in Settings, or set an Anthropic proxy URL.');
+    toast(brooksNeedCredentialsMessage());
     return;
   }
   var input=document.getElementById('brooks-input'),msgs=document.getElementById('chat-msgs');
@@ -1114,7 +1155,7 @@ function sendBrooks(){
     brooksHistory.pop();
     msgs.removeChild(um);
     input.value=text;
-    toast('Missing Anthropic API key or proxy URL.');
+    toast(brooksNeedCredentialsMessage());
     return;
   }
   xhr.onreadystatechange=function(){
@@ -1136,16 +1177,16 @@ function sendBrooks(){
         typing.innerHTML='<div class="mfrom">BROOKS AI</div>'+reply.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
       }catch(e){typing.innerHTML='<div class="mfrom">BROOKS AI</div>Parse error. Try again.';}
     } else if(xhr.status===401){
-      typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Invalid API key. Please check your key in the right panel.</span>';
+      typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Anthropic auth failed. Check the proxy server, or your optional direct key in Settings.</span>';
     } else {
-      typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Error '+xhr.status+'. Check your API key and try again.</span>';
+      typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Error '+xhr.status+'. Check the Anthropic proxy, or your optional API key, and try again.</span>';
     }
     msgs.scrollTop=msgs.scrollHeight;
     updateBrooksScriptActionBar();
   };
   xhr.onerror=function(){
     if(btn){btn.disabled=false;btn.textContent='Send';}
-    typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error. Make sure you\'re online and your API key is correct.</span>';
+    typing.innerHTML='<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Network error. If you use the local proxy, start it with npm run proxy:dev (' + BROOKS_DEFAULT_ANTHROPIC_PROXY + ').</span>';
     msgs.scrollTop=msgs.scrollHeight;
     updateBrooksScriptActionBar();
   };
@@ -1173,7 +1214,44 @@ function sendBrooks(){
   xhr.send(payload);
 }
 
+function brooksStoryMiningActionLabel(type) {
+  if (type === 'sitcom') return 'sitcom ideas';
+  if (type === 'sitcom-diversity') return 'a sitcom diversity audit';
+  if (type === 'movie') return 'movie ideas';
+  return 'a comedy special arc';
+}
+
+function confirmHeavyBrooksScan(type, onConfirm) {
+  var count = (jokes && jokes.length) ? jokes.length : 0;
+  var scope = count === 1 ? '1 joke' : (count + ' jokes');
+  var title = 'Run a full library scan?';
+  var message = 'This sends your whole library (' + scope + ') plus a long Story Mining prompt to Brooks for ' + brooksStoryMiningActionLabel(type) + '. Haiku still costs money.';
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal(title, message, [
+      { label: 'Run scan', primary: true, onClick: onConfirm },
+      { label: 'Cancel', onClick: function(){} }
+    ]);
+    return;
+  }
+  if (window.confirm(message)) onConfirm();
+}
+
 function runStoryMining(type) {
+  if (!document.getElementById('chat-msgs')) return;
+  if (!hasBrooksAccess()) {
+    document.getElementById('brooks-upgrade-overlay').style.display = 'flex';
+    return;
+  }
+  if (!brooksAnthropicCredentialsReady()) {
+    toast(brooksNeedCredentialsMessage());
+    return;
+  }
+  confirmHeavyBrooksScan(type, function() {
+    executeStoryMining(type);
+  });
+}
+
+function executeStoryMining(type) {
   var msgs = document.getElementById('chat-msgs');
   if (!msgs) return;
   var welcome = document.getElementById('brooks-welcome');
@@ -1184,14 +1262,6 @@ function runStoryMining(type) {
   brooksScriptFormat = null;
   _brooksPendingTag = 'jokes-work';
   updateBrooksScriptActionBar();
-  if (!hasBrooksAccess()) {
-    document.getElementById('brooks-upgrade-overlay').style.display = 'flex';
-    return;
-  }
-  if (!brooksAnthropicCredentialsReady()) {
-    toast('Add your API key or configure an Anthropic proxy URL in Settings.');
-    return;
-  }
   var jokeList = jokes.map(function(j, i) {
     return (i+1) + '. [' + (j.tier||'?').toUpperCase() + '-tier, ' + (j.rating||'?') + '/5 stars] TITLE: ' + (j.title||'Untitled') + (j.body ? ' | MATERIAL: ' + j.body : '');
   }).join('\n');
@@ -1220,7 +1290,7 @@ function runStoryMining(type) {
   brooksHistory.push({role:'user', content: prompt});
   var xhr = new XMLHttpRequest();
   if (!brooksConfigureAnthropicXhr(xhr)) {
-    typing.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Missing API key or proxy URL.</span>';
+    typing.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">' + brooksNeedCredentialsMessage() + '</span>';
     return;
   }
   xhr.onload = function() {
@@ -1281,7 +1351,7 @@ function runStoryMining(type) {
         followXHR.send(followPayload);
       } catch(e) { t.innerHTML = '<div class="mfrom">BROOKS AI</div>Parse error. Try again.'; }
     } else if (xhr.status === 401) {
-      t.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Invalid API key.</span>';
+      t.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Anthropic auth failed. Check the proxy (or optional direct key).</span>';
     } else {
       t.innerHTML = '<div class="mfrom">BROOKS AI</div><span style="color:var(--red)">Error ' + xhr.status + '. Try again.</span>';
     }
@@ -1370,11 +1440,13 @@ function renderBrooksGreeting(){
     'Quick choice first so I don\'t bulldoze the wrong lane.'
   ];
   var pick = lines[Math.floor(Math.random() * lines.length)];
+  var proxyUrl = getBrooksProxyUrlForInput();
   el.innerHTML = '<div class="mfrom">BROOKS AI</div><div style="margin-bottom:10px;line-height:1.45">' + pick + '</div>' +
     brooksChoiceRowHtml([
       { label: 'Stand-up / jokes', onclick: 'brooksPickPath(\'jokes\')' },
       { label: 'Script idea', onclick: 'brooksPickPath(\'script\')' }
-    ]);
+    ]) +
+    '<div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">Brooks uses the Anthropic proxy at <span style="font-family:\'DM Mono\',monospace;font-size:10px">' + proxyUrl + '</span> so your API key stays on the server. A direct key in Settings is optional.</div>';
   updateBrooksScriptActionBar();
 }
 
@@ -1581,7 +1653,7 @@ function sendToWritingStudio() {
     return;
   }
   if (!brooksAnthropicCredentialsReady()) {
-    toast('Add your API key in Settings, or set an Anthropic proxy URL.');
+    toast(brooksNeedCredentialsMessage());
     return;
   }
   var transcript = '';
@@ -1606,7 +1678,7 @@ function sendToWritingStudio() {
   var prompt = 'Based on this development conversation, write a proper TV pilot script outline. Include: a title page, logline, character descriptions, a cold open scene, Act One outline with 3-4 scenes, Act Two outline with 3-4 scenes, and a tag scene. Use proper screenplay formatting. Base everything specifically on the ideas discussed.\n\nCONVERSATION:\n' + transcript;
   var xhr = new XMLHttpRequest();
   if (!brooksConfigureAnthropicXhr(xhr)) {
-    toast('Missing API key or proxy URL.');
+    toast(brooksNeedCredentialsMessage());
     return;
   }
   xhr.onload = function() {
@@ -1628,7 +1700,7 @@ function sendToWritingStudio() {
         }, 400);
       } catch(e) { toast('Error creating script. Try again.'); }
     } else {
-      toast('Error ' + xhr.status + '. Check your API key.');
+      toast('Error ' + xhr.status + '. Check the Anthropic proxy or your optional API key.');
     }
   };
   xhr.onerror = function() { toast('Network error. Try again.'); };
@@ -2023,7 +2095,7 @@ function updateProjectFileFromChat(fileId) {
 function callBrooksAPI(prompt, callback, options) {
   var xhr = new XMLHttpRequest();
   if (!brooksConfigureAnthropicXhr(xhr)) {
-    toast('Add your API key in Settings, or set an Anthropic proxy URL.');
+    toast(brooksNeedCredentialsMessage());
     if (typeof callback === 'function') callback(null);
     return;
   }
