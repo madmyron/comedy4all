@@ -230,13 +230,24 @@ function sbLoadJokes(opts) {
       setSyncStatus('synced');
       attachGridClicks();
       try { localStorage.setItem('c4a_last_sync_at', String(Date.now())); } catch(e) {}
+      function afterSets() {
+        if (typeof sbLoadRehearsalScores === 'function') sbLoadRehearsalScores();
+        if (typeof sbLoadShowLogs === 'function') {
+          sbLoadShowLogs({
+            notify: !!opts.notifySets,
+            onDone: opts.onDone
+          });
+        } else if (opts.onDone) {
+          opts.onDone();
+        }
+      }
       if (typeof sbLoadSavedSets === 'function') {
         sbLoadSavedSets({
           notify: !!opts.notifySets,
-          onDone: opts.onDone
+          onDone: afterSets
         });
-      } else if (opts.onDone) {
-        opts.onDone();
+      } else {
+        afterSets();
       }
     });
 }
@@ -247,7 +258,7 @@ function forceSyncNow() {
     toast('Sign in first to sync across devices.');
     return;
   }
-  toast('Syncing jokes and sets…');
+  toast('Syncing jokes, sets, and set logs…');
   sbLoadJokes({
     notifySets: true,
     onDone: function() {

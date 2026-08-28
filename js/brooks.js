@@ -592,7 +592,7 @@ function updateBrooksContext(){
   var access=hasBrooksAccess();
   var inviteCode=getStoredBrooksInviteCode();
   var userEmail=(window._c4aUserEmail||'').toLowerCase();
-  if(el) el.innerHTML='\u2713 '+jokes.length+' joke'+(jokes.length===1?'':'s')+' in your library<br>\u2713 Top scoring joke: '+(top?top.title:'None yet')+(top?' ('+(top.score||0)+')':'')+'<br>\u2713 Brooks access: '+(access?'<span style="color:var(--green)">Unlocked</span>':'<span style="color:var(--text3)">Premium only</span>')+(brooksAnthropicProxyConfigured()?'<br>\u2713 Anthropic: <span style="color:var(--green)">via proxy</span> (key stays on server)':'<br>\u2713 Anthropic: <span style="color:var(--text3)">direct</span> (browser sends key to Anthropic)');
+  if(el) el.innerHTML='\u2713 '+jokes.length+' joke'+(jokes.length===1?'':'s')+' in your library<br>\u2713 Top scoring joke: '+(top?top.title:'None yet')+(top?' ('+(top.score||0)+')':'')+'<br>\u2713 Brooks access: '+(access?'<span style="color:var(--green)">Unlocked</span>':'<span style="color:var(--text3)">Premium only</span>')+(brooksAnthropicProxyConfigured()?'<br>\u2713 Anthropic: <span style="color:var(--green)">via proxy</span> (key stays on server)':'<br>\u2713 Anthropic: <span style="color:var(--text3)">direct</span> (browser sends key to Anthropic)')+(typeof shows!=='undefined'&&shows.length?'<br>\u2713 Set logs: <span style="color:var(--green)">'+shows.length+' live set'+(shows.length===1?'':'s')+'</span>':'<br>\u2713 Set logs: <span style="color:var(--text3)">none yet</span>');
   syncBrooksApiKeyInputs(key);
   syncBrooksProxyInputs();
   hideBrooksSetupMessages();
@@ -1127,9 +1127,15 @@ function sendBrooks(){
   }
   if (brooksSessionKind === 'jokes' && brooksHistory.length === 0 && jokes && jokes.length > 0) {
     var jokeContext = jokes.map(function(j, i) {
-      return (i+1) + '. ' + (j.title||'') + ': ' + (j.body||j.text||j.setup||'') + (j.punch ? ' / ' + j.punch : '') + ' [' + (j.tier||'?') + '-tier, ' + (j.rating||'?') + '/5]';
+      var liveReh = '';
+      if (typeof getRehearsalScoreForJoke === 'function') {
+        var rs = getRehearsalScoreForJoke(j.id);
+        if (rs) liveReh += ' rehearsal ' + rs;
+      }
+      return (i+1) + '. ' + (j.title||'') + ': ' + (j.body||j.text||j.setup||'') + (j.punch ? ' / ' + j.punch : '') + ' [' + (j.tier||'?') + '-tier, ' + (j.rating||'?') + '/5' + liveReh + ']';
     }).join('\n');
-    brooksHistory.push({role:'user', content:'Here are all my jokes:\n\n' + jokeContext});
+    var liveBlock = typeof formatLiveVsRehearsalForBrooks === 'function' ? formatLiveVsRehearsalForBrooks() : '';
+    brooksHistory.push({role:'user', content:'Here are all my jokes:\n\n' + jokeContext + (liveBlock ? '\n\n' + liveBlock : '')});
     brooksHistory.push({role:'assistant', content:"Got it. I've read all your material. What do you want to work on?"});
   }
   brooksHistory.push({role:'user',content:userContent});

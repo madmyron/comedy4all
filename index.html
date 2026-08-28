@@ -18,7 +18,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=15">
+<link rel="stylesheet" href="css/styles.css?v=16">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -400,6 +400,7 @@
           <div class="sect-title" style="margin-top:10px">AI Notes</div>
           <div style="font-size:11.5px;color:var(--text2);line-height:1.65;margin-bottom:14px;background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:var(--r2);padding:9px 11px">Opener strength: 9.2 &#10003;<br>Consider moving "Mom texting" earlier -- warming slow at slot 6.</div>
           <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:7px;font-size:12px" onclick="go('rehearsal')">&gt; Rehearse This Set</button>
+          <button class="btn" style="width:100%;justify-content:center;margin-bottom:7px;font-size:12px" onclick="go('shows');openNewShow()">Log live set</button>
           <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="toast('PDF exported!')">&#8595; PDF Set Sheet</button>
         </div>
       </div>
@@ -739,7 +740,7 @@
             <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px" id="heatmap"></div>
           </div>
           <div class="card">
-            <div class="ctitle">Joke Rankings</div>
+            <div class="ctitle" id="joke-ranking-title">Joke Rankings</div>
             <div id="joke-ranking" style="overflow-y:auto;max-height:170px" class="scroll"></div>
           </div>
         </div>
@@ -770,7 +771,7 @@
      <div id="screen-shows" class="screen">
       <div class="topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
-        <div class="topbar-title">Show History</div>
+        <div class="topbar-title">Show History / Set Log</div>
         <button class="btn btn-sm btn-primary" onclick="openNewShow()">+ Log a Show</button>
       </div>
       <div class="content scroll">
@@ -787,6 +788,10 @@
             <div class="card" style="margin-bottom:12px">
               <div class="ctitle">Joke Win Rate <span class="csub">across all shows</span></div>
               <div id="joke-win-rate" style="margin-top:6px"><div style="font-size:11px;color:var(--text3)">Log shows to see which jokes consistently land.</div></div>
+            </div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="ctitle">Live vs Rehearsal <span class="csub">R = rehearsal, L = live</span></div>
+              <div id="live-vs-rehearsal" style="margin-top:6px"><div style="font-size:11px;color:var(--text3)">Rehearse a set, then log the live show.</div></div>
             </div>
             <div class="card">
               <div class="ctitle">Brooks Insight</div>
@@ -893,8 +898,12 @@
       <div><label class="mlbl">Set Length</label><input class="minput" id="sh-length" placeholder="e.g. 20 min"></div>
       <div><label class="mlbl">Overall Show Rating</label><div id="sh-stars" style="display:flex;gap:3px;margin-top:6px"></div></div>
     </div>
+    <div style="margin-bottom:12px">
+      <label class="mlbl">Set</label>
+      <select id="sh-set-select" class="minput" onchange="onShowSetChange()"></select>
+    </div>
     <div style="margin-bottom:14px"><label class="mlbl">Notes</label><textarea class="minput" id="sh-notes" placeholder="Crowd vibe, what worked, what didn't..." style="height:70px"></textarea></div>
-    <div style="margin-bottom:6px"><label class="mlbl">Joke Reactions &#8212; how did each land?</label></div>
+    <div style="margin-bottom:6px"><label class="mlbl">Joke reactions &#8212; live vs rehearsal</label></div>
     <div id="sh-reactions" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r2);padding:4px" class="scroll"></div>
     <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px">
       <button class="btn" onclick="closeNewShow()">Cancel</button>
@@ -1188,19 +1197,19 @@
 <div class="toast" id="toast-el"></div>
 
 <script src="js/data.js?v=2"></script>
-<script src="js/supabase.js?v=11"></script>
-<script src="js/ui.js?v=5"></script>
+<script src="js/supabase.js?v=12"></script>
+<script src="js/ui.js?v=6"></script>
 <script src="js/jokes.js?v=32"></script>
-<script src="js/rehearsal.js?v=2"></script>
-<script src="js/analytics.js?v=2"></script>
-<script src="js/brooks.js?v=8"></script>
+<script src="js/rehearsal.js?v=3"></script>
+<script src="js/analytics.js?v=4"></script>
+<script src="js/brooks.js?v=9"></script>
 <script src="js/settings.js?v=5"></script>
-<script src="js/shows.js?v=2"></script>
+<script src="js/shows.js?v=4"></script>
 <script src="js/projects.js?v=2"></script>
 <script src="js/studio.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/plugins/Swap/Sortable.Swap.js"></script>
-<script src="js/init.js?v=7"></script>
+<script src="js/init.js?v=8"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
