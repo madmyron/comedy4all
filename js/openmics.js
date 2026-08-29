@@ -1,15 +1,12 @@
 // C4A-466 — Find Open Mics this week near you (DFW-first v1)
-// Candidates are a search input only. Nights are shown after two silent
-// independent signals pass (Maps listing still exists; a public listing
-// agrees on venue + weekday). Failures are dropped. No verifying UI.
+// Candidates are a search input only. A night is shown when Maps/OSM still
+// has the venue (or Maps is down — fail open so a listing outage cannot
+// wipe the week). Date must fall in the next 7 days. No verifying UI.
 
 var OPENMIC_RADIUS_MI = 40;
 var OPENMIC_WINDOW_DAYS = 7;
-var OPENMIC_CK_URL = 'https://www.cerealkillerproductions.com/dfw-comedy-open-mic-list/';
 var OPENMIC_DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var _openMicOrigin = null;
-var _openMicCkText = '';
-var _openMicCkAt = 0;
 var _openMicSearching = false;
 
 // Weekly DFW nights used as search seeds — not rendered as a directory.
@@ -142,100 +139,43 @@ function saveOpenMicAsNextShow(id) {
   saveNextShow(show);
 }
 
-function fetchPlain(url, timeoutMs) {
-  var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  var timer = setTimeout(function() { if (ctrl) ctrl.abort(); }, timeoutMs || 9000);
-  return fetch(url, { signal: ctrl ? ctrl.signal : undefined })
-    .then(function(res) {
-      clearTimeout(timer);
-      if (!res.ok) throw new Error('bad status');
-      return res.text();
-    })
-    .catch(function(err) {
-      clearTimeout(timer);
-      throw err;
-    });
-}
-
-function fetchViaJina(targetUrl) {
-  return fetchPlain('https://r.jina.ai/' + targetUrl, 12000);
-}
-
-function fetchCkListing() {
-  var now = Date.now();
-  if (_openMicCkText && (now - _openMicCkAt) < 30 * 60 * 1000) {
-    return Promise.resolve(_openMicCkText);
+function mapsHitFromPhoton(mic, data) {
+  var feats = (data && data.features) || [];
+  for (var i = 0; i < feats.length; i++) {
+    var f = feats[i];
+    var coords = (f.geometry && f.geometry.coordinates) || [];
+    var lon = coords[0], lat = coords[1];
+    if (typeof lat !== 'number' || typeof lon !== 'number') continue;
+    var mi = haversineMi(mic.lat, mic.lon, lat, lon);
+    if (mi > 4) continue;
+    var propsName = String((f.properties && (f.properties.name || '')) || '').toLowerCase();
+    var venueKey = String(mic.venue).toLowerCase().replace(/^the\s+/, '');
+    var hintHit = (mic.hints || []).some(function(h) { return propsName.indexOf(String(h).toLowerCase()) !== -1; });
+    var venueHit = propsName.indexOf(venueKey.split(' ')[0]) !== -1;
+    if (hintHit || venueHit || mi < 0.6) {
+      return { lat: lat, lon: lon, name: (f.properties && f.properties.name) || mic.venue };
+    }
   }
-  return fetchViaJina(OPENMIC_CK_URL).then(function(text) {
-    _openMicCkText = text || '';
-    _openMicCkAt = Date.now();
-    return _openMicCkText;
-  });
+  return null;
 }
 
-function ckSectionForDay(text, dayName) {
-  if (!text) return '';
-  var names = OPENMIC_DAY_NAMES;
-  var upper = text.toUpperCase();
-  var startKey = '**' + dayName.toUpperCase() + '**';
-  var start = upper.indexOf(startKey);
-  if (start === -1) {
-    start = upper.indexOf('\n' + dayName.toUpperCase() + '\n');
-    if (start === -1) return text;
-  }
-  var rest = text.slice(start);
-  var restUpper = rest.toUpperCase();
-  var end = rest.length;
-  for (var i = 0; i < names.length; i++) {
-    if (names[i].toLowerCase() === dayName.toLowerCase()) continue;
-    var key = '**' + names[i].toUpperCase() + '**';
-    var idx = restUpper.indexOf(key, 8);
-    if (idx !== -1 && idx < end) end = idx;
-  }
-  var monthly = restUpper.indexOf('**MONTHLY**');
-  if (monthly !== -1 && monthly < end) end = monthly;
-  return rest.slice(0, end);
-}
-
-function listingAgrees(mic, ckText, venuePageText) {
-  var day = OPENMIC_DAY_NAMES[mic.dow];
-  var section = ckSectionForDay(ckText, day).toLowerCase();
-  var hints = mic.hints || [mic.venue];
-  var nameInCk = hints.some(function(h) { return section.indexOf(String(h).toLowerCase()) !== -1; });
-  if (nameInCk) return true;
-  if (!venuePageText) return false;
-  var page = venuePageText.toLowerCase();
-  var hasMic = page.indexOf('open mic') !== -1 || page.indexOf('open-mic') !== -1;
-  var hasDay = page.indexOf(day.toLowerCase()) !== -1;
-  var hasName = hints.some(function(h) { return page.indexOf(String(h).toLowerCase()) !== -1; });
-  return hasMic && hasDay && hasName;
-}
-
+// Maps/OSM: venue still operates near the expected place.
+// If Photon is down, return {unavailable:true} so the week is not wiped.
 function mapsAgrees(mic) {
   var q = encodeURIComponent(mic.mapsQuery || (mic.venue + ' ' + mic.city + ' TX'));
   var url = 'https://photon.komoot.io/api/?q=' + q + '&lat=' + mic.lat + '&lon=' + mic.lon + '&limit=5';
-  return fetch(url).then(function(res) {
+  var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var timer = setTimeout(function() { if (ctrl) ctrl.abort(); }, 8000);
+  return fetch(url, { signal: ctrl ? ctrl.signal : undefined }).then(function(res) {
+    clearTimeout(timer);
     if (!res.ok) throw new Error('maps');
     return res.json();
   }).then(function(data) {
-    var feats = (data && data.features) || [];
-    for (var i = 0; i < feats.length; i++) {
-      var f = feats[i];
-      var coords = (f.geometry && f.geometry.coordinates) || [];
-      var lon = coords[0], lat = coords[1];
-      if (typeof lat !== 'number' || typeof lon !== 'number') continue;
-      var mi = haversineMi(mic.lat, mic.lon, lat, lon);
-      if (mi > 4) continue;
-      var propsName = String((f.properties && (f.properties.name || '')) || '').toLowerCase();
-      var venueKey = String(mic.venue).toLowerCase().replace(/^the\s+/, '');
-      var hintHit = (mic.hints || []).some(function(h) { return propsName.indexOf(String(h).toLowerCase()) !== -1; });
-      var venueHit = propsName.indexOf(venueKey.split(' ')[0]) !== -1;
-      if (hintHit || venueHit || mi < 0.6) {
-        return { lat: lat, lon: lon, name: (f.properties && f.properties.name) || mic.venue };
-      }
-    }
-    return null;
-  }).catch(function() { return null; });
+    return mapsHitFromPhoton(mic, data);
+  }).catch(function() {
+    clearTimeout(timer);
+    return { unavailable: true, lat: mic.lat, lon: mic.lon };
+  });
 }
 
 function geocodeCity(city) {
@@ -266,31 +206,34 @@ function runPool(items, limit, worker) {
   return Promise.all(starters).then(function() { return out; });
 }
 
-function confirmCandidate(mic, origin, ckText) {
+function nightFromCandidate(mic, origin, lat, lon, when) {
+  return {
+    id: mic.id,
+    venue: mic.venue,
+    city: mic.city,
+    time: mic.time,
+    signup: mic.signup || '',
+    weekday: OPENMIC_DAY_NAMES[mic.dow],
+    date: isoDate(when),
+    dateObj: when,
+    dateLabel: formatMicDate(when),
+    miles: haversineMi(origin.lat, origin.lon, lat, lon)
+  };
+}
+
+function confirmCandidate(mic, origin) {
   var when = nextDateForDow(mic.dow, dfwNow());
   if (!when) return Promise.resolve(null);
   var dist = haversineMi(origin.lat, origin.lon, mic.lat, mic.lon);
   if (dist > OPENMIC_RADIUS_MI) return Promise.resolve(null);
-  var pageP = mic.venueUrl ? fetchViaJina(mic.venueUrl).catch(function() { return ''; }) : Promise.resolve('');
-  return Promise.all([mapsAgrees(mic), pageP]).then(function(pair) {
-    var maps = pair[0];
-    var page = pair[1];
+  return mapsAgrees(mic).then(function(maps) {
     if (!maps) return null;
-    if (!listingAgrees(mic, ckText, page)) return null;
-    var lat = maps.lat, lon = maps.lon;
-    return {
-      id: mic.id,
-      venue: mic.venue,
-      city: mic.city,
-      time: mic.time,
-      signup: mic.signup || '',
-      weekday: OPENMIC_DAY_NAMES[mic.dow],
-      date: isoDate(when),
-      dateObj: when,
-      dateLabel: formatMicDate(when),
-      miles: haversineMi(origin.lat, origin.lon, lat, lon)
-    };
-  }).catch(function() { return null; });
+    var lat = maps.lat;
+    var lon = maps.lon;
+    return nightFromCandidate(mic, origin, lat, lon, when);
+  }).catch(function() {
+    return nightFromCandidate(mic, origin, mic.lat, mic.lon, when);
+  });
 }
 
 function setOpenMicStatus(msg) {
@@ -303,7 +246,7 @@ function renderOpenMicResults(nights) {
   if (!root) return;
   var found = (nights || []).filter(Boolean);
   if (!found.length) {
-    root.innerHTML = '<div class="card" style="padding:22px;text-align:center;color:var(--text3);font-size:13px">No nights we could silently confirm for the next 7 days near that search.<br><span style="font-size:11px">Try Dallas, Fort Worth, or Use my location.</span></div>';
+    root.innerHTML = '<div class="card" style="padding:22px;text-align:center;color:var(--text3);font-size:13px">No nights this week within 40 miles of that search.<br><span style="font-size:11px">Try Dallas, Fort Worth, or a closer city.</span></div>';
     return;
   }
   found.sort(function(a, b) {
@@ -342,14 +285,17 @@ function searchOpenMicsFromOrigin(origin) {
   if (results) results.innerHTML = '';
   var loc = document.getElementById('om-location-label');
   if (loc) loc.textContent = origin.label ? ('Searching near ' + origin.label) : 'Searching near you';
-  fetchCkListing().catch(function() { return ''; }).then(function(ckText) {
-    return runPool(OPENMIC_CANDIDATES, 4, function(mic) {
-      return confirmCandidate(mic, origin, ckText || '').catch(function() { return null; });
+  runPool(OPENMIC_CANDIDATES, 4, function(mic) {
+    return confirmCandidate(mic, origin).catch(function() {
+      var when = nextDateForDow(mic.dow, dfwNow());
+      if (!when) return null;
+      if (haversineMi(origin.lat, origin.lon, mic.lat, mic.lon) > OPENMIC_RADIUS_MI) return null;
+      return nightFromCandidate(mic, origin, mic.lat, mic.lon, when);
     });
   }).then(function(nights) {
     _openMicSearching = false;
     var kept = (nights || []).filter(Boolean);
-    setOpenMicStatus(kept.length ? (kept.length + ' confirmed night' + (kept.length === 1 ? '' : 's') + ' in the next 7 days') : '');
+    setOpenMicStatus(kept.length ? (kept.length + ' night' + (kept.length === 1 ? '' : 's') + ' in the next 7 days') : '');
     renderOpenMicResults(kept);
   }).catch(function() {
     _openMicSearching = false;
@@ -373,18 +319,39 @@ function searchOpenMicsCity() {
   });
 }
 
+function showOpenMicFallback(msg) {
+  var fb = document.getElementById('om-fallback');
+  var dfw = document.getElementById('om-dfw-btn');
+  if (fb) fb.style.display = 'flex';
+  if (dfw) dfw.style.display = '';
+  setOpenMicStatus(msg || 'Location unavailable. Search a city or Dallas–Fort Worth.');
+}
+
+function hideOpenMicFallback() {
+  var fb = document.getElementById('om-fallback');
+  var dfw = document.getElementById('om-dfw-btn');
+  if (fb) fb.style.display = 'none';
+  if (dfw) dfw.style.display = 'none';
+}
+
 function searchOpenMicsGps() {
-  if (!navigator.geolocation) { toast('Location is not available in this browser.'); return; }
+  if (!navigator.geolocation) {
+    showOpenMicFallback('Location is not available in this browser.');
+    return;
+  }
+  hideOpenMicFallback();
   setOpenMicStatus('Looking for nights this week…');
+  var loc = document.getElementById('om-location-label');
+  if (loc) loc.textContent = 'Using your current location';
   navigator.geolocation.getCurrentPosition(function(pos) {
+    hideOpenMicFallback();
     searchOpenMicsFromOrigin({
       lat: pos.coords.latitude,
       lon: pos.coords.longitude,
       label: 'your location'
     });
   }, function() {
-    setOpenMicStatus('');
-    toast('Location denied. Type a city instead.');
+    showOpenMicFallback('Could not use your location. Search a city or try Dallas–Fort Worth.');
   }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
 }
 
@@ -400,4 +367,6 @@ function initOpenMics() {
     try { input.value = localStorage.getItem('c4a_openmic_city') || ''; } catch (e) {}
   }
   renderHomeNextShow();
+  hideOpenMicFallback();
+  searchOpenMicsGps();
 }

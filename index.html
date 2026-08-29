@@ -812,21 +812,21 @@
       <div class="topbar">
         <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
         <div class="topbar-title">Find Open Mics</div>
-        <button class="btn btn-sm btn-primary" onclick="searchOpenMicsDfw()">Dallas–Fort Worth</button>
+        <button id="om-dfw-btn" class="btn btn-sm btn-primary" onclick="searchOpenMicsDfw()" style="display:none">Dallas–Fort Worth</button>
       </div>
       <div class="content scroll">
         <div class="card" style="margin-bottom:14px">
           <div class="ctitle">This week near you <span class="csub">next 7 days, not tonight-only</span></div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
+          <div id="om-fallback" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
             <input class="minput" id="om-city" placeholder="City (Dallas, Fort Worth, Denton…)" style="flex:1;min-width:180px" onkeydown="if(event.key==='Enter'){searchOpenMicsCity();event.preventDefault();}">
             <button type="button" class="btn" onclick="searchOpenMicsCity()">Search this week</button>
-            <button type="button" class="btn" onclick="searchOpenMicsGps()">Use my location</button>
+            <button type="button" class="btn" onclick="searchOpenMicsGps()">Try location again</button>
           </div>
           <div id="om-location-label" style="font-size:11px;color:var(--text3);margin-top:8px"></div>
-          <div id="om-status" style="font-size:12px;color:var(--text2);margin-top:4px"></div>
+          <div id="om-status" style="font-size:12px;color:var(--text2);margin-top:4px">Looking for nights this week…</div>
         </div>
         <div id="om-results">
-          <div style="text-align:center;padding:36px 16px;color:var(--text3);font-size:13px">Search a city or use GPS. Only nights we can silently confirm for the next 7 days are listed — grouped by day, so Wednesday and Thursday still show if you skip tonight.</div>
+          <div style="text-align:center;padding:36px 16px;color:var(--text3);font-size:13px">Looking for nights this week near you.</div>
         </div>
       </div>
     </div>
@@ -1234,7 +1234,7 @@
 <script src="js/brooks.js?v=9"></script>
 <script src="js/settings.js?v=5"></script>
 <script src="js/shows.js?v=6"></script>
-<script src="js/openmics.js?v=2"></script>
+<script src="js/openmics.js?v=3"></script>
 <script src="js/projects.js?v=2"></script>
 <script src="js/studio.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
