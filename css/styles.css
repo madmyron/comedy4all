@@ -565,6 +565,11 @@ body.dark #screen-jokes .sect-title{color:var(--text2)}
 .home-tile[data-tile="shows"]    { --tile-accent: #1a5aa0; --tile-icon-bg: #eef4fb; }
 .home-tile[data-tile="analytics"]{ --tile-accent: #2d7a35; --tile-icon-bg: #eef8ef; }
 .home-tile[data-tile="dashboard"]{ --tile-accent: #9a9590; --tile-icon-bg: #f0ede8; }
+.home-tile[data-tile="projects"] { --tile-accent: #6830a0; --tile-icon-bg: #f4eefb; }
+.home-tile[data-tile="openmics"] { --tile-accent: #b07d10; --tile-icon-bg: #fdf6e3; }
+.om-card { margin-bottom: 8px; padding: 12px 14px; cursor: pointer; transition: border-color .12s, transform .12s; }
+.om-card:hover { border-color: var(--gold); }
+.om-card .btn { flex-shrink: 0; }
 
 #mobile-new-joke-btn { display: none; }
 

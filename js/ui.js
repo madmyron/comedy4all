@@ -79,7 +79,7 @@ function performGo(name) {
   if (name==='brooks' && typeof sbLoadBrooksConversations === 'function') sbLoadBrooksConversations();
   var ni = document.querySelectorAll('.nav-item[data-screen="'+name+'"]');
   for (var i=0;i<ni.length;i++) ni[i].classList.add('active');
-  if (name==='home') {}
+  if (name==='home') { if (typeof renderHomeNextShow === 'function') renderHomeNextShow(); }
   if (name==='projects') loadProjects();
   if (name==='jokes') {
     if (typeof updateJokeViewToggle === 'function') updateJokeViewToggle();
@@ -106,6 +106,7 @@ function performGo(name) {
   if (name==='studio') { renderStudio(); if (typeof sbLoadScripts === 'function') sbLoadScripts(); }
   if (name==='versions') renderVersions();
   if (name==='shows') renderShows();
+  if (name==='openmics') { if (typeof initOpenMics === 'function') initOpenMics(); }
   if (name==='settings') showTab('profile', document.querySelector('.snav-item'));
   if (name==='brooks') {
     updateBrooksContext();

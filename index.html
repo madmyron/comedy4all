@@ -18,7 +18,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=16">
+<link rel="stylesheet" href="css/styles.css?v=17">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -210,12 +210,17 @@
             <div class="home-tile-desc">Manage your creative projects</div>
             <div id="home-project-count" style="margin-top:10px;display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:var(--gold-bg);color:var(--gold);font-size:10px;font-weight:700;border:1px solid var(--gold-br)">0 projects</div>
           </div>
+          <div class="home-tile" data-tile="openmics" onclick="go('openmics')">
+            <div class="home-tile-icon">🎤</div>
+            <div class="home-tile-title">Find Open Mics</div>
+            <div class="home-tile-desc">This week near you</div>
+          </div>
         </div>
         <div class="home-next-show">
           <div>
             <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:4px">Next Show</div>
-            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">Addison Improv</div>
-            <div style="font-size:12px;color:var(--text2)">Friday &middot; 8:00 PM</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px" id="home-next-venue">No night saved yet</div>
+            <div style="font-size:12px;color:var(--text2)" id="home-next-meta">Find an open mic this week, then save it here.</div>
           </div>
           <button class="btn btn-primary" onclick="go('rehearsal')">Rehearse Now &rarr;</button>
         </div>
@@ -782,7 +787,7 @@
               <div class="stat-card"><div class="stat-lbl">Avg Show Score</div><div class="stat-val" id="sh-avg">--</div><div class="stat-d">out of 5</div></div>
               <div class="stat-card"><div class="stat-lbl">Best Joke Overall</div><div class="stat-val" style="font-size:13px;padding-top:4px" id="sh-best">--</div><div class="stat-d" style="color:var(--gold)" id="sh-best-score"></div></div>
             </div>
-            <div id="shows-list"><div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No shows logged yet.<br><span style="font-size:11px">Tap "+ Log a Show" after a gig to track your performance.</span></div></div>
+            <div id="shows-list"><div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No set logs yet.<br><span style="font-size:11px">Tap "+ Log a Show" after a gig to record how each joke landed.</span><br><button type="button" class="btn btn-sm" style="margin-top:12px" onclick="go('openmics')">Find open mics this week near you</button></div></div>
           </div>
           <div>
             <div class="card" style="margin-bottom:12px">
@@ -798,6 +803,30 @@
               <div id="shows-insight" style="font-size:12px;color:var(--text2);line-height:1.7">Log a few shows and Brooks will analyze patterns in what's working.</div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPEN MICS -->
+    <div id="screen-openmics" class="screen">
+      <div class="topbar">
+        <button class="nav-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <div class="topbar-title">Find Open Mics</div>
+        <button id="om-dfw-btn" class="btn btn-sm btn-primary" onclick="searchOpenMicsDfw()" style="display:none">Dallas–Fort Worth</button>
+      </div>
+      <div class="content scroll">
+        <div class="card" style="margin-bottom:14px">
+          <div class="ctitle">This week near you <span class="csub">next 7 days, not tonight-only</span></div>
+          <div id="om-fallback" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
+            <input class="minput" id="om-city" placeholder="City (Dallas, Fort Worth, Denton…)" style="flex:1;min-width:180px" onkeydown="if(event.key==='Enter'){searchOpenMicsCity();event.preventDefault();}">
+            <button type="button" class="btn" onclick="searchOpenMicsCity()">Search this week</button>
+            <button type="button" class="btn" onclick="searchOpenMicsGps()">Try location again</button>
+          </div>
+          <div id="om-location-label" style="font-size:11px;color:var(--text3);margin-top:8px"></div>
+          <div id="om-status" style="font-size:12px;color:var(--text2);margin-top:4px">Looking for nights this week…</div>
+        </div>
+        <div id="om-results">
+          <div style="text-align:center;padding:36px 16px;color:var(--text3);font-size:13px">Looking for nights this week near you.</div>
         </div>
       </div>
     </div>
@@ -1198,25 +1227,26 @@
 
 <script src="js/data.js?v=2"></script>
 <script src="js/supabase.js?v=12"></script>
-<script src="js/ui.js?v=6"></script>
+<script src="js/ui.js?v=7"></script>
 <script src="js/jokes.js?v=32"></script>
 <script src="js/rehearsal.js?v=3"></script>
 <script src="js/analytics.js?v=4"></script>
 <script src="js/brooks.js?v=9"></script>
 <script src="js/settings.js?v=5"></script>
-<script src="js/shows.js?v=5"></script>
+<script src="js/shows.js?v=6"></script>
+<script src="js/openmics.js?v=8"></script>
 <script src="js/projects.js?v=2"></script>
 <script src="js/studio.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/plugins/Swap/Sortable.Swap.js"></script>
-<script src="js/init.js?v=8"></script>
+<script src="js/init.js?v=9"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
       navigator.serviceWorker.getRegistrations().then(function(regs) {
         return Promise.all(regs.map(function(r) { return r.update(); }));
       }).then(function() {
-        return navigator.serviceWorker.register('/sw.js?v=21');
+        return navigator.serviceWorker.register('/sw.js?v=24');
       }).catch(function() {});
     });
   }
