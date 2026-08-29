@@ -109,7 +109,15 @@ function renderHomeNextShow() {
     var bits = [];
     if (show.weekday) bits.push(show.weekday);
     if (show.time) bits.push(show.time);
-    if (show.dateLabel) bits.push(show.dateLabel);
+    if (show.date) {
+      var p = String(show.date).split('-');
+      if (p.length === 3) {
+        var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+        if (!isNaN(d.getTime())) bits.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      }
+    } else if (show.dateLabel) {
+      bits.push(show.dateLabel);
+    }
     metaEl.textContent = bits.join(' · ') || 'Saved from Find Open Mics';
   } else {
     venueEl.textContent = 'No night saved yet';
