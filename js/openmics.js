@@ -146,6 +146,17 @@ function isoDate(d) {
   return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
 }
 
+function openMicMinutes(time) {
+  var m = String(time || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (!m) return 24 * 60;
+  var h = Number(m[1]);
+  var min = m[2] ? Number(m[2]) : 0;
+  var ap = (m[3] || '').toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return h * 60 + min;
+}
+
 function loadNextShow() {
   try {
     var raw = JSON.parse(localStorage.getItem('c4a_next_show') || 'null');
@@ -450,6 +461,8 @@ function renderOpenMicResults(nights) {
   }
   found.sort(function(a, b) {
     if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    var ta = openMicMinutes(a.time), tb = openMicMinutes(b.time);
+    if (ta !== tb) return ta - tb;
     return a.miles - b.miles;
   });
   var groups = [];

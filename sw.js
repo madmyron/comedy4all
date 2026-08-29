@@ -1,4 +1,4 @@
-const CACHE = 'comedy4all-v28';
+const CACHE = 'comedy4all-v29';
 
 const SHELL = [
   '/css/styles.css',
