@@ -89,6 +89,7 @@ function performGo(name) {
   if (name==='sets') renderSet();
   if (name==='analytics') renderAnalytics();
   if (name==='rehearsal') {
+    if (typeof buildRehearsalFromSet === 'function') buildRehearsalFromSet();
     if (!rehearsalData.length) {
       toast('Add a few jokes first to start rehearsing.');
       go('jokes');

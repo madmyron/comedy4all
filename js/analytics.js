@@ -1,12 +1,26 @@
 // - ANALYTICS -
 function renderAnalytics(){
   var scores=[6.8,7.2,7.9,8.1,7.5,8.6,9.1,8.3],labels=['F5','F12','F19','F28','M8','M15','M22','M26'],max=9.1;
+  if (typeof shows !== 'undefined' && shows && shows.length) {
+    var logged = shows.slice().filter(function(s){ return s.rating > 0; }).slice(0, 8).reverse();
+    if (logged.length) {
+      scores = logged.map(function(s){ return s.rating; });
+      labels = logged.map(function(s){
+        var d = new Date((s.date||'')+'T12:00:00');
+        return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      });
+      max = Math.max.apply(null, scores.concat([5]));
+    }
+  }
   var bars=document.getElementById('show-bars');
   if(bars){
     var h='';
+    var liveRated = typeof shows !== 'undefined' && shows && shows.some(function(s){ return s.rating > 0; });
     for(var i=0;i<scores.length;i++){
-      var color=scores[i]>=8.5?'var(--gold)':scores[i]>=7.5?'var(--blue)':'var(--text3)';
-      h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:'+color+';height:'+Math.round((scores[i]/max)*100)+'%"></div><div style="font-size:8px;color:var(--text3)">'+scores[i].toFixed(1)+'</div><div style="font-size:7px;color:var(--text3)">'+labels[i]+'</div></div>';
+      var color = liveRated
+        ? (scores[i]>=4?'var(--gold)':scores[i]>=3?'var(--blue)':'var(--text3)')
+        : (scores[i]>=8.5?'var(--gold)':scores[i]>=7.5?'var(--blue)':'var(--text3)');
+      h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;background:'+color+';height:'+Math.round((scores[i]/max)*100)+'%"></div><div style="font-size:8px;color:var(--text3)">'+Number(scores[i]).toFixed(1)+'</div><div style="font-size:7px;color:var(--text3)">'+labels[i]+'</div></div>';
     }
     bars.innerHTML=h;
   }
@@ -14,13 +28,29 @@ function renderAnalytics(){
   if(hm){var vals=[3,5,4,6,8,9,7,2,4,5,7,6,8,9,4,5,3,6,7,9,8];var h='';for(var i=0;i<vals.length;i++)h+='<div style="height:22px;border-radius:3px;background:rgba(176,125,16,'+(vals[i]/10)+');cursor:pointer" title="Score: '+vals[i]+'/10"></div>';hm.innerHTML=h;}
   var jr=document.getElementById('joke-ranking');
   if(jr){
-    var sorted=jokes.slice().sort(function(a,b){return b.score-a.score;});
-    var h='';
-    for(var i=0;i<sorted.length;i++){
-      var j=sorted[i];
-      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">'+j.title+'</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var('+(j.score>=8?'--gold':'--blue')+');width:'+(j.score*10)+'%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:\'DM Mono\',monospace;width:28px;text-align:right;color:var('+(j.score>=8?'--gold':'--text3')+');font-weight:600">'+j.score+'</div></div>';
+    var liveRows = typeof getLiveVsRehearsalSignals === 'function' ? getLiveVsRehearsalSignals() : [];
+    if (liveRows.length) {
+      var h='';
+      for(var i=0;i<Math.min(liveRows.length,12);i++){
+        var r=liveRows[i];
+        var reh = typeof rehearsalLabel === 'function' ? rehearsalLabel(r.rehearsal) : (r.rehearsal||'--');
+        var live = typeof liveLabel === 'function' ? liveLabel(r.live) : (r.live||'--');
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">'+((r.title||'').replace(/</g,'&lt;'))+'</div><div style="font-size:10px;color:'+(r.mismatch?'var(--gold)':'var(--text3)')+';font-family:\'DM Mono\',monospace">R '+reh+' → L '+live+'</div></div>';
+      }
+      jr.innerHTML=h;
+      var rankTitle=document.getElementById('joke-ranking-title');
+      if(rankTitle) rankTitle.textContent='Live vs Rehearsal';
+    } else {
+      var rankTitle=document.getElementById('joke-ranking-title');
+      if(rankTitle) rankTitle.textContent='Joke Rankings';
+      var sorted=jokes.slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
+      var h='';
+      for(var i=0;i<sorted.length;i++){
+        var j=sorted[i];
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:11.5px;color:var(--text)">'+j.title+'</div><div style="width:75px"><div style="background:var(--bg3);border-radius:3px;height:4px;overflow:hidden"><div style="height:100%;background:var('+(j.score>=8?'--gold':'--blue')+');width:'+(j.score*10)+'%;border-radius:3px"></div></div></div><div style="font-size:11px;font-family:\'DM Mono\',monospace;width:28px;text-align:right;color:var('+(j.score>=8?'--gold':'--text3')+');font-weight:600">'+j.score+'</div></div>';
+      }
+      jr.innerHTML=h;
     }
-    jr.innerHTML=h;
   }
   updateCounts();
 }

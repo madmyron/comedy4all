@@ -1,12 +1,137 @@
-// - SHOW HISTORY -
+// - SHOW HISTORY / SET LOG -
 var shows = [];
 var showRating = 0;
+var _showReactions = {};
+var _showLogJokeIds = [];
+
+function loadShowLogsLocal() {
+  try {
+    var stored = JSON.parse(localStorage.getItem('c4a_show_logs') || '[]');
+    if (Array.isArray(stored)) shows = stored;
+  } catch (e) {}
+}
+
+function writeShowLogsLocal(list) {
+  shows = list || [];
+  try { localStorage.setItem('c4a_show_logs', JSON.stringify(shows)); } catch (e) {}
+}
+
+function escapeShowAttr(v) {
+  return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function jokeTitleById(jid, extraTitles) {
+  var key = String(jid);
+  if (extraTitles && extraTitles[key]) return extraTitles[key];
+  var j = jokes.find(function(x){ return String(x.id) === String(jid); });
+  if (j) return j.title || 'Untitled';
+  for (var i = 0; i < shows.length; i++) {
+    var titles = shows[i].jokeTitles || {};
+    if (titles[key]) return titles[key];
+  }
+  return 'Unknown joke';
+}
+
+function rehearsalLabel(r) {
+  if (r === 'kill' || r === 'killed') return 'KILL';
+  if (r === 'bomb' || r === 'bombed') return 'BOMB';
+  if (r === 'ok') return 'OK';
+  return '--';
+}
+
+function liveLabel(r) {
+  if (r === 'killed' || r === 'kill') return 'KILL';
+  if (r === 'bombed' || r === 'bomb') return 'BOMB';
+  if (r === 'ok') return 'OK';
+  if (r === 'skip') return 'SKIP';
+  return '--';
+}
+
+function normalizeLiveOutcome(v) {
+  if (v === 'kill' || v === 'killed') return 'killed';
+  if (v === 'bomb' || v === 'bombed') return 'bombed';
+  if (v === 'ok') return 'ok';
+  if (v === 'skip') return 'skip';
+  return '';
+}
+
+function normalizeRehearsalOutcome(v) {
+  if (v === 'kill' || v === 'killed') return 'kill';
+  if (v === 'bomb' || v === 'bombed') return 'bomb';
+  if (v === 'ok') return 'ok';
+  return '';
+}
+
+function getJokeIdsForShowSet(setKey) {
+  if (setKey && setKey !== 'current' && typeof getSavedSets === 'function') {
+    var sets = getSavedSets();
+    var idx = typeof findSavedSetIndex === 'function' ? findSavedSetIndex(sets, setKey) : -1;
+    if (idx !== -1) return (sets[idx].ids || []).map(String);
+  }
+  if (typeof restoreActiveSetIfEmpty === 'function') restoreActiveSetIfEmpty();
+  var ids = typeof getCurrentSetIds === 'function' ? getCurrentSetIds() : [];
+  if (ids && ids.length) return ids.map(String);
+  return (jokes || []).map(function(j){ return String(j.id); });
+}
+
+function fillShowSetSelect(preferred) {
+  var sel = document.getElementById('sh-set-select');
+  if (!sel) return;
+  var currentIds = typeof getCurrentSetIds === 'function' ? getCurrentSetIds() : [];
+  var html = '<option value="current">Current set (' + currentIds.length + ')</option>';
+  if (typeof getSavedSets === 'function') {
+    getSavedSets().forEach(function(s) {
+      var nm = s.name || 'Untitled';
+      html += '<option value="' + escapeShowAttr(nm) + '">' + escapeShowAttr(nm) + ' (' + ((s.ids||[]).length) + ')</option>';
+    });
+  }
+  sel.innerHTML = html;
+  if (preferred) sel.value = preferred;
+}
+
+function renderShowReactionRows(jokeIds) {
+  var rx = document.getElementById('sh-reactions');
+  if (!rx) return;
+  _showLogJokeIds = (jokeIds || []).map(String);
+  if (!_showLogJokeIds.length) {
+    rx.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:var(--text3)">Add jokes to a set first, then log how each one landed.</div>';
+    return;
+  }
+  rx.innerHTML = _showLogJokeIds.map(function(jid) {
+    var reh = typeof getRehearsalScoreForJoke === 'function' ? getRehearsalScoreForJoke(jid) : '';
+    var rehHtml = reh
+      ? '<div style="font-size:10px;color:var(--text3);margin-top:2px">Rehearsal: ' + rehearsalLabel(reh) + '</div>'
+      : '<div style="font-size:10px;color:var(--text3);margin-top:2px">No rehearsal score yet</div>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border)" id="rx-row-'+escapeShowAttr(jid)+'">'
+      + '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeShowAttr(jokeTitleById(jid))+'</div>'+rehHtml+'</div>'
+      + '<div style="display:flex;gap:5px;flex-shrink:0">'
+      + '<button type="button" class="reaction-btn" onclick="setReaction(\''+escapeShowAttr(jid)+'\',\'killed\')" title="Killed it">KILL</button>'
+      + '<button type="button" class="reaction-btn" onclick="setReaction(\''+escapeShowAttr(jid)+'\',\'ok\')" title="Okay">OK</button>'
+      + '<button type="button" class="reaction-btn" onclick="setReaction(\''+escapeShowAttr(jid)+'\',\'bombed\')" title="Bombed">BOMB</button>'
+      + '<button type="button" class="reaction-btn" onclick="setReaction(\''+escapeShowAttr(jid)+'\',\'skip\')" title="Didn\'t perform">--</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+function onShowSetChange() {
+  var sel = document.getElementById('sh-set-select');
+  _showReactions = {};
+  renderShowReactionRows(getJokeIdsForShowSet(sel ? sel.value : 'current'));
+}
 
 function openNewShow() {
   showRating = 0;
+  _showReactions = {};
+  if (typeof restoreActiveSetIfEmpty === 'function') restoreActiveSetIfEmpty();
   document.getElementById('show-modal').style.display = 'flex';
   var dateEl = document.getElementById('sh-date');
   if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+  var venueEl = document.getElementById('sh-venue');
+  if (venueEl) venueEl.value = '';
+  var lenEl = document.getElementById('sh-length');
+  if (lenEl) lenEl.value = '';
+  var notesEl = document.getElementById('sh-notes');
+  if (notesEl) notesEl.value = '';
   var starsEl = document.getElementById('sh-stars');
   if (starsEl) {
     starsEl.innerHTML = '';
@@ -20,26 +145,13 @@ function openNewShow() {
       })(v);
     }
   }
-  var rx = document.getElementById('sh-reactions');
-  if (rx) {
-    if (jokes.length === 0) {
-      rx.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:var(--text3)">Add jokes to your library first to track reactions.</div>';
-    } else {
-      rx.innerHTML = jokes.map(function(j){
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--border)" id="rx-row-'+j.id+'">'
-          +'<div style="font-size:12px;font-weight:500;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">'+j.title+'</div>'
-          +'<div style="display:flex;gap:5px">'
-          +'<button class="reaction-btn" onclick="setReaction('+j.id+',\'killed\',this)" title="Killed it">KILL</button>'
-          +'<button class="reaction-btn" onclick="setReaction('+j.id+',\'ok\',this)" title="Okay">OK</button>'
-          +'<button class="reaction-btn" onclick="setReaction('+j.id+',\'bombed\',this)" title="Bombed">BOMB</button>'
-          +'<button class="reaction-btn" onclick="setReaction('+j.id+',\'skip\',this)" title="Didn\'t perform">--</button>'
-          +'</div></div>';
-      }).join('');
-    }
-  }
+  var sel = document.getElementById('set-name-select');
+  fillShowSetSelect(sel && sel.value ? sel.value : 'current');
+  onShowSetChange();
 }
-var _showReactions = {};
-function setReaction(jokeId, reaction, btn) {
+
+function setReaction(jokeId, reaction) {
+  jokeId = String(jokeId);
   _showReactions[jokeId] = reaction;
   var row = document.getElementById('rx-row-'+jokeId);
   if (!row) return;
@@ -61,23 +173,219 @@ function updateShowStars() {
 function closeNewShow() {
   document.getElementById('show-modal').style.display = 'none';
   _showReactions = {};
+  _showLogJokeIds = [];
 }
 function saveShow() {
-  var venue = (document.getElementById('sh-venue')||{}).value||'Unnamed Venue';
+  var venueEl = document.getElementById('sh-venue');
+  var venue = venueEl && venueEl.value ? venueEl.value.trim() : '';
+  if (!venue) venue = 'Unnamed Venue';
   var date = (document.getElementById('sh-date')||{}).value||new Date().toISOString().split('T')[0];
   var length = (document.getElementById('sh-length')||{}).value||'';
   var notes = (document.getElementById('sh-notes')||{}).value||'';
+  var setSel = document.getElementById('sh-set-select');
+  var setName = (setSel && setSel.value && setSel.value !== 'current') ? setSel.value : 'Current set';
+  var jokeIds = _showLogJokeIds.length ? _showLogJokeIds.slice() : getJokeIdsForShowSet(setSel ? setSel.value : 'current');
+  if (!jokeIds.length) {
+    toast('Add jokes to a set first, then log how each one landed.');
+    return;
+  }
+  var reactions = {};
+  jokeIds.forEach(function(jid) {
+    if (_showReactions[jid]) reactions[String(jid)] = _showReactions[jid];
+  });
+  var jokeTitles = {};
+  jokeIds.forEach(function(jid) {
+    var title = jokeTitleById(jid);
+    if (title && title !== 'Unknown joke') jokeTitles[String(jid)] = title;
+  });
+  var rehearsalSnap = typeof snapshotRehearsalForJokeIds === 'function'
+    ? snapshotRehearsalForJokeIds(jokeIds)
+    : {};
+  var now = new Date().toISOString();
   var show = {
-    id: Date.now(), venue: venue.trim(), date: date,
-    length: length.trim(), notes: notes.trim(),
-    rating: showRating, reactions: Object.assign({}, _showReactions),
-    created: new Date().toISOString()
+    id: 'local-' + Date.now(),
+    venue: venue,
+    date: date,
+    length: length.trim(),
+    notes: notes.trim(),
+    rating: showRating,
+    setName: setName,
+    jokeIds: jokeIds,
+    jokeTitles: jokeTitles,
+    reactions: reactions,
+    rehearsal: rehearsalSnap,
+    created: now,
+    updated: now
   };
-  shows.unshift(show);
+  var next = shows.slice();
+  next.unshift(show);
+  writeShowLogsLocal(next);
+  sbInsertShowLog(show);
   closeNewShow();
   renderShows();
-  toast('Show logged! \u2713');
+  if (typeof renderAnalytics === 'function') renderAnalytics();
+  if (typeof updateBrooksContext === 'function') updateBrooksContext();
+  toast('Set logged! \u2713');
 }
+
+function sbInsertShowLog(show) {
+  if (!_sb || !currentUser || !show) return;
+  var row = {
+    user_id: currentUser.id,
+    venue: show.venue || '',
+    show_date: show.date || null,
+    length: show.length || '',
+    notes: show.notes || '',
+    rating: show.rating || 0,
+    set_name: show.setName || '',
+    joke_ids: show.jokeIds || [],
+    joke_titles: show.jokeTitles || {},
+    reactions: show.reactions || {},
+    rehearsal_snapshot: show.rehearsal || {},
+    created_at: show.created || new Date().toISOString(),
+    updated_at: show.updated || new Date().toISOString()
+  };
+  _sb.from('show_logs').insert(row).select('id').single().then(function(res) {
+    if (res.error) {
+      var msg = String(res.error.message || '');
+      if (msg.indexOf('joke_titles') !== -1) {
+        delete row.joke_titles;
+        _sb.from('show_logs').insert(row).select('id').single().then(function(retry) {
+          if (retry.error) {
+            var rmsg = String(retry.error.message || '');
+            if (rmsg.indexOf('show_logs') !== -1 || retry.error.code === '42P01' || retry.error.code === 'PGRST205') return;
+            console.error('Show log sync error:', retry.error);
+            return;
+          }
+          if (retry.data && retry.data.id) applyShowLogCloudId(show.id, retry.data.id);
+        });
+        return;
+      }
+      if (msg.indexOf('show_logs') !== -1 || res.error.code === '42P01' || res.error.code === 'PGRST205') return;
+      console.error('Show log sync error:', res.error);
+      return;
+    }
+    if (!res.data || !res.data.id) return;
+    applyShowLogCloudId(show.id, res.data.id);
+  });
+}
+
+function applyShowLogCloudId(localId, cloudId) {
+  var list = shows.slice();
+  for (var i=0;i<list.length;i++) {
+    if (String(list[i].id) === String(localId)) {
+      list[i].supabase_id = cloudId;
+      list[i].id = cloudId;
+      break;
+    }
+  }
+  writeShowLogsLocal(list);
+}
+
+function sbLoadShowLogs(opts) {
+  opts = opts || {};
+  if (!_sb || !currentUser) { if (opts.onDone) opts.onDone(shows); return; }
+  var cols = opts._omitTitles
+    ? 'id, venue, show_date, length, notes, rating, set_name, joke_ids, reactions, rehearsal_snapshot, created_at, updated_at'
+    : 'id, venue, show_date, length, notes, rating, set_name, joke_ids, joke_titles, reactions, rehearsal_snapshot, created_at, updated_at';
+  _sb.from('show_logs')
+    .select(cols)
+    .eq('user_id', currentUser.id)
+    .order('show_date', { ascending: false })
+    .then(function(res) {
+      if (res.error) {
+        var msg = String(res.error.message || '');
+        if (msg.indexOf('joke_titles') !== -1 && !opts._omitTitles) {
+          sbLoadShowLogs(Object.assign({}, opts, { _omitTitles: true }));
+          return;
+        }
+        if (msg.indexOf('show_logs') !== -1 || msg.indexOf('schema cache') !== -1 || res.error.code === '42P01' || res.error.code === 'PGRST205') {
+          if (opts.notify) toast('Show log sync not ready — run sql/show_logs.sql in Supabase.');
+        } else {
+          console.error('Load show logs error:', res.error);
+        }
+        if (opts.onDone) opts.onDone(shows);
+        return;
+      }
+      function asObj(v) {
+        if (!v) return {};
+        if (typeof v === 'string') { try { return JSON.parse(v); } catch(e) { return {}; } }
+        return v;
+      }
+      function asArr(v) {
+        if (!v) return [];
+        if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e) { return []; } }
+        return Array.isArray(v) ? v : [];
+      }
+      var remote = (res.data || []).map(function(row) {
+        return {
+          id: row.id,
+          supabase_id: row.id,
+          venue: row.venue || 'Unnamed Venue',
+          date: row.show_date || (row.created_at || '').slice(0, 10),
+          length: row.length || '',
+          notes: row.notes || '',
+          rating: row.rating || 0,
+          setName: row.set_name || '',
+          jokeIds: asArr(row.joke_ids).map(String),
+          jokeTitles: asObj(row.joke_titles),
+          reactions: asObj(row.reactions),
+          rehearsal: asObj(row.rehearsal_snapshot),
+          created: row.created_at,
+          updated: row.updated_at,
+          _fromCloud: true
+        };
+      });
+      var localOnly = shows.filter(function(s) { return !s.supabase_id && String(s.id).indexOf('local-') === 0; });
+      var merged = remote.slice();
+      localOnly.forEach(function(s) {
+        merged.unshift(s);
+        sbInsertShowLog(s);
+      });
+      writeShowLogsLocal(merged);
+      renderShows();
+      if (typeof renderAnalytics === 'function') renderAnalytics();
+      if (typeof updateBrooksContext === 'function') updateBrooksContext();
+      if (opts.onDone) opts.onDone(merged);
+    });
+}
+
+function getLiveVsRehearsalSignals() {
+  var rows = [];
+  shows.forEach(function(s) {
+    var ids = (s.jokeIds && s.jokeIds.length) ? s.jokeIds : Object.keys(s.reactions || {});
+    ids.forEach(function(jid) {
+      var live = normalizeLiveOutcome((s.reactions || {})[jid]);
+      if (!live || live === 'skip') return;
+      var reh = normalizeRehearsalOutcome((s.rehearsal || {})[jid] || (typeof getRehearsalScoreForJoke === 'function' ? getRehearsalScoreForJoke(jid) : ''));
+      rows.push({
+        jokeId: String(jid),
+        title: jokeTitleById(jid, s.jokeTitles),
+        live: live,
+        rehearsal: reh,
+        venue: s.venue,
+        date: s.date,
+        setName: s.setName || '',
+        mismatch: !!(reh && ((reh === 'kill' && live === 'bombed') || (reh === 'bomb' && live === 'killed')))
+      });
+    });
+  });
+  return rows;
+}
+
+function formatLiveVsRehearsalForBrooks() {
+  var rows = getLiveVsRehearsalSignals();
+  if (!rows.length) return '';
+  var lines = rows.slice(0, 24).map(function(r) {
+    var bit = r.title + ': live ' + liveLabel(r.live);
+    if (r.rehearsal) bit += ' / rehearsal ' + rehearsalLabel(r.rehearsal);
+    if (r.mismatch) bit += ' (mismatch)';
+    if (r.venue) bit += ' @ ' + r.venue;
+    return '- ' + bit;
+  });
+  return 'Live set log vs rehearsal:\n' + lines.join('\n');
+}
+
 function renderShows() {
   var list = document.getElementById('shows-list');
   var total = document.getElementById('sh-total');
@@ -86,70 +394,136 @@ function renderShows() {
   var bestScore = document.getElementById('sh-best-score');
   if (total) total.textContent = shows.length;
   if (shows.length === 0) {
-    if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No shows logged yet.<br><span style="font-size:11px">Tap "+ Log a Show" after a gig.</span></div>';
+    if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No set logs yet.<br><span style="font-size:11px">Tap "+ Log a Show" after a gig to record how each joke landed.</span></div>';
+    if (avg) avg.textContent = '--';
+    if (best) best.textContent = '--';
+    if (bestScore) bestScore.textContent = '';
+    renderJokeWinRate({});
+    renderLiveVsRehearsalPanel();
     return;
   }
   var rated = shows.filter(function(s){return s.rating>0;});
   if (avg) avg.textContent = rated.length ? (rated.reduce(function(a,s){return a+s.rating;},0)/rated.length).toFixed(1) : '--';
   var killCount = {};
   shows.forEach(function(s){
-    Object.keys(s.reactions).forEach(function(jid){
+    Object.keys(s.reactions || {}).forEach(function(jid){
       if (s.reactions[jid]==='killed') killCount[jid]=(killCount[jid]||0)+1;
     });
   });
   var bestId = Object.keys(killCount).sort(function(a,b){return killCount[b]-killCount[a];})[0];
   if (bestId) {
-    var bj = jokes.find(function(j){return j.id==bestId;});
-    if (best) best.textContent = bj ? bj.title : '--';
+    if (best) best.textContent = jokeTitleById(bestId);
     if (bestScore) bestScore.textContent = killCount[bestId] + 'x killed';
+  } else {
+    if (best) best.textContent = '--';
+    if (bestScore) bestScore.textContent = '';
   }
   if (list) list.innerHTML = shows.map(function(s){
     var stars = '';
     for(var i=1;i<=5;i++) stars += '<span style="color:'+(i<=s.rating?'var(--gold)':'var(--border2)')+'>\u2605</span>';
-    var rxKeys = Object.keys(s.reactions);
-    var killed = rxKeys.filter(function(k){return s.reactions[k]==='killed';}).length;
-    var bombed = rxKeys.filter(function(k){return s.reactions[k]==='bombed';}).length;
-    var rxSummary = rxKeys.length ? (killed+'KILL '+bombed+'BOMB') : 'No reactions logged';
-    var d = new Date(s.date+'T12:00:00');
-    var dateStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    return '<div class="show-card" onclick="openShowDetail('+s.id+')">'
+    var rx = s.reactions || {};
+    var rxKeys = Object.keys(rx);
+    var killed = rxKeys.filter(function(k){return rx[k]==='killed';}).length;
+    var bombed = rxKeys.filter(function(k){return rx[k]==='bombed';}).length;
+    var rxSummary = rxKeys.length ? (killed+' KILL  '+bombed+' BOMB') : 'No reactions logged';
+    var d = new Date((s.date||'')+'T12:00:00');
+    var dateStr = isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var setBit = s.setName ? escapeShowAttr(s.setName) + ' · ' : '';
+    return '<div class="show-card" onclick="openShowDetail(\''+escapeShowAttr(s.id)+'\')">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'
-      +'<div style="font-size:13px;font-weight:600;color:var(--text)">'+s.venue+'</div>'
+      +'<div style="font-size:13px;font-weight:600;color:var(--text)">'+escapeShowAttr(s.venue)+'</div>'
       +'<div style="font-size:11px">'+stars+'</div>'
       +'</div>'
       +'<div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-bottom:6px">'
-      +'<span> '+dateStr+'</span>'+(s.length?'<span> '+s.length+'</span>':'')
+      +'<span>'+dateStr+'</span>'+(s.length?'<span>'+escapeShowAttr(s.length)+'</span>':'')
       +'</div>'
-      +(s.notes?'<div style="font-size:11.5px;color:var(--text2);margin-bottom:6px;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+s.notes+'</div>':'')
-      +'<div style="font-size:11px;color:var(--text3)">'+rxSummary+'</div>'
+      +(s.notes?'<div style="font-size:11.5px;color:var(--text2);margin-bottom:6px;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+escapeShowAttr(s.notes)+'</div>':'')
+      +'<div style="font-size:11px;color:var(--text3)">'+setBit+rxSummary+'</div>'
       +'</div>';
   }).join('');
   renderJokeWinRate(killCount);
+  renderLiveVsRehearsalPanel();
 }
 function renderJokeWinRate(killCount) {
   var el = document.getElementById('joke-win-rate');
   if (!el) return;
   if (!killCount || Object.keys(killCount).length === 0) {
-    el.innerHTML = '<div style="font-size:11px;color:var(--text3)">Log shows to see which jokes consistently land.</div>';
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3)">Log a live set to see which jokes consistently land.</div>';
     return;
   }
   var sorted = Object.keys(killCount).sort(function(a,b){return killCount[b]-killCount[a];}).slice(0,5);
   el.innerHTML = sorted.map(function(jid){
-    var j = jokes.find(function(x){return x.id==jid;});
-    var title = j ? j.title : 'Unknown';
+    var title = jokeTitleById(jid);
     var pct = Math.min(100, killCount[jid] * 20);
-    return '<div class="bar-row"><div class="bar-lbl">'+title+'</div>'
+    return '<div class="bar-row"><div class="bar-lbl">'+escapeShowAttr(title)+'</div>'
       +'<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div>'
       +'<div class="bar-val">'+killCount[jid]+'x</div></div>';
   }).join('');
 }
-function openShowDetail(id) {
-  var s = shows.find(function(x){return x.id===id;});
-  if (!s) return;
-  var d = new Date(s.date+'T12:00:00');
-  var dateStr = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-  toast(s.venue + ' -- ' + dateStr);
+
+function renderLiveVsRehearsalPanel() {
+  var el = document.getElementById('live-vs-rehearsal');
+  var insight = document.getElementById('shows-insight');
+  var rows = getLiveVsRehearsalSignals();
+  if (el) {
+    if (!rows.length) {
+      el.innerHTML = '<div style="font-size:11px;color:var(--text3)">Rehearse a set, then log the live show. This compares rehearsal scores with how each joke landed.</div>';
+    } else {
+      el.innerHTML = rows.slice(0, 8).map(function(r) {
+        var color = r.mismatch ? 'var(--gold)' : 'var(--text3)';
+        return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px">'
+          + '<span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeShowAttr(r.title)+'</span>'
+          + '<span style="color:'+color+';flex-shrink:0">R '+rehearsalLabel(r.rehearsal)+' → L '+liveLabel(r.live)+'</span>'
+          + '</div>';
+      }).join('');
+    }
+  }
+  if (insight) {
+    if (!rows.length) {
+      insight.textContent = 'Log a few live sets and Brooks will compare them with rehearsal scores.';
+    } else {
+      var mismatches = rows.filter(function(r){ return r.mismatch; });
+      if (mismatches.length) {
+        insight.textContent = mismatches[0].title + ' went the other way live vs rehearsal. Check Set Log when building the next set.';
+      } else {
+        insight.textContent = 'Logged ' + shows.length + ' live set' + (shows.length===1?'':'s') + '. Live outcomes are tracking close to rehearsal.';
+      }
+    }
+  }
 }
+
+function openShowDetail(id) {
+  var s = shows.find(function(x){ return String(x.id) === String(id); });
+  if (!s) return;
+  var existing = document.getElementById('show-detail-modal');
+  if (existing) existing.remove();
+  var d = new Date((s.date||'')+'T12:00:00');
+  var dateStr = isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  var ids = (s.jokeIds && s.jokeIds.length) ? s.jokeIds : Object.keys(s.reactions || {});
+  var rows = ids.map(function(jid) {
+    var live = (s.reactions || {})[jid] || '';
+    var reh = (s.rehearsal || {})[jid] || '';
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">'
+      + '<span style="color:var(--text)">'+escapeShowAttr(jokeTitleById(jid, s.jokeTitles))+'</span>'
+      + '<span style="color:var(--text3);flex-shrink:0">R '+rehearsalLabel(reh)+' → L '+liveLabel(live)+'</span>'
+      + '</div>';
+  }).join('') || '<div style="font-size:12px;color:var(--text3)">No per-joke outcomes on this log.</div>';
+  var modal = document.createElement('div');
+  modal.id = 'show-detail-modal';
+  modal.className = 'overlay';
+  modal.style.display = 'flex';
+  modal.onclick = function(e){ if (e.target === modal) modal.remove(); };
+  modal.innerHTML = '<div class="mbox" style="max-width:480px">'
+    + '<div style="font-size:16px;font-weight:600;margin-bottom:6px">'+escapeShowAttr(s.venue)+'</div>'
+    + '<div style="font-size:12px;color:var(--text3);margin-bottom:14px">'+escapeShowAttr(dateStr)+(s.setName?' · '+escapeShowAttr(s.setName):'')+'</div>'
+    + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Rehearsal → live</div>'
+    + '<div class="scroll" style="max-height:50vh">'+rows+'</div>'
+    + '<div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn" onclick="document.getElementById(\'show-detail-modal\').remove()">Close</button></div>'
+    + '</div>';
+  document.body.appendChild(modal);
+}
+
+loadShowLogsLocal();
 
 // - RECORDING -
 var _origGo = go;

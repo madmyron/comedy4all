@@ -16,6 +16,7 @@ if (jokeViewMode === 'packs' && typeof renderPackTiles === 'function') renderPac
 else renderJokes(displayJokes);
 renderSet();
 renderAnalytics();
+if (typeof renderShows === 'function') renderShows();
 runIfAvailable(typeof renderWaveform === 'function' ? renderWaveform : null);
 runIfAvailable(typeof renderRecList === 'function' ? renderRecList : (typeof renderRecListReal === 'function' ? renderRecListReal : null));
 runIfAvailable(typeof renderMoments === 'function' ? renderMoments : null);

@@ -259,6 +259,7 @@ body::before{
 .minput{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:8px 11px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:all .15s}
 .minput:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(176,125,16,.1)}
 textarea.minput{height:95px;resize:vertical}
+select.minput{cursor:pointer;appearance:auto}
 /* Edit joke: large sheet matching #joke-detail read panel */
 .overlay-sheet{align-items:flex-end;padding:0;z-index:1100}
 .mbox-sheet{
