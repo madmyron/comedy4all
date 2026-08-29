@@ -20,9 +20,16 @@ function escapeShowAttr(v) {
   return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function jokeTitleById(jid) {
+function jokeTitleById(jid, extraTitles) {
+  var key = String(jid);
+  if (extraTitles && extraTitles[key]) return extraTitles[key];
   var j = jokes.find(function(x){ return String(x.id) === String(jid); });
-  return j ? (j.title || 'Untitled') : 'Unknown joke';
+  if (j) return j.title || 'Untitled';
+  for (var i = 0; i < shows.length; i++) {
+    var titles = shows[i].jokeTitles || {};
+    if (titles[key]) return titles[key];
+  }
+  return 'Unknown joke';
 }
 
 function rehearsalLabel(r) {
@@ -169,7 +176,9 @@ function closeNewShow() {
   _showLogJokeIds = [];
 }
 function saveShow() {
-  var venue = (document.getElementById('sh-venue')||{}).value||'Unnamed Venue';
+  var venueEl = document.getElementById('sh-venue');
+  var venue = venueEl && venueEl.value ? venueEl.value.trim() : '';
+  if (!venue) venue = 'Unnamed Venue';
   var date = (document.getElementById('sh-date')||{}).value||new Date().toISOString().split('T')[0];
   var length = (document.getElementById('sh-length')||{}).value||'';
   var notes = (document.getElementById('sh-notes')||{}).value||'';
@@ -184,19 +193,25 @@ function saveShow() {
   jokeIds.forEach(function(jid) {
     if (_showReactions[jid]) reactions[String(jid)] = _showReactions[jid];
   });
+  var jokeTitles = {};
+  jokeIds.forEach(function(jid) {
+    var title = jokeTitleById(jid);
+    if (title && title !== 'Unknown joke') jokeTitles[String(jid)] = title;
+  });
   var rehearsalSnap = typeof snapshotRehearsalForJokeIds === 'function'
     ? snapshotRehearsalForJokeIds(jokeIds)
     : {};
   var now = new Date().toISOString();
   var show = {
     id: 'local-' + Date.now(),
-    venue: venue.trim(),
+    venue: venue,
     date: date,
     length: length.trim(),
     notes: notes.trim(),
     rating: showRating,
     setName: setName,
     jokeIds: jokeIds,
+    jokeTitles: jokeTitles,
     reactions: reactions,
     rehearsal: rehearsalSnap,
     created: now,
@@ -224,6 +239,7 @@ function sbInsertShowLog(show) {
     rating: show.rating || 0,
     set_name: show.setName || '',
     joke_ids: show.jokeIds || [],
+    joke_titles: show.jokeTitles || {},
     reactions: show.reactions || {},
     rehearsal_snapshot: show.rehearsal || {},
     created_at: show.created || new Date().toISOString(),
@@ -232,33 +248,57 @@ function sbInsertShowLog(show) {
   _sb.from('show_logs').insert(row).select('id').single().then(function(res) {
     if (res.error) {
       var msg = String(res.error.message || '');
+      if (msg.indexOf('joke_titles') !== -1) {
+        delete row.joke_titles;
+        _sb.from('show_logs').insert(row).select('id').single().then(function(retry) {
+          if (retry.error) {
+            var rmsg = String(retry.error.message || '');
+            if (rmsg.indexOf('show_logs') !== -1 || retry.error.code === '42P01' || retry.error.code === 'PGRST205') return;
+            console.error('Show log sync error:', retry.error);
+            return;
+          }
+          if (retry.data && retry.data.id) applyShowLogCloudId(show.id, retry.data.id);
+        });
+        return;
+      }
       if (msg.indexOf('show_logs') !== -1 || res.error.code === '42P01' || res.error.code === 'PGRST205') return;
       console.error('Show log sync error:', res.error);
       return;
     }
     if (!res.data || !res.data.id) return;
-    var list = shows.slice();
-    for (var i=0;i<list.length;i++) {
-      if (String(list[i].id) === String(show.id)) {
-        list[i].supabase_id = res.data.id;
-        list[i].id = res.data.id;
-        break;
-      }
-    }
-    writeShowLogsLocal(list);
+    applyShowLogCloudId(show.id, res.data.id);
   });
+}
+
+function applyShowLogCloudId(localId, cloudId) {
+  var list = shows.slice();
+  for (var i=0;i<list.length;i++) {
+    if (String(list[i].id) === String(localId)) {
+      list[i].supabase_id = cloudId;
+      list[i].id = cloudId;
+      break;
+    }
+  }
+  writeShowLogsLocal(list);
 }
 
 function sbLoadShowLogs(opts) {
   opts = opts || {};
   if (!_sb || !currentUser) { if (opts.onDone) opts.onDone(shows); return; }
+  var cols = opts._omitTitles
+    ? 'id, venue, show_date, length, notes, rating, set_name, joke_ids, reactions, rehearsal_snapshot, created_at, updated_at'
+    : 'id, venue, show_date, length, notes, rating, set_name, joke_ids, joke_titles, reactions, rehearsal_snapshot, created_at, updated_at';
   _sb.from('show_logs')
-    .select('id, venue, show_date, length, notes, rating, set_name, joke_ids, reactions, rehearsal_snapshot, created_at, updated_at')
+    .select(cols)
     .eq('user_id', currentUser.id)
     .order('show_date', { ascending: false })
     .then(function(res) {
       if (res.error) {
         var msg = String(res.error.message || '');
+        if (msg.indexOf('joke_titles') !== -1 && !opts._omitTitles) {
+          sbLoadShowLogs(Object.assign({}, opts, { _omitTitles: true }));
+          return;
+        }
         if (msg.indexOf('show_logs') !== -1 || msg.indexOf('schema cache') !== -1 || res.error.code === '42P01' || res.error.code === 'PGRST205') {
           if (opts.notify) toast('Show log sync not ready — run sql/show_logs.sql in Supabase.');
         } else {
@@ -288,6 +328,7 @@ function sbLoadShowLogs(opts) {
           rating: row.rating || 0,
           setName: row.set_name || '',
           jokeIds: asArr(row.joke_ids).map(String),
+          jokeTitles: asObj(row.joke_titles),
           reactions: asObj(row.reactions),
           rehearsal: asObj(row.rehearsal_snapshot),
           created: row.created_at,
@@ -319,7 +360,7 @@ function getLiveVsRehearsalSignals() {
       var reh = normalizeRehearsalOutcome((s.rehearsal || {})[jid] || (typeof getRehearsalScoreForJoke === 'function' ? getRehearsalScoreForJoke(jid) : ''));
       rows.push({
         jokeId: String(jid),
-        title: jokeTitleById(jid),
+        title: jokeTitleById(jid, s.jokeTitles),
         live: live,
         rehearsal: reh,
         venue: s.venue,
@@ -463,7 +504,7 @@ function openShowDetail(id) {
     var live = (s.reactions || {})[jid] || '';
     var reh = (s.rehearsal || {})[jid] || '';
     return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">'
-      + '<span style="color:var(--text)">'+escapeShowAttr(jokeTitleById(jid))+'</span>'
+      + '<span style="color:var(--text)">'+escapeShowAttr(jokeTitleById(jid, s.jokeTitles))+'</span>'
       + '<span style="color:var(--text3);flex-shrink:0">R '+rehearsalLabel(reh)+' → L '+liveLabel(live)+'</span>'
       + '</div>';
   }).join('') || '<div style="font-size:12px;color:var(--text3)">No per-joke outcomes on this log.</div>';

@@ -11,6 +11,7 @@ create table if not exists public.show_logs (
   rating integer,
   set_name text,
   joke_ids jsonb not null default '[]'::jsonb,
+  joke_titles jsonb not null default '{}'::jsonb,
   reactions jsonb not null default '{}'::jsonb,
   rehearsal_snapshot jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
