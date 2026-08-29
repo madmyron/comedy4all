@@ -394,7 +394,7 @@ function renderShows() {
   var bestScore = document.getElementById('sh-best-score');
   if (total) total.textContent = shows.length;
   if (shows.length === 0) {
-    if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No set logs yet.<br><span style="font-size:11px">Tap "+ Log a Show" after a gig to record how each joke landed.</span></div>';
+    if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No set logs yet.<br><span style="font-size:11px">Tap "+ Log a Show" after a gig to record how each joke landed.</span><br><button type="button" class="btn btn-sm" style="margin-top:12px" onclick="go(\'openmics\')">Find open mics this week near you</button></div>';
     if (avg) avg.textContent = '--';
     if (best) best.textContent = '--';
     if (bestScore) bestScore.textContent = '';

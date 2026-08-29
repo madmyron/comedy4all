@@ -1,4 +1,4 @@
-const CACHE = 'comedy4all-v23';
+const CACHE = 'comedy4all-v24';
 
 const SHELL = [
   '/css/styles.css',
@@ -7,6 +7,7 @@ const SHELL = [
   '/js/data.js',
   '/js/init.js',
   '/js/jokes.js',
+  '/js/openmics.js',
   '/js/rehearsal.js',
   '/js/settings.js',
   '/js/shows.js',
