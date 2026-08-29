@@ -394,10 +394,6 @@ function renderOpenMicResults(nights) {
   }
   found.sort(function(a, b) {
     if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-    var order = { club: 0, workshop: 1, bar: 2 };
-    var ka = order[a.kind] != null ? order[a.kind] : 3;
-    var kb = order[b.kind] != null ? order[b.kind] : 3;
-    if (ka !== kb) return ka - kb;
     return a.miles - b.miles;
   });
   var groups = [];
