@@ -50,12 +50,12 @@ var OPENMIC_CANDIDATES = [
   { id:'tks-thu', venue:"TK's", city:'Addison', lat:32.955, lon:-96.829, dow:4, time:'5:30 PM', kind:'bar', mapsQuery:"TK's Addison Texas", hints:["tk's", 'tks addison'], signup:'DM Justin or in person at 5:00 PM. Hard stop 7:00 PM. 5 min.' },
   { id:'liquid-thu', venue:'Liquid Zoo', city:'Dallas', lat:32.80743, lon:-96.81717, dow:4, time:'8:00 PM', kind:'bar', mapsQuery:'Liquid Zoo Dallas', hints:['liquid zoo'], signup:'Sign up on the host form. 3 min.' },
   { id:'renos-thu', venue:"Reno's Chop Shop", city:'Dallas', lat:32.7842, lon:-96.7848, dow:4, time:'8:30 PM', kind:'bar', mapsQuery:"Reno's Chop Shop Deep Ellum", hints:["reno's chop", 'renos chop'], signup:'In person at 8:00 PM.' },
-  { id:'shark-thu', venue:"Shark's Comedy Club", city:'Dallas', lat:32.812, lon:-96.84, dow:4, time:'9:30 PM', kind:'club', fallbackClub:true, mapsQuery:"Shark's Comedy Club Dallas", hints:["shark's comedy", 'sharks comedy'], signup:'Swimming with Sharks. Noah “Shark” Robertson. In-person signup ~9:00 PM. 3–5 min.' },
+  { id:'shark-thu', venue:"Shark's Comedy Club", city:'Dallas', lat:32.78046, lon:-96.80075, dow:4, time:'9:30 PM', kind:'club', fallbackClub:true, mapsQuery:"Shark's Comedy Club Dallas", hints:["shark's comedy", 'sharks comedy'], signup:'Swimming with Sharks. Noah “Shark” Robertson. In-person signup ~9:00 PM. 3–5 min.' },
   { id:'snookies-thu', venue:'Snookies', city:'Dallas', lat:32.78, lon:-96.80, dow:4, time:'10:00 PM', kind:'bar', mapsQuery:'Snookies Dallas', hints:['snookies'], signup:'Bar mic. Thursday 10:00 PM.' },
   { id:'hyena-thu', venue:"Hyena's Comedy Nightclub", city:'Fort Worth', lat:32.75517, lon:-97.33023, dow:4, time:'10:00 PM', kind:'club', mapsQuery:"Hyena's Comedy Club Fort Worth", hints:['hyena'], signup:'On the CK list this week (Thu 10pm). Club site currently shows ticketed shows only. In person 7:30–9:30 PM. 3–5 min.' },
-  { id:'backdoor-thu', venue:'Backdoor Comedy Club', city:'Richardson', lat:32.9478, lon:-96.7312, dow:4, time:'8:00 PM', kind:'club', fallbackClub:true, mapsQuery:'Backdoor Comedy Club Richardson', hints:['backdoor'], signup:'Clean comedy. Call (214) 328-4444. 3 min.' },
+  { id:'backdoor-thu', venue:'Backdoor Comedy Club', city:'Richardson', lat:32.94725, lon:-96.71210, dow:4, time:'8:00 PM', kind:'club', fallbackClub:true, mapsQuery:'Backdoor Comedy Club Richardson', hints:['backdoor'], signup:'Clean comedy. Call (214) 328-4444. 3 min.' },
 
-  { id:'shark-fri', venue:"Shark's Comedy Club", city:'Dallas', lat:32.812, lon:-96.84, dow:5, time:'9:30 PM', kind:'club', fallbackClub:true, mapsQuery:"Shark's Comedy Club Dallas", hints:["shark's comedy", 'sharks comedy'], signup:'After the 8:00 PM show. Sign up during that show. 3–5 min.' },
+  { id:'shark-fri', venue:"Shark's Comedy Club", city:'Dallas', lat:32.78046, lon:-96.80075, dow:5, time:'9:30 PM', kind:'club', fallbackClub:true, mapsQuery:"Shark's Comedy Club Dallas", hints:["shark's comedy", 'sharks comedy'], signup:'After the 8:00 PM show. Sign up during that show. 3–5 min.' },
 
   { id:'reys-sat', venue:"Rey's Sports Bar", city:'Irving', lat:32.8141, lon:-96.9482, dow:6, time:'7:00 PM', kind:'bar', mapsQuery:"Rey's Sports Bar Irving", hints:["rey's sports", 'reys sports', "rey's sports bar"], signup:'Host-run bar mic in Irving (not a club). 2836 N O’Connor. Amos Hunt. Sign up 6:30 PM or DM Amos. Hard stop 9:00 PM — Latin dance later.' }
 ];
@@ -63,10 +63,50 @@ var OPENMIC_CANDIDATES = [
 // Confirmed closed. Do not grow this into a research project — Outfit is the known case (closed Mar 1, 2025).
 var OPENMIC_CLOSED_VENUES = ['outfit brewing'];
 
+// Published contact only. Omit a field rather than guess a phone or street.
+var OPENMIC_VENUE_INFO = {
+  'Dallas Comedy Club': { address:'3036 Elm Street, Dallas, TX 75226', venueUrl:'https://dallas-comedyclub.com/open-mics/' },
+  'Addison Improv': { address:'4980 Belt Line Road, Addison, TX 75254', venueUrl:'https://improvtx.com/' },
+  'Arlington Improv': { address:'309 Curtis Mathes Way, Arlington, TX 76018', venueUrl:'https://improvtx.com/' },
+  'Backdoor Comedy Club': { address:'940 E. Belt Line Road, Richardson, TX 75081', phone:'(214) 328-4444', venueUrl:'https://backdoorcomedy.com/' },
+  "Shark's Comedy Club": { address:'1303 Main Street, Dallas, TX 75202', venueUrl:'https://sharkscomedyclub.com/faq' },
+  "Hyena's Comedy Nightclub": { address:'425 Commerce Street, Fort Worth, TX 76102', venueUrl:'https://www.hyenascomedynightclub.com/fort-worth' },
+  'Big Laugh Comedy Club': { venueUrl:'https://fortworth.blcomedy.com/submissions/open-mic-sign-up' },
+  '1851 Club': { venueUrl:'https://clawsoutcomedy.com/openmics' },
+  'The Statler': { address:'1914 Commerce Street, Dallas, TX 75201' },
+  "Rey's Sports Bar": { address:"2836 N O'Connor Road, Irving, TX 75062" },
+  'Liquid Zoo': { address:'4122 Maple Avenue, Dallas, TX 75219', signupUrl:'https://form.jotform.com/241417836785063' },
+  "TK's": { address:'14854 Montfort Drive, Addison, TX 75254' },
+  'The Bearded Monk': { address:'122 East McKinney Street, Denton, TX 76201' }
+};
+var _openMicNights = {};
+
 function openMicEscape(str) {
   return String(str == null ? '' : str)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
+}
+
+function openMicPhoneFromText(s) {
+  var m = String(s == null ? '' : s).match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+  return m ? m[0] : '';
+}
+
+function formatPhotonAddress(props) {
+  if (!props) return '';
+  var line = [props.housenumber, props.street].filter(Boolean).join(' ').trim();
+  var city = props.city || props.town || '';
+  var state = props.state || '';
+  var zip = props.postcode || '';
+  var tail = city;
+  if (state) tail = tail ? tail + ', ' + state : state;
+  if (zip) tail = tail ? tail + ' ' + zip : zip;
+  if (line && tail) return line + ', ' + tail;
+  return line || tail || '';
+}
+
+function venueInfoFor(mic) {
+  return OPENMIC_VENUE_INFO[mic.venue] || {};
 }
 
 function dfwNow() {
@@ -291,7 +331,12 @@ function mapsHitFromPhoton(mic, data) {
     var hintHit = (mic.hints || []).some(function(h) { return propsName.indexOf(String(h).toLowerCase()) !== -1; });
     var venueHit = propsName.indexOf(venueKey.split(' ')[0]) !== -1;
     if (hintHit || venueHit || mi < 0.6) {
-      return { lat: lat, lon: lon, name: (f.properties && f.properties.name) || mic.venue };
+      return {
+        lat: lat,
+        lon: lon,
+        name: (f.properties && f.properties.name) || mic.venue,
+        address: formatPhotonAddress(f.properties)
+      };
     }
   }
   return null;
@@ -348,7 +393,10 @@ function kindLabel(kind) {
   return 'Comedy club';
 }
 
-function nightFromCandidate(mic, origin, lat, lon, when) {
+function nightFromCandidate(mic, origin, lat, lon, when, maps) {
+  var info = venueInfoFor(mic);
+  var address = info.address || (maps && maps.address) || '';
+  var phone = info.phone || openMicPhoneFromText(mic.signup) || '';
   return {
     id: mic.id,
     venue: mic.venue,
@@ -360,7 +408,13 @@ function nightFromCandidate(mic, origin, lat, lon, when) {
     date: isoDate(when),
     dateObj: when,
     dateLabel: formatMicDate(when),
-    miles: haversineMi(origin.lat, origin.lon, lat, lon)
+    miles: haversineMi(origin.lat, origin.lon, lat, lon),
+    lat: lat,
+    lon: lon,
+    address: address,
+    phone: phone,
+    venueUrl: info.venueUrl || '',
+    signupUrl: info.signupUrl || ''
   };
 }
 
@@ -373,9 +427,9 @@ function confirmCandidate(mic, origin) {
   return mapsAgrees(mic).then(function(maps) {
     var lat = (maps && maps.lat) ? maps.lat : mic.lat;
     var lon = (maps && maps.lon) ? maps.lon : mic.lon;
-    return nightFromCandidate(mic, origin, lat, lon, when);
+    return nightFromCandidate(mic, origin, lat, lon, when, maps);
   }).catch(function() {
-    return nightFromCandidate(mic, origin, mic.lat, mic.lon, when);
+    return nightFromCandidate(mic, origin, mic.lat, mic.lon, when, null);
   });
 }
 
@@ -388,6 +442,8 @@ function renderOpenMicResults(nights) {
   var root = document.getElementById('om-results');
   if (!root) return;
   var found = (nights || []).filter(Boolean);
+  _openMicNights = {};
+  found.forEach(function(n) { _openMicNights[n.id] = n; });
   if (!found.length) {
     root.innerHTML = '<div class="card" style="padding:22px;text-align:center;color:var(--text3);font-size:13px">No comedy open mics this week within 40 miles.<br><span style="font-size:11px">Try Dallas, Fort Worth, or a closer city.</span></div>';
     return;
@@ -408,7 +464,7 @@ function renderOpenMicResults(nights) {
       var dist = n.miles < 10 ? n.miles.toFixed(1) : String(Math.round(n.miles));
       var kind = kindLabel(n.kind);
       var kindColor = n.kind === 'bar' ? 'var(--text3)' : (n.kind === 'workshop' ? 'var(--gold)' : 'var(--green)');
-      return '<div class="om-card card" data-om-id="'+openMicEscape(n.id)+'" data-venue="'+openMicEscape(n.venue)+'" data-city="'+openMicEscape(n.city)+'" data-time="'+openMicEscape(n.time)+'" data-weekday="'+openMicEscape(n.weekday)+'" data-date="'+openMicEscape(n.date)+'" data-date-label="'+openMicEscape(n.dateLabel)+'" data-signup="'+openMicEscape(n.signup)+'">'
+      return '<div class="om-card card" data-om-id="'+openMicEscape(n.id)+'" data-venue="'+openMicEscape(n.venue)+'" data-city="'+openMicEscape(n.city)+'" data-time="'+openMicEscape(n.time)+'" data-weekday="'+openMicEscape(n.weekday)+'" data-date="'+openMicEscape(n.date)+'" data-date-label="'+openMicEscape(n.dateLabel)+'" data-signup="'+openMicEscape(n.signup)+'" onclick="openOpenMicDetail(\''+openMicEscape(n.id)+'\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openOpenMicDetail(\''+openMicEscape(n.id)+'\');}">'
         + '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'
         + '<div><div style="font-size:14px;font-weight:650;color:var(--text)">'+openMicEscape(n.venue)
         + ' <span style="font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:'+kindColor+'">'+openMicEscape(kind)+'</span></div>'
@@ -416,11 +472,73 @@ function renderOpenMicResults(nights) {
         + '<div style="font-size:11px;color:var(--text3);margin-top:4px">'+dist+' mi'
         + (n.signup ? ' · '+openMicEscape(n.signup) : '')
         + '</div></div>'
-        + '<button type="button" class="btn btn-sm btn-primary" onclick="saveOpenMicAsNextShow(\''+openMicEscape(n.id)+'\')">Save as next show</button>'
+        + '<button type="button" class="btn btn-sm btn-primary" onclick="event.stopPropagation();saveOpenMicAsNextShow(\''+openMicEscape(n.id)+'\')">Save as next show</button>'
         + '</div></div>';
     }).join('');
     return '<div class="om-day" style="margin-bottom:16px"><div class="sect-title" style="margin-bottom:8px">'+openMicEscape(g.label)+'</div>'+cards+'</div>';
   }).join('');
+}
+
+function closeOpenMicDetail() {
+  var el = document.getElementById('openmic-detail-modal');
+  if (el) el.remove();
+}
+
+function openMicMapsHref(n) {
+  if (n.address) return 'https://maps.google.com/?q=' + encodeURIComponent(n.address);
+  if (typeof n.lat === 'number' && typeof n.lon === 'number') {
+    return 'https://maps.google.com/?q=' + encodeURIComponent(n.lat + ',' + n.lon);
+  }
+  return 'https://maps.google.com/?q=' + encodeURIComponent((n.venue || '') + ' ' + (n.city || '') + ' TX');
+}
+
+function openMicDetailRow(label, innerHtml) {
+  if (!innerHtml) return '';
+  return '<div style="margin-bottom:12px"><div class="mlbl">'+openMicEscape(label)+'</div><div style="font-size:13px;color:var(--text);line-height:1.5">'+innerHtml+'</div></div>';
+}
+
+function openOpenMicDetail(id) {
+  var n = _openMicNights[id];
+  if (!n) return;
+  closeOpenMicDetail();
+  var dist = n.miles < 10 ? n.miles.toFixed(1) : String(Math.round(n.miles));
+  var kind = kindLabel(n.kind);
+  var maps = openMicMapsHref(n);
+  var body = '';
+  body += openMicDetailRow('When', openMicEscape((n.dateLabel || n.weekday || '') + (n.time ? ' · ' + n.time : '')) + ' · ' + openMicEscape(dist) + ' mi');
+  if (n.address) {
+    body += openMicDetailRow('Address', openMicEscape(n.address)
+      + '<div style="margin-top:4px"><a href="'+openMicEscape(maps)+'" target="_blank" rel="noopener" style="color:var(--gold);font-size:12px">Open in Maps</a></div>');
+  } else {
+    body += openMicDetailRow('Maps', '<a href="'+openMicEscape(maps)+'" target="_blank" rel="noopener" style="color:var(--gold)">Open in Maps</a>');
+  }
+  if (n.phone) {
+    var tel = String(n.phone).replace(/[^\d+]/g, '');
+    if (tel.length === 10) tel = '+1' + tel;
+    body += openMicDetailRow('Phone', '<a href="tel:'+openMicEscape(tel)+'" style="color:var(--gold)">'+openMicEscape(n.phone)+'</a>');
+  }
+  if (n.signup) body += openMicDetailRow('How to sign up', openMicEscape(n.signup));
+  if (n.signupUrl) {
+    body += openMicDetailRow('Sign-up form', '<a href="'+openMicEscape(n.signupUrl)+'" target="_blank" rel="noopener" style="color:var(--gold)">Open sign-up form</a>');
+  }
+  if (n.venueUrl) {
+    body += openMicDetailRow('Venue site', '<a href="'+openMicEscape(n.venueUrl)+'" target="_blank" rel="noopener" style="color:var(--gold)">'+openMicEscape(n.venueUrl.replace(/^https?:\/\//,'').replace(/\/$/,''))+'</a>');
+  }
+  var modal = document.createElement('div');
+  modal.id = 'openmic-detail-modal';
+  modal.className = 'overlay';
+  modal.style.display = 'flex';
+  modal.onclick = function(e) { if (e.target === modal) closeOpenMicDetail(); };
+  modal.innerHTML = '<div class="mbox" style="max-width:480px">'
+    + '<div style="font-size:16px;font-weight:600;margin-bottom:4px">'+openMicEscape(n.venue)+'</div>'
+    + '<div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-bottom:14px">'+openMicEscape(kind)
+    + (n.city ? ' · '+openMicEscape(n.city) : '')+'</div>'
+    + body
+    + '<div style="display:flex;gap:9px;justify-content:flex-end;margin-top:16px">'
+    + '<button type="button" class="btn" onclick="closeOpenMicDetail()">Close</button>'
+    + '<button type="button" class="btn btn-primary" onclick="saveOpenMicAsNextShow(\''+openMicEscape(n.id)+'\')">Save as next show</button>'
+    + '</div></div>';
+  document.body.appendChild(modal);
 }
 
 function searchOpenMicsFromOrigin(origin) {
@@ -514,3 +632,7 @@ function initOpenMics() {
   hideOpenMicFallback();
   searchOpenMicsGps();
 }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeOpenMicDetail();
+});
