@@ -11,6 +11,7 @@ var _openMicOrigin = null;
 var _openMicSearching = false;
 
 // Weekly nights from CK (Aug 2026). kind: club | bar | workshop. fallbackClub = club-only list if CK is gone.
+// CK is not gospel for dead rooms — OPENMIC_CLOSED_VENUES drops confirmed closures even if CK still lists them.
 var OPENMIC_CANDIDATES = [
   { id:'addison-sun', venue:'Addison Improv', city:'Addison', lat:32.95372, lon:-96.82673, dow:0, time:'3:00 PM', kind:'workshop', fallbackClub:true, mapsQuery:'Addison Improv', hints:['addison improv'], signup:'In person at 2:30 PM. 5 min.' },
   { id:'tks-sun', venue:"TK's", city:'Addison', lat:32.955, lon:-96.829, dow:0, time:'5:30 PM', kind:'bar', mapsQuery:"TK's Addison Texas", hints:["tk's", 'tks addison'], signup:'DM Rudy or in person at 5:00 PM. 5 min.' },
@@ -49,16 +50,18 @@ var OPENMIC_CANDIDATES = [
   { id:'tks-thu', venue:"TK's", city:'Addison', lat:32.955, lon:-96.829, dow:4, time:'5:30 PM', kind:'bar', mapsQuery:"TK's Addison Texas", hints:["tk's", 'tks addison'], signup:'DM Justin or in person at 5:00 PM. Hard stop 7:00 PM. 5 min.' },
   { id:'liquid-thu', venue:'Liquid Zoo', city:'Dallas', lat:32.80743, lon:-96.81717, dow:4, time:'8:00 PM', kind:'bar', mapsQuery:'Liquid Zoo Dallas', hints:['liquid zoo'], signup:'Sign up on the host form. 3 min.' },
   { id:'renos-thu', venue:"Reno's Chop Shop", city:'Dallas', lat:32.7842, lon:-96.7848, dow:4, time:'8:30 PM', kind:'bar', mapsQuery:"Reno's Chop Shop Deep Ellum", hints:["reno's chop", 'renos chop'], signup:'In person at 8:00 PM.' },
-  { id:'shark-thu', venue:"Shark's Comedy Club", city:'Dallas', lat:32.812, lon:-96.84, dow:4, time:'9:30 PM', kind:'club', fallbackClub:true, mapsQuery:"Shark's Comedy Club Dallas", hints:["shark's comedy", 'sharks comedy'], signup:'In person at 9:00 PM. 3–5 min.' },
+  { id:'shark-thu', venue:"Shark's Comedy Club", city:'Dallas', lat:32.812, lon:-96.84, dow:4, time:'9:30 PM', kind:'club', fallbackClub:true, mapsQuery:"Shark's Comedy Club Dallas", hints:["shark's comedy", 'sharks comedy'], signup:'Swimming with Sharks. Noah “Shark” Robertson. In-person signup ~9:00 PM. 3–5 min.' },
   { id:'snookies-thu', venue:'Snookies', city:'Dallas', lat:32.78, lon:-96.80, dow:4, time:'10:00 PM', kind:'bar', mapsQuery:'Snookies Dallas', hints:['snookies'], signup:'Bar mic. Thursday 10:00 PM.' },
   { id:'hyena-thu', venue:"Hyena's Comedy Nightclub", city:'Fort Worth', lat:32.75517, lon:-97.33023, dow:4, time:'10:00 PM', kind:'club', mapsQuery:"Hyena's Comedy Club Fort Worth", hints:['hyena'], signup:'On the CK list this week (Thu 10pm). Club site currently shows ticketed shows only. In person 7:30–9:30 PM. 3–5 min.' },
   { id:'backdoor-thu', venue:'Backdoor Comedy Club', city:'Richardson', lat:32.9478, lon:-96.7312, dow:4, time:'8:00 PM', kind:'club', fallbackClub:true, mapsQuery:'Backdoor Comedy Club Richardson', hints:['backdoor'], signup:'Clean comedy. Call (214) 328-4444. 3 min.' },
 
-  { id:'outfit-fri', venue:'Outfit Brewing', city:'Dallas', lat:32.8143, lon:-96.8706, dow:5, time:'7:00 PM', kind:'bar', mapsQuery:'Outfit Brewing Dallas', hints:['outfit brewing'], signup:'Every Friday. In person or DM host. 5 min.' },
   { id:'shark-fri', venue:"Shark's Comedy Club", city:'Dallas', lat:32.812, lon:-96.84, dow:5, time:'9:30 PM', kind:'club', fallbackClub:true, mapsQuery:"Shark's Comedy Club Dallas", hints:["shark's comedy", 'sharks comedy'], signup:'After the 8:00 PM show. Sign up during that show. 3–5 min.' },
 
-  { id:'reys-sat', venue:"Rey's Sports Bar", city:'Irving', lat:32.8141, lon:-96.9482, dow:6, time:'7:00 PM', kind:'bar', mapsQuery:"Rey's Sports Bar Irving", hints:["rey's sports", 'reys sports'], signup:'Sign up 6:30 PM or DM Amos. Hard stop 9:00 PM.' }
+  { id:'reys-sat', venue:"Rey's Sports Bar", city:'Irving', lat:32.8141, lon:-96.9482, dow:6, time:'7:00 PM', kind:'bar', mapsQuery:"Rey's Sports Bar Irving", hints:["rey's sports", 'reys sports', "rey's sports bar"], signup:'Host-run bar mic in Irving (not a club). 2836 N O’Connor. Amos Hunt. Sign up 6:30 PM or DM Amos. Hard stop 9:00 PM — Latin dance later.' }
 ];
+
+// Confirmed closed. Do not grow this into a research project — Outfit is the known case (closed Mar 1, 2025).
+var OPENMIC_CLOSED_VENUES = ['outfit brewing'];
 
 function openMicEscape(str) {
   return String(str == null ? '' : str)
@@ -251,18 +254,27 @@ function fetchLiveCk() {
     });
 }
 
+function isKnownClosed(mic) {
+  var blob = ckNorm([mic.venue, mic.city].concat(mic.hints || []).join(' '));
+  return OPENMIC_CLOSED_VENUES.some(function(name) { return blob.indexOf(ckNorm(name)) !== -1; });
+}
+
+function livingCandidates(list) {
+  return (list || []).filter(function(m) { return !isKnownClosed(m); });
+}
+
 function comedySeeds(liveText) {
   var stored = loadStoredCk();
   var liveOk = liveText && ckLooksValid(liveText);
   var ck = liveOk ? liveText : (ckLooksValid(stored) ? stored : '');
   if (ck) {
-    var hit = OPENMIC_CANDIDATES.filter(function(m) { return onComedyList(m, ck); });
+    var hit = livingCandidates(OPENMIC_CANDIDATES.filter(function(m) { return onComedyList(m, ck); }));
     if (hit.length) return { list: hit, source: liveOk ? 'ck' : 'snapshot' };
     // Live/stored CK parsed but matched nothing this week — club-only, not every bar.
-    return { list: OPENMIC_CANDIDATES.filter(function(m) { return m.fallbackClub; }), source: 'clubs' };
+    return { list: livingCandidates(OPENMIC_CANDIDATES.filter(function(m) { return m.fallbackClub; })), source: 'clubs' };
   }
   // Jina/CK down and no stored scrape: last-good CK seeds (this file), not Maps-only bars.
-  return { list: OPENMIC_CANDIDATES.slice(), source: 'snapshot' };
+  return { list: livingCandidates(OPENMIC_CANDIDATES.slice()), source: 'snapshot' };
 }
 
 function mapsHitFromPhoton(mic, data) {
@@ -353,6 +365,7 @@ function nightFromCandidate(mic, origin, lat, lon, when) {
 }
 
 function confirmCandidate(mic, origin) {
+  if (isKnownClosed(mic)) return Promise.resolve(null);
   var when = nextDateForDow(mic.dow, dfwNow());
   if (!when) return Promise.resolve(null);
   var dist = haversineMi(origin.lat, origin.lon, mic.lat, mic.lon);
