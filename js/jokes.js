@@ -99,6 +99,30 @@ function persistJokeManagerSortMode(mode) {
   if (sortSelect && sortSelect.value !== mode) sortSelect.value = mode;
 }
 
+function persistJokeManualOrder(list) {
+  list = list || displayJokes || [];
+  try {
+    localStorage.setItem('c4a_joke_order', JSON.stringify(list.map(function(j){ return String(j.id); })));
+  } catch(e) {}
+  if (currentUser && _sb) {
+    var updates = list.map(function(j, i) {
+      return _sb.from('jokes').update({ sort_order: i }).eq('id', j.id);
+    });
+    Promise.all(updates).catch(function() {});
+  }
+}
+
+function enableManualSortFromDrag() {
+  if (getJokeManagerSortMode() === 'custom') return;
+  persistJokeManagerSortMode('custom');
+  if (jokeGridSortable) jokeGridSortable.option('disabled', false);
+  if (displayJokes && jokes && displayJokes.length === jokes.length) {
+    jokes = displayJokes.slice();
+  }
+  persistJokeManualOrder(displayJokes);
+  toast('Switched to Manual sort so you can reorder.');
+}
+
 function tagColor(t) {
   if (t==='Travel') return 'gold';
   if (t==='Tech') return 'blue';
@@ -1094,31 +1118,24 @@ function renderJokes(list) {
   if (!isArchiveView && typeof Sortable !== 'undefined') {
     if (jokeGridSortable) jokeGridSortable.destroy();
     
-    var isCustomOrder = mode === 'custom';
-    
     jokeGridSortable = new Sortable(grid, {
       animation: 150,
       ghostClass: 'sortable-ghost',
-      disabled: !isCustomOrder,
+      disabled: false,
       delay: 400,
       delayOnTouchOnly: true,
       swap: true,
       swapClass: 'sortable-swap-highlight',
+      onStart: function() {
+        enableManualSortFromDrag();
+      },
       onEnd: function(evt) {
         if (evt.oldIndex === evt.newIndex) return;
         var movedItem = displayJokes.splice(evt.oldIndex, 1)[0];
         displayJokes.splice(evt.newIndex, 0, movedItem);
         jokes = displayJokes.slice();
-        try {
-          localStorage.setItem('c4a_joke_order', JSON.stringify(jokes.map(function(j){ return String(j.id); })));
-        } catch(e) {}
+        persistJokeManualOrder(jokes);
         toast('Order saved \u2713');
-        if (currentUser && _sb) {
-          var updates = jokes.map(function(j, i) {
-            return _sb.from('jokes').update({ sort_order: i }).eq('id', j.id);
-          });
-          Promise.all(updates).catch(function() {});
-        }
       }
     });
   } else if (jokeGridSortable) {
@@ -1294,9 +1311,6 @@ function sortJokes(by) {
   by = normalizeJokeSortMode(by);
   persistJokeManagerSortMode(by);
   var s = by === 'custom' ? displayJokes.slice() : applyJokeSort(displayJokes, by);
-  if (by !== 'custom') {
-     if (jokeGridSortable) jokeGridSortable.option('disabled', true);
-  }
   displayJokes = s;
   renderJokes(s);
 }
