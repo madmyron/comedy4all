@@ -578,9 +578,12 @@ function syncThemeCards() {
 
 // - KEYBOARD SHORTCUTS -
 document.addEventListener('keydown',function(e){
-  if(document.getElementById('joke-modal').style.display!=='none') return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  var jm = document.getElementById('joke-modal');
+  if (jm && jm.style.display !== 'none') return;
   var tag=e.target.tagName;
   if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+  if (e.target.isContentEditable || (e.target.closest && e.target.closest('[contenteditable]'))) return;
   if(e.key==='n'||e.key==='N') openNewJoke();
   if(e.key==='r'||e.key==='R') go('rehearsal');
   if(e.key==='b'||e.key==='B') go('brooks');
